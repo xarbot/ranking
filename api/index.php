@@ -447,6 +447,9 @@ function route(PDO $db, string $method, string $path, array $payload): array
         session_regenerate_id(true);
         return [['ok' => true], 200];
     }
+    if ($method === 'GET' && $path === '/public/marks') {
+        return [publicMarks($db), 200];
+    }
     $actor = requireUser($db);
     if ($method === 'GET' && $path === '/bootstrap') {
         return [bootstrap($db), 200];

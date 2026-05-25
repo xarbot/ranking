@@ -133,7 +133,7 @@
   }
   function apply(root) {
     document.documentElement.lang = language;
-    document.title = t("Ranking de Atletismo");
+    document.title = t("Ranking de Atletismo") + " | Club Atlètic Castellar";
     var walker = document.createTreeWalker(root || document.body, NodeFilter.SHOW_TEXT);
     var node;
     while ((node = walker.nextNode())) translateTextNode(node);
