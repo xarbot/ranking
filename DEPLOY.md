@@ -1,6 +1,8 @@
 # Despliegue en nginx con PHP 8.3
 
-La aplicacion se publica desde `/var/www/ranking.clubatleticcastellar.cat/htdocs`, el `root` nginx configurado para el dominio.
+La consulta publica se sirve en `/` y el panel autenticado de entrada de datos en `/admin/`,
+ambos desde `/var/www/ranking.clubatleticcastellar.cat/htdocs`.
+Las dos interfaces ofrecen castellano y catalan desde su selector de idioma.
 
 ## Requisitos
 
@@ -19,7 +21,7 @@ git clone URL_DEL_REPOSITORIO htdocs
 cd htdocs
 ```
 
-2. Instala el fragmento nginx que enruta la API y bloquea ficheros privados. El bloque `server` facilitado ya incluye ese directorio.
+2. Instala el fragmento nginx que enruta `/api/`, normaliza `/admin/` y bloquea ficheros privados. El bloque `server` facilitado ya incluye ese directorio.
 
 ```sh
 cp deploy/nginx/ranking.conf.example ../conf/nginx/ranking.conf
@@ -72,11 +74,12 @@ El fichero `database/init.sql` crea las tablas iniciales y registra la version d
 
 ## Comprobacion
 
-Comprueba que la portada y la API responden, y que un fichero interno queda bloqueado:
+Comprueba que la consulta, el panel, la API publica y los ficheros internos responden como corresponde:
 
 ```sh
 curl -I https://ranking.clubatleticcastellar.cat/
-curl -i https://ranking.clubatleticcastellar.cat/api/auth/status
+curl -I https://ranking.clubatleticcastellar.cat/admin/
+curl -i https://ranking.clubatleticcastellar.cat/api/public/marks
 curl -I https://ranking.clubatleticcastellar.cat/lib/env.php
 ```
 

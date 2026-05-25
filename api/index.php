@@ -267,6 +267,27 @@ function bootstrap(PDO $db): array
     return compact('athletes', 'events', 'tracks', 'marks', 'users');
 }
 
+function publicMarks(PDO $db): array
+{
+    $events = execute($db, 'SELECT id, nombre AS name FROM pruebas ORDER BY nombre')->fetchAll();
+    $marks = execute(
+        $db,
+        "SELECT m.id, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
+         p.nombre AS event, m.resultado AS result, m.categoria AS category,
+         DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
+         CONCAT(t.nombre, ' - ', t.localidad) AS track
+         FROM marcas m
+         JOIN atletas a ON a.id = m.atleta_id
+         JOIN pruebas p ON p.id = m.prueba_id
+         JOIN pistas t ON t.id = m.pista_id
+         ORDER BY m.fecha DESC, m.id DESC"
+    )->fetchAll();
+    $categories = [
+        'sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master',
+    ];
+    return compact('events', 'categories', 'marks');
+}
+
 function createItem(PDO $db, string $resource, array $payload): void
 {
     if ($resource === 'athletes') {

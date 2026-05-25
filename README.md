@@ -1,7 +1,9 @@
 # Ranking de Atletismo
 
-Aplicacion de entrada de marcas de atletismo con persistencia MySQL y categoria
-calculada automaticamente por edad.
+Aplicacion de marcas de atletismo con consulta publica en `/`, panel de gestion
+autenticado en `/admin/`, persistencia MySQL y categoria calculada por edad.
+
+Tanto la consulta publica como el panel de gestion permiten alternar castellano y catalan.
 
 ## Requisitos
 
@@ -31,28 +33,30 @@ El esquema contiene:
 
 ## Despliegue nginx
 
-1. Publica el repositorio en el `root` nginx; `index.html` y `api/` se sirven desde la raiz.
+1. Publica el repositorio en el `root` nginx; `/` sirve los listados y `/admin/` la gestion.
 2. Copia `.env.example` como `.env` en el directorio padre de la raiz publica.
 3. Edita `.env` con `DB_HOST`, `DB_NAME`, `DB_USER` y `DB_PASS` del servidor.
 4. Instala `deploy/nginx/ranking.conf.example` en el directorio de includes del virtual host y recarga nginx tras ejecutar `nginx -t`.
-5. Accede a la URL configurada para la aplicacion.
+5. Accede a `/admin/` para crear el primer usuario de gestion.
 
-En la primera apertura, la aplicacion solicita crear el primer usuario de gestion.
+La ruta `/` es publica y presenta las marcas registradas con filtros por prueba,
+categoria y atleta. La ruta `/admin/` requiere autenticacion para modificar datos.
+La consulta utiliza `GET /api/public/marks`, que no devuelve usuarios ni fechas de nacimiento.
 
-`.env` contiene credenciales y queda fuera del webroot. La interfaz llama a `api/...`;
+`.env` contiene credenciales y queda fuera del webroot. Las interfaces llaman a `api/...`;
 nginx redirige esas peticiones al controlador `api/index.php`.
 
 Para instalacion y actualizacion en produccion, sigue [`DEPLOY.md`](DEPLOY.md).
 
 ## Uso
 
-1. Inicia sesion con un usuario de gestion.
-2. Desde **Usuarios**, crea, edita, activa o desactiva las cuentas que necesiten introducir datos.
-3. Crea las pistas de atletismo.
-4. Registra atletas manualmente o importalos desde CSV usando la plantilla descargable.
-5. Define las pruebas, o usa **Cargar pruebas habituales**.
-6. Introduce marcas desde la pantalla principal.
-7. Desde **Marcas registradas**, busca un atleta para revisar, editar o eliminar sus marcas.
+1. Consulta los listados abiertos desde `/`; no exponen usuarios ni fechas de nacimiento.
+2. Inicia sesion desde `/admin/` con un usuario de gestion.
+3. Desde **Usuarios**, crea, edita, activa o desactiva las cuentas necesarias.
+4. Crea las pistas de atletismo.
+5. Registra atletas manualmente o importalos desde CSV usando la plantilla descargable.
+6. Define las pruebas, o usa **Cargar pruebas habituales**.
+7. Introduce marcas y revisalas desde el panel de gestion.
 
 La categoria se calcula en la API segun la edad cumplida del atleta en la fecha de la
 marca: `sub8`, `sub10`, `sub12`, `sub14`, `sub16`, `sub18`, `sub20`, `sub23`,

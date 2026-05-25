@@ -1,6 +1,11 @@
 # Copiar a /var/www/ranking.clubatleticcastellar.cat/conf/nginx/ranking.conf
 # Este fichero se incluye dentro del bloque server existente.
 
+# La portada publica se sirve en / y la gestion autenticada en /admin/.
+location = /admin {
+    return 308 /admin/;
+}
+
 # La API usa rutas REST y un unico front controller PHP.
 location = /api {
     return 308 /api/;

@@ -9,222 +9,69 @@
     <script src="app.js" defer></script>
   </head>
   <body>
-    <label class="language-picker">
-      <span>Idioma</span>
-      <select id="language" aria-label="Idioma">
-        <option value="es">Castellano</option>
-        <option value="ca">Català</option>
-      </select>
-    </label>
-
-    <main id="auth-shell" class="auth-shell">
-      <article class="card auth-card">
-        <p class="eyebrow">Acceso restringido</p>
-        <h1 class="auth-title">Gestion de datos</h1>
-        <form id="login-form" class="auth-form">
-          <label>Usuario<input id="login-username" required autocomplete="username"></label>
-          <label>Contrasena<input id="login-password" type="password" required autocomplete="current-password"></label>
-          <p id="login-error" class="error" role="alert"></p>
-          <button class="primary" type="submit">Iniciar sesion</button>
-        </form>
-        <form id="setup-form" class="auth-form hidden">
-          <p class="helper setup-helper">Crea el primer usuario que administrara la entrada de datos.</p>
-          <label>Nombre<input id="setup-name" required autocomplete="name"></label>
-          <label>Usuario<input id="setup-username" required autocomplete="username"></label>
-          <label>Contrasena<input id="setup-password" type="password" minlength="8" required autocomplete="new-password"></label>
-          <p id="setup-error" class="error" role="alert"></p>
-          <button class="primary" type="submit">Crear usuario inicial</button>
-        </form>
-      </article>
-    </main>
-
-    <header id="app-header" class="hero hidden">
+    <div class="topbar">
+      <label class="language-picker">
+        <span>Idioma</span>
+        <select id="language" aria-label="Idioma">
+          <option value="es">Castellano</option>
+          <option value="ca">Català</option>
+        </select>
+      </label>
+      <a class="admin-link" href="/admin/">Administracion</a>
+    </div>
+    <header class="hero">
       <div>
-        <p class="eyebrow">Gestion deportiva</p>
+        <p class="eyebrow">Consulta publica</p>
         <h1>Ranking de Atletismo</h1>
-        <p class="subtitle">Registra instalaciones, atletas, pruebas y marcas con categoria automatica por edad.</p>
+        <p class="subtitle">Consulta las marcas registradas por prueba, categoria y atleta.</p>
       </div>
       <div class="stats" aria-label="Resumen">
         <div><strong id="count-athletes">0</strong><span>Atletas</span></div>
         <div><strong id="count-events">0</strong><span>Pruebas</span></div>
         <div><strong id="count-marks">0</strong><span>Marcas</span></div>
       </div>
-      <div class="user-session">
-        <span id="current-user-name"></span>
-        <button class="secondary" id="logout" type="button">Cerrar sesion</button>
-      </div>
     </header>
-
-    <main id="app-shell" class="hidden">
-      <nav class="tabs" aria-label="Secciones">
-        <button class="tab active" data-panel="marcas">Marcas</button>
-        <button class="tab" data-panel="consulta-marcas">Marcas registradas</button>
-        <button class="tab" data-panel="atletas">Atletas</button>
-        <button class="tab" data-panel="pruebas">Pruebas</button>
-        <button class="tab" data-panel="pistas">Pistas</button>
-        <button class="tab" data-panel="usuarios">Usuarios</button>
-      </nav>
-      <p id="app-error" class="status failure hidden" role="alert"></p>
-
-      <section id="panel-marcas" class="panel active">
-        <div class="split">
-          <article class="card entry-card">
-            <div class="card-title">
-              <div>
-                <p class="eyebrow">Nueva entrada</p>
-                <h2 id="mark-form-title">Registrar marca</h2>
-              </div>
-            </div>
-            <form id="mark-form" autocomplete="off">
-              <input type="hidden" id="mark-id">
-              <label>Atleta
-                <input id="mark-athlete" list="athlete-options" required placeholder="Buscar atleta...">
-                <datalist id="athlete-options"></datalist>
-              </label>
-              <label>Prueba
-                <input id="mark-event" list="event-options" required placeholder="Buscar prueba...">
-                <datalist id="event-options"></datalist>
-              </label>
-              <div class="fields two">
-                <label>Fecha
-                  <input id="mark-date" type="date" required>
-                </label>
-                <label>Resultado
-                  <input id="mark-result" required placeholder="Ej. 12.43 o 1:58.20">
-                </label>
-              </div>
-              <label>Sitio / pista
-                <input id="mark-track" list="track-options" required placeholder="Buscar instalacion...">
-                <datalist id="track-options"></datalist>
-              </label>
-              <div class="category-box">
-                <span>Categoria calculada</span>
-                <strong id="mark-category">Selecciona atleta y fecha</strong>
-              </div>
-              <p id="mark-error" class="error" role="alert"></p>
-              <div class="actions">
-                <button class="primary" id="mark-submit" type="submit">Guardar marca</button>
-                <button class="secondary hidden" id="cancel-mark" type="button">Cancelar</button>
-              </div>
-            </form>
-          </article>
+    <main>
+      <section class="card filters" aria-label="Filtros">
+        <div class="card-title">
+          <div>
+            <p class="eyebrow">Resultados</p>
+            <h2>Marcas registradas</h2>
+          </div>
+          <button class="secondary" id="clear-filters" type="button">Limpiar filtros</button>
+        </div>
+        <div class="filter-grid">
+          <label>Prueba
+            <select id="event-filter"><option value="">Todas las pruebas</option></select>
+          </label>
+          <label>Categoria
+            <select id="category-filter"><option value="">Todas las categorias</option></select>
+          </label>
+          <label>Atleta
+            <input id="athlete-filter" placeholder="Nombre o apellidos...">
+          </label>
         </div>
       </section>
-
-      <section id="panel-consulta-marcas" class="panel">
-        <article class="card management marks-management">
-          <div class="card-title">
-            <div>
-              <p class="eyebrow">Revision</p>
-              <h2>Marcas de un atleta</h2>
-            </div>
-          </div>
-          <label class="marks-search">Buscar atleta
-            <input id="marks-athlete-filter" list="athlete-options" placeholder="Nombre o apellidos...">
-          </label>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Prueba</th><th>Marca</th><th>Categoria</th><th>Fecha</th><th>Sitio</th><th></th></tr>
-              </thead>
-              <tbody id="marks-body"></tbody>
-            </table>
-            <p id="marks-empty" class="empty">Busca un atleta para consultar sus marcas.</p>
-          </div>
-        </article>
-      </section>
-
-      <section id="panel-atletas" class="panel">
-        <article class="card management">
-          <div class="card-title">
-            <h2>Atletas</h2>
-            <div class="import-actions">
-              <button class="secondary" id="download-athlete-template" type="button">Descargar plantilla</button>
-              <label class="file-button secondary" for="import-athletes-file">Importar CSV</label>
-              <input class="hidden" id="import-athletes-file" type="file" accept=".csv,text/csv">
-            </div>
-          </div>
-          <p class="helper">Columnas de importacion: Nombre, Apellidos y Fecha de nacimiento (AAAA-MM-DD).</p>
-          <p id="athlete-import-status" class="status hidden" role="status"></p>
-          <form id="athlete-form" class="inline-form">
-            <input type="hidden" id="athlete-id">
-            <label>Nombre<input id="athlete-name" required></label>
-            <label>Apellidos<input id="athlete-surname" required></label>
-            <label>Fecha de nacimiento<input id="athlete-birthdate" type="date" required></label>
-            <button class="primary" type="submit">Guardar</button>
-            <button class="secondary hidden" id="cancel-athlete" type="button">Cancelar</button>
-          </form>
-          <p id="athlete-error" class="error" role="alert"></p>
-          <div class="table-wrap">
-            <table><thead><tr><th>Atleta</th><th>Fecha de nacimiento</th><th></th></tr></thead>
-              <tbody id="athletes-body"></tbody></table>
-            <p id="athletes-empty" class="empty">Anade el primer atleta para registrar marcas.</p>
-          </div>
-        </article>
-      </section>
-
-      <section id="panel-pruebas" class="panel">
-        <article class="card management">
-          <div class="card-title">
-            <h2>Pruebas</h2>
-            <button class="secondary" id="load-events" type="button">Cargar pruebas habituales</button>
-          </div>
-          <form id="event-form" class="inline-form">
-            <input type="hidden" id="event-id">
-            <label>Prueba<input id="event-name" required placeholder="Ej. 100 m"></label>
-            <button class="primary" type="submit">Guardar</button>
-            <button class="secondary hidden" id="cancel-event" type="button">Cancelar</button>
-          </form>
-          <p id="event-error" class="error" role="alert"></p>
-          <div class="table-wrap">
-            <table><thead><tr><th>Prueba</th><th></th></tr></thead>
-              <tbody id="events-body"></tbody></table>
-            <p id="events-empty" class="empty">Crea pruebas o carga un catalogo inicial.</p>
-          </div>
-        </article>
-      </section>
-
-      <section id="panel-pistas" class="panel">
-        <article class="card management">
-          <div class="card-title"><h2>Pistas de atletismo</h2></div>
-          <form id="track-form" class="inline-form">
-            <input type="hidden" id="track-id">
-            <label>Nombre de la instalacion<input id="track-name" required></label>
-            <label>Localidad<input id="track-city" required></label>
-            <button class="primary" type="submit">Guardar</button>
-            <button class="secondary hidden" id="cancel-track" type="button">Cancelar</button>
-          </form>
-          <p id="track-error" class="error" role="alert"></p>
-          <div class="table-wrap">
-            <table><thead><tr><th>Pista</th><th>Localidad</th><th></th></tr></thead>
-              <tbody id="tracks-body"></tbody></table>
-            <p id="tracks-empty" class="empty">Registra las pistas donde se realizan las marcas.</p>
-          </div>
-        </article>
-      </section>
-
-      <section id="panel-usuarios" class="panel">
-        <article class="card management">
-          <div class="card-title"><h2>Usuarios de gestion</h2></div>
-          <form id="user-form" class="inline-form">
-            <input type="hidden" id="user-id">
-            <label>Nombre<input id="user-name" required></label>
-            <label>Usuario<input id="user-username" required placeholder="Ej. operador.marta"></label>
-            <label>Contrasena<input id="user-password" type="password" minlength="8" required placeholder="Minimo 8 caracteres"></label>
-            <label class="checkbox-field"><input id="user-active" type="checkbox" checked> Activo</label>
-            <button class="primary" type="submit">Guardar</button>
-            <button class="secondary hidden" id="cancel-user" type="button">Cancelar</button>
-          </form>
-          <p class="helper">Al editar, deja la contrasena vacia para conservar la actual.</p>
-          <p id="user-error" class="error" role="alert"></p>
-          <div class="table-wrap">
-            <table><thead><tr><th>Nombre</th><th>Usuario</th><th>Estado</th><th></th></tr></thead>
-              <tbody id="users-body"></tbody></table>
-            <p id="users-empty" class="empty">No hay usuarios registrados.</p>
-          </div>
-        </article>
+      <p id="public-error" class="status failure hidden" role="alert"></p>
+      <section class="card results">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Atleta</th>
+                <th>Prueba</th>
+                <th>Categoria</th>
+                <th>Marca</th>
+                <th>Fecha</th>
+                <th>Sitio</th>
+              </tr>
+            </thead>
+            <tbody id="marks-body"></tbody>
+          </table>
+          <p id="marks-empty" class="empty">No hay marcas registradas.</p>
+        </div>
       </section>
     </main>
-    <footer id="app-footer" class="hidden">Datos almacenados en la base de datos MySQL.</footer>
+    <footer>Consulta publica de marcas deportivas.</footer>
   </body>
 </html>

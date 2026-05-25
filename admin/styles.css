@@ -22,14 +22,13 @@ body {
   font: 15px/1.45 "Segoe UI", Arial, sans-serif;
 }
 
-.topbar {
+.language-picker {
   align-items: center;
   display: flex;
-  gap: 20px;
+  gap: 8px;
   justify-content: flex-end;
   padding: 14px max(calc((100% - 1320px) / 2), 26px) 0;
 }
-.language-picker { align-items: center; display: flex; gap: 8px; }
 .language-picker select {
   height: 36px;
   min-width: 120px;
@@ -269,7 +268,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 }
 
 @media (max-width: 600px) {
-  .topbar,
+  .language-picker,
   .hero, main { padding-left: 16px; padding-right: 16px; }
   .stats div { min-width: 82px; padding: 12px; }
   .tabs { overflow-x: auto; }
@@ -277,18 +276,3 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .card { padding: 17px; }
   .fields.two { grid-template-columns: 1fr; }
 }
-.admin-link {
-  color: var(--primary);
-  font-weight: 700;
-  text-decoration: none;
-}
-.admin-link:hover { text-decoration: underline; }
-.filters { margin-bottom: 20px; }
-.filter-grid {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(3, minmax(190px, 1fr));
-}
-.results { min-height: 180px; }
-@media (max-width: 600px) {
-  .filter-grid { grid-template-columns: 1fr; }
