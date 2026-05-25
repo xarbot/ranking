@@ -1,0 +1,69 @@
+CREATE DATABASE IF NOT EXISTS ranking_atletismo
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE ranking_atletismo;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(180) NOT NULL,
+  usuario VARCHAR(100) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  activo BOOLEAN NOT NULL DEFAULT TRUE,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_usuarios_usuario (usuario)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS atletas (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  apellidos VARCHAR(180) NOT NULL,
+  fecha_nacimiento DATE NOT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_atletas_nombre_apellidos (nombre, apellidos)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pruebas (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(120) NOT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pruebas_nombre (nombre)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS pistas (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(160) NOT NULL,
+  localidad VARCHAR(120) NOT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pistas_nombre_localidad (nombre, localidad)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS marcas (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  atleta_id BIGINT UNSIGNED NOT NULL,
+  prueba_id BIGINT UNSIGNED NOT NULL,
+  pista_id BIGINT UNSIGNED NOT NULL,
+  fecha DATE NOT NULL,
+  resultado VARCHAR(40) NOT NULL,
+  categoria ENUM(
+    'sub8', 'sub10', 'sub12', 'sub14', 'sub16',
+    'sub18', 'sub20', 'sub23', 'senior', 'master'
+  ) NOT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_marcas_atleta_fecha (atleta_id, fecha),
+  KEY idx_marcas_prueba_categoria (prueba_id, categoria),
+  CONSTRAINT fk_marcas_atleta FOREIGN KEY (atleta_id) REFERENCES atletas (id),
+  CONSTRAINT fk_marcas_prueba FOREIGN KEY (prueba_id) REFERENCES pruebas (id),
+  CONSTRAINT fk_marcas_pista FOREIGN KEY (pista_id) REFERENCES pistas (id)
+) ENGINE=InnoDB;
+

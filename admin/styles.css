@@ -22,6 +22,18 @@ body {
   font: 15px/1.45 "Segoe UI", Arial, sans-serif;
 }
 
+.language-picker {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px max(calc((100% - 1320px) / 2), 26px) 0;
+}
+.language-picker select {
+  height: 36px;
+  min-width: 120px;
+}
+
 .hero {
   align-items: flex-end;
   background: var(--primary-dark);
@@ -57,6 +69,30 @@ h2 { font-size: 21px; margin: 0; }
 .stats div + div { border-left: 1px solid rgba(255, 255, 255, .19); }
 .stats strong { display: block; font-size: 25px; }
 .stats span { color: #c2d8d5; font-size: 12px; }
+
+.auth-shell {
+  display: flex;
+  justify-content: center;
+  padding: clamp(44px, 10vh, 92px) 20px;
+}
+.auth-card { max-width: 420px; width: 100%; }
+.auth-title { color: var(--ink); font-size: 29px; margin: 0 0 23px; }
+.auth-form { display: grid; gap: 15px; }
+.auth-form .primary { margin-top: 4px; }
+.setup-helper { margin: 0 0 2px; }
+.user-session {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.user-session span { font-weight: 600; }
+.user-session .secondary {
+  background: transparent;
+  border-color: rgba(255, 255, 255, .34);
+  color: white;
+}
+.user-session .secondary:hover { background: rgba(255, 255, 255, .09); }
 
 main {
   margin: 0 auto;
@@ -188,16 +224,37 @@ td strong { color: var(--primary-dark); }
   margin-bottom: 14px;
 }
 .inline-form label { flex: 1; min-width: 190px; }
+.inline-form .checkbox-field {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  height: 42px;
+  min-width: auto;
+}
+.checkbox-field input { height: 18px; padding: 0; width: 18px; }
+.state {
+  background: #e5f4f0;
+  border-radius: 20px;
+  color: var(--primary-dark);
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+.state.inactive { background: #f1f2f1; color: var(--muted); }
 .management .table-wrap { margin-top: 20px; }
 footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align: center; }
 
 @media (max-width: 960px) {
   .hero { align-items: stretch; flex-direction: column; }
   .stats { width: max-content; }
+  .user-session { justify-content: space-between; }
   .entry-card { max-width: 520px; }
 }
 
 @media (max-width: 600px) {
+  .language-picker,
   .hero, main { padding-left: 16px; padding-right: 16px; }
   .stats div { min-width: 82px; padding: 12px; }
   .tabs { overflow-x: auto; }

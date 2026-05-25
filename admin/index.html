@@ -5,10 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="i18n.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
-    <header class="hero">
+    <label class="language-picker">
+      <span>Idioma</span>
+      <select id="language" aria-label="Idioma">
+        <option value="es">Castellano</option>
+        <option value="ca">Català</option>
+      </select>
+    </label>
+
+    <main id="auth-shell" class="auth-shell">
+      <article class="card auth-card">
+        <p class="eyebrow">Acceso restringido</p>
+        <h1 class="auth-title">Gestion de datos</h1>
+        <form id="login-form" class="auth-form">
+          <label>Usuario<input id="login-username" required autocomplete="username"></label>
+          <label>Contrasena<input id="login-password" type="password" required autocomplete="current-password"></label>
+          <p id="login-error" class="error" role="alert"></p>
+          <button class="primary" type="submit">Iniciar sesion</button>
+        </form>
+        <form id="setup-form" class="auth-form hidden">
+          <p class="helper setup-helper">Crea el primer usuario que administrara la entrada de datos.</p>
+          <label>Nombre<input id="setup-name" required autocomplete="name"></label>
+          <label>Usuario<input id="setup-username" required autocomplete="username"></label>
+          <label>Contrasena<input id="setup-password" type="password" minlength="8" required autocomplete="new-password"></label>
+          <p id="setup-error" class="error" role="alert"></p>
+          <button class="primary" type="submit">Crear usuario inicial</button>
+        </form>
+      </article>
+    </main>
+
+    <header id="app-header" class="hero hidden">
       <div>
         <p class="eyebrow">Gestion deportiva</p>
         <h1>Ranking de Atletismo</h1>
@@ -19,16 +49,22 @@
         <div><strong id="count-events">0</strong><span>Pruebas</span></div>
         <div><strong id="count-marks">0</strong><span>Marcas</span></div>
       </div>
+      <div class="user-session">
+        <span id="current-user-name"></span>
+        <button class="secondary" id="logout" type="button">Cerrar sesion</button>
+      </div>
     </header>
 
-    <main>
+    <main id="app-shell" class="hidden">
       <nav class="tabs" aria-label="Secciones">
         <button class="tab active" data-panel="marcas">Marcas</button>
         <button class="tab" data-panel="consulta-marcas">Marcas registradas</button>
         <button class="tab" data-panel="atletas">Atletas</button>
         <button class="tab" data-panel="pruebas">Pruebas</button>
         <button class="tab" data-panel="pistas">Pistas</button>
+        <button class="tab" data-panel="usuarios">Usuarios</button>
       </nav>
+      <p id="app-error" class="status failure hidden" role="alert"></p>
 
       <section id="panel-marcas" class="panel active">
         <div class="split">
@@ -166,7 +202,29 @@
           </div>
         </article>
       </section>
+
+      <section id="panel-usuarios" class="panel">
+        <article class="card management">
+          <div class="card-title"><h2>Usuarios de gestion</h2></div>
+          <form id="user-form" class="inline-form">
+            <input type="hidden" id="user-id">
+            <label>Nombre<input id="user-name" required></label>
+            <label>Usuario<input id="user-username" required placeholder="Ej. operador.marta"></label>
+            <label>Contrasena<input id="user-password" type="password" minlength="8" required placeholder="Minimo 8 caracteres"></label>
+            <label class="checkbox-field"><input id="user-active" type="checkbox" checked> Activo</label>
+            <button class="primary" type="submit">Guardar</button>
+            <button class="secondary hidden" id="cancel-user" type="button">Cancelar</button>
+          </form>
+          <p class="helper">Al editar, deja la contrasena vacia para conservar la actual.</p>
+          <p id="user-error" class="error" role="alert"></p>
+          <div class="table-wrap">
+            <table><thead><tr><th>Nombre</th><th>Usuario</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="users-body"></tbody></table>
+            <p id="users-empty" class="empty">No hay usuarios registrados.</p>
+          </div>
+        </article>
+      </section>
     </main>
-    <footer>Datos guardados localmente en este navegador.</footer>
+    <footer id="app-footer" class="hidden">Datos almacenados en la base de datos MySQL.</footer>
   </body>
 </html>
