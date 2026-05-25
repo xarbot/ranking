@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, history: null };
+  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -57,11 +57,10 @@
       }).join("");
     byId("event-filter").value = eventId;
     byId("category-filter").value = category;
-    byId("category-filter").disabled = !eventId;
   }
   function renderMarks() {
-    var marks = state.ranking ? state.ranking.marks : state.marks;
-    byId("results-title").textContent = state.ranking ? t("Ranking por prueba") : t("Ultimas marcas registradas");
+    var marks = state.marks;
+    byId("results-title").textContent = t("Ultimas marcas registradas");
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return "<tr><td><button class=\"athlete-button\" type=\"button\" data-athlete-id=\"" + mark.athleteId + "\">" +
         escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(t(mark.event)) +
@@ -71,9 +70,40 @@
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
   }
 
+  function renderRanking() {
+    if (!state.ranking) return;
+    var eventId = byId("event-filter").value;
+    var category = byId("category-filter").value;
+    var event = state.events.find(function (item) { return String(item.id) === eventId; });
+    var title = event ? t(event.name) : category.toUpperCase();
+    if (event && category) title += " - " + category.toUpperCase();
+    byId("ranking-title").textContent = title;
+    byId("ranking-empty").classList.toggle("hidden", state.ranking.groups.length > 0);
+    byId("ranking-groups").innerHTML = state.ranking.groups.map(function (group) {
+      var key = String(group.event.id);
+      var visible = state.rankingVisible[key] || 20;
+      var rows = group.marks.slice(0, visible).map(function (mark, index) {
+        return "<tr><td>" + (index + 1) + "</td><td><button class=\"athlete-button\" type=\"button\" data-athlete-id=\"" +
+          mark.athleteId + "\">" + escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(t(mark.event)) +
+          "</td><td>" + escapeHtml(mark.category) + "</td><td><strong>" + escapeHtml(mark.result) +
+          "</strong></td><td>" + formatDate(mark.date) + "</td><td>" + escapeHtml(mark.track) + "</td></tr>";
+      }).join("");
+      var more = visible < group.marks.length
+        ? "<button class=\"ranking-more\" type=\"button\" data-more-event=\"" + key + "\" aria-label=\"" +
+          escapeHtml(t("Mostrar 20 resultados mas")) + "\">+</button>"
+        : "";
+      return "<article class=\"card ranking-group\"><h3>" + escapeHtml(t(group.event.name)) +
+        "</h3><div class=\"table-wrap\"><table><thead><tr><th>#</th><th>" + t("Atleta") +
+        "</th><th>" + t("Prueba") + "</th><th>" + t("Categoria") + "</th><th>" + t("Marca") +
+        "</th><th>" + t("Fecha") + "</th><th>" + t("Sitio") + "</th></tr></thead><tbody>" +
+        rows + "</tbody></table></div>" + more + "</article>";
+    }).join("");
+  }
+
   function renderHistory() {
     var history = state.history;
-    byId("latest-section").classList.toggle("hidden", !!history);
+    byId("latest-section").classList.toggle("hidden", !!history || !!state.ranking);
+    byId("ranking-section").classList.toggle("hidden", !!history || !state.ranking);
     byId("history-section").classList.toggle("hidden", !history);
     if (!history) return;
     byId("history-athlete-name").textContent = history.athlete.name;
@@ -107,6 +137,7 @@
     renderFilters();
     renderSearch();
     renderMarks();
+    renderRanking();
     renderHistory();
     byId("count-marks").textContent = state.counts.marks || 0;
     byId("count-events").textContent = state.counts.events || 0;
@@ -124,6 +155,7 @@
         marks: data.marks || [],
         counts: data.counts || {},
         ranking: null,
+        rankingVisible: {},
         history: null
       };
       showError("");
@@ -138,22 +170,23 @@
     state.history = null;
     byId("athlete-search").value = "";
     renderHistory();
-    if (!eventId) {
+    var category = byId("category-filter").value;
+    if (!eventId && !category) {
       state.ranking = null;
-      byId("category-filter").disabled = true;
-      renderMarks();
+      state.rankingVisible = {};
+      renderHistory();
       return;
     }
-    byId("category-filter").disabled = false;
-    var category = byId("category-filter").value;
     try {
       var url = "/api/public/ranking?eventId=" + encodeURIComponent(eventId) + "&category=" + encodeURIComponent(category);
       var response = await fetch(url);
       var data = await response.json().catch(function () { return {}; });
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
       state.ranking = data;
+      state.rankingVisible = {};
       showError("");
-      renderMarks();
+      renderRanking();
+      renderHistory();
     } catch (error) {
       showError(error.message);
     }
@@ -189,16 +222,14 @@
     selectSearchedAthlete();
   });
   byId("athlete-search").addEventListener("change", selectSearchedAthlete);
-  byId("event-filter").addEventListener("change", function () {
-    if (!byId("event-filter").value) byId("category-filter").value = "";
-    loadRanking();
-  });
+  byId("event-filter").addEventListener("change", loadRanking);
   byId("category-filter").addEventListener("change", loadRanking);
   byId("clear-filters").addEventListener("click", function () {
     byId("event-filter").value = "";
     byId("category-filter").value = "";
     byId("athlete-search").value = "";
     state.ranking = null;
+    state.rankingVisible = {};
     state.history = null;
     renderFilters();
     renderMarks();
@@ -207,6 +238,19 @@
   byId("marks-body").addEventListener("click", function (event) {
     var button = event.target.closest("[data-athlete-id]");
     if (button) loadHistory(button.dataset.athleteId);
+  });
+  byId("ranking-groups").addEventListener("click", function (event) {
+    var athlete = event.target.closest("[data-athlete-id]");
+    if (athlete) {
+      loadHistory(athlete.dataset.athleteId);
+      return;
+    }
+    var more = event.target.closest("[data-more-event]");
+    if (more) {
+      var key = more.dataset.moreEvent;
+      state.rankingVisible[key] = (state.rankingVisible[key] || 20) + 20;
+      renderRanking();
+    }
   });
   byId("history-back").addEventListener("click", function () {
     state.history = null;
@@ -218,6 +262,7 @@
     renderSearch();
     renderFilters();
     renderMarks();
+    renderRanking();
     renderHistory();
   });
 

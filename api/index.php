@@ -338,25 +338,23 @@ function publicMarks(PDO $db): array
     ];
 }
 
-function publicRanking(PDO $db, int $eventId, ?string $category): array
+function publicRanking(PDO $db, ?int $eventId, ?string $category): array
 {
     $categories = ['sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master'];
     if ($category !== null && !in_array($category, $categories, true)) {
         throw new ApiException('La categoria indicada no existe.');
     }
-    $event = execute(
-        $db,
-        "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection
-         FROM pruebas WHERE id = ?",
-        [$eventId]
-    )->fetch();
-    if (!$event) {
-        throw new ApiException('La prueba indicada no existe.', 404);
+    if ($eventId === null && $category === null) {
+        throw new ApiException('Selecciona una prueba o una categoria para consultar el ranking.');
     }
-    $parameters = [$eventId];
-    $categorySql = '';
+    $parameters = [];
+    $filters = [];
+    if ($eventId !== null) {
+        $filters[] = 'm.prueba_id = ?';
+        $parameters[] = $eventId;
+    }
     if ($category !== null) {
-        $categorySql = ' AND m.categoria = ?';
+        $filters[] = 'm.categoria = ?';
         $parameters[] = $category;
     }
     $marks = execute(
@@ -369,33 +367,49 @@ function publicRanking(PDO $db, int $eventId, ?string $category): array
          JOIN atletas a ON a.id = m.atleta_id
          JOIN pruebas p ON p.id = m.prueba_id
          JOIN pistas t ON t.id = m.pista_id
-         WHERE m.prueba_id = ?{$categorySql}",
+         WHERE " . implode(' AND ', $filters),
         $parameters
     )->fetchAll();
-    $best = [];
+    $grouped = [];
     foreach ($marks as $mark) {
         $mark['_value'] = comparableResult($mark['result']);
-        $key = (string) $mark['athleteId'];
-        $better = !isset($best[$key]) ||
+        $eventKey = (string) $mark['eventId'];
+        $athleteKey = (string) $mark['athleteId'];
+        if (!isset($grouped[$eventKey])) {
+            $grouped[$eventKey] = [
+                'event' => [
+                    'id' => $mark['eventId'],
+                    'name' => $mark['event'],
+                    'resultDirection' => $mark['resultDirection'],
+                ],
+                'marks' => [],
+            ];
+        }
+        $better = !isset($grouped[$eventKey]['marks'][$athleteKey]) ||
             ($mark['resultDirection'] === 'higher'
-                ? $mark['_value'] > $best[$key]['_value']
-                : $mark['_value'] < $best[$key]['_value']);
+                ? $mark['_value'] > $grouped[$eventKey]['marks'][$athleteKey]['_value']
+                : $mark['_value'] < $grouped[$eventKey]['marks'][$athleteKey]['_value']);
         if ($better) {
-            $best[$key] = $mark;
+            $grouped[$eventKey]['marks'][$athleteKey] = $mark;
         }
     }
-    $marks = array_values($best);
-    usort($marks, static function (array $first, array $second): int {
-        $result = $first['resultDirection'] === 'higher'
-            ? $second['_value'] <=> $first['_value']
-            : $first['_value'] <=> $second['_value'];
-        return $result !== 0 ? $result : strcasecmp($first['athlete'], $second['athlete']);
-    });
-    foreach ($marks as &$mark) {
-        unset($mark['_value']);
+    $groups = array_values($grouped);
+    usort($groups, static fn(array $first, array $second): int => strcasecmp($first['event']['name'], $second['event']['name']));
+    foreach ($groups as &$group) {
+        $group['marks'] = array_values($group['marks']);
+        usort($group['marks'], static function (array $first, array $second): int {
+            $result = $first['resultDirection'] === 'higher'
+                ? $second['_value'] <=> $first['_value']
+                : $first['_value'] <=> $second['_value'];
+            return $result !== 0 ? $result : strcasecmp($first['athlete'], $second['athlete']);
+        });
+        foreach ($group['marks'] as &$mark) {
+            unset($mark['_value']);
+        }
+        unset($mark);
     }
-    unset($mark);
-    return compact('event', 'category', 'marks');
+    unset($group);
+    return compact('eventId', 'category', 'groups');
 }
 
 function publicAthleteHistory(PDO $db, int $athleteId): array
@@ -592,12 +606,13 @@ function route(PDO $db, string $method, string $path, array $payload): array
         return [publicMarks($db), 200];
     }
     if ($method === 'GET' && $path === '/public/ranking') {
-        $eventId = filter_var($_GET['eventId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if (!$eventId) {
-            throw new ApiException('Selecciona una prueba para consultar el ranking.');
+        $rawEventId = trim((string) ($_GET['eventId'] ?? ''));
+        $eventId = $rawEventId === '' ? null : filter_var($rawEventId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($rawEventId !== '' && !$eventId) {
+            throw new ApiException('La prueba indicada no existe.');
         }
         $category = trim((string) ($_GET['category'] ?? ''));
-        return [publicRanking($db, (int) $eventId, $category === '' ? null : $category), 200];
+        return [publicRanking($db, $eventId === null ? null : (int) $eventId, $category === '' ? null : $category), 200];
     }
     if ($method === 'GET' && preg_match('#^/public/athletes/(\d+)/history$#', $path, $matches)) {
         return [publicAthleteHistory($db, (int) $matches[1]), 200];

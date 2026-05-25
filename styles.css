@@ -338,6 +338,32 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 .athlete-button:hover { color: var(--primary); }
 .history { display: grid; gap: 20px; }
 .history.hidden { display: none; }
+.ranking-view { display: grid; gap: 20px; }
+.ranking-view.hidden { display: none; }
+.ranking-header .eyebrow,
+.ranking-group .eyebrow { color: var(--muted); }
+.ranking-groups { display: grid; gap: 20px; }
+.ranking-group h3 {
+  color: var(--primary-dark);
+  font-size: 20px;
+  margin: 0 0 16px;
+}
+.ranking-more {
+  align-items: center;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  font-size: 24px;
+  font-weight: 600;
+  height: 42px;
+  justify-content: center;
+  margin: 18px auto 0;
+  width: 42px;
+}
+.ranking-more:hover { background: var(--primary-dark); }
 .athlete-history-header {
   align-items: center;
   display: flex;
