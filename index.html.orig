@@ -23,7 +23,7 @@
 
     <main>
       <nav class="tabs" aria-label="Secciones">
-        <button class="tab active" data-panel="marcas">Marcas</button>
+        <button class="tab active" data-panel="marcas">Marcas y ranking</button>
         <button class="tab" data-panel="atletas">Atletas</button>
         <button class="tab" data-panel="pruebas">Pruebas</button>
         <button class="tab" data-panel="pistas">Pistas</button>
@@ -39,6 +39,7 @@
               </div>
             </div>
             <form id="mark-form" autocomplete="off">
+              <input type="hidden" id="mark-id">
               <label>Atleta
                 <input id="mark-athlete" list="athlete-options" required placeholder="Buscar atleta...">
                 <datalist id="athlete-options"></datalist>
@@ -66,9 +67,11 @@
               <p id="mark-error" class="error" role="alert"></p>
               <div class="actions">
                 <button class="primary" type="submit">Guardar marca</button>
+                <button class="secondary hidden" id="cancel-mark" type="button">Cancelar</button>
               </div>
             </form>
           </article>
+
           <article class="card ranking-card">
             <div class="card-title">
               <div>
@@ -139,12 +142,18 @@
           <form id="event-form" class="inline-form">
             <input type="hidden" id="event-id">
             <label>Prueba<input id="event-name" required placeholder="Ej. 100 m"></label>
+            <label>Tipo de ranking
+              <select id="event-order" required>
+                <option value="asc">Menor marca gana (tiempo)</option>
+                <option value="desc">Mayor marca gana (distancia / puntos)</option>
+              </select>
+            </label>
             <button class="primary" type="submit">Guardar</button>
             <button class="secondary hidden" id="cancel-event" type="button">Cancelar</button>
           </form>
           <p id="event-error" class="error" role="alert"></p>
           <div class="table-wrap">
-            <table><thead><tr><th>Prueba</th><th></th></tr></thead>
+            <table><thead><tr><th>Prueba</th><th>Orden</th><th></th></tr></thead>
               <tbody id="events-body"></tbody></table>
             <p id="events-empty" class="empty">Crea pruebas o carga un catalogo inicial.</p>
           </div>
