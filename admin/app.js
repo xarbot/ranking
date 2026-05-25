@@ -7,6 +7,7 @@
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
+  function eventLabel(event) { return t(event.name); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
   function localDateValue(date) {
     var offset = date.getTimezoneOffset() * 60000;
@@ -241,7 +242,7 @@
       return "<option value=\"" + escapeHtml(athleteLabel(athlete)) + "\"></option>";
     }).join("");
     byId("event-options").innerHTML = state.events.map(function (event) {
-      return "<option value=\"" + escapeHtml(event.name) + "\"></option>";
+      return "<option value=\"" + escapeHtml(eventLabel(event)) + "\"></option>";
     }).join("");
     byId("track-options").innerHTML = state.tracks.map(function (track) {
       return "<option value=\"" + escapeHtml(trackLabel(track)) + "\"></option>";
@@ -263,7 +264,7 @@
       return a.name.localeCompare(b.name, "es");
     }).map(function (event) {
       var direction = event.resultDirection === "higher" ? t("Marca mas alta") : t("Marca mas baja");
-      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td>" +
+      return "<tr><td><strong>" + escapeHtml(eventLabel(event)) + "</strong></td><td>" +
         direction + "</td><td class=\"row-actions\">" +
         "<button class=\"row-button\" data-edit-event=\"" + event.id +
         "\">" + t("Editar") + "</button><button class=\"row-button danger\" data-delete-event=\"" + event.id +
@@ -316,7 +317,7 @@
       var event = itemById(state.events, mark.eventId);
       var track = itemById(state.tracks, mark.trackId);
       if (!event || !track) return "";
-      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td>" +
+      return "<tr><td><strong>" + escapeHtml(eventLabel(event)) + "</strong></td><td>" +
         escapeHtml(mark.result) + "</td><td>" + escapeHtml(mark.category) + "</td><td>" +
         formatDate(mark.date) + "</td><td>" + escapeHtml(trackLabel(track)) +
         "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-mark=\"" + mark.id +
@@ -440,7 +441,7 @@
   async function saveMark(event) {
     event.preventDefault();
     var athlete = itemByLabel(state.athletes, byId("mark-athlete").value, athleteLabel);
-    var competition = itemByLabel(state.events, byId("mark-event").value, function (item) { return item.name; });
+    var competition = itemByLabel(state.events, byId("mark-event").value, eventLabel);
     var track = itemByLabel(state.tracks, byId("mark-track").value, trackLabel);
     var result = byId("mark-result").value.trim();
     var date = byId("mark-date").value;
@@ -519,7 +520,7 @@
     if (!mark || !athlete || !event || !track) return;
     byId("mark-id").value = mark.id;
     byId("mark-athlete").value = athleteLabel(athlete);
-    byId("mark-event").value = event.name;
+    byId("mark-event").value = eventLabel(event);
     byId("mark-track").value = trackLabel(track);
     byId("mark-date").value = mark.date;
     byId("mark-result").value = mark.result;

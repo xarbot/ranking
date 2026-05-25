@@ -5,6 +5,7 @@
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
+  function eventLabel(event) { return t(event.name); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (char) {
@@ -26,7 +27,7 @@
     var selectedCategory = byId("category-filter").value;
     byId("event-filter").innerHTML = "<option value=\"\">" + t("Todas las pruebas") + "</option>" +
       state.events.map(function (event) {
-        return "<option value=\"" + event.id + "\">" + escapeHtml(event.name) + "</option>";
+        return "<option value=\"" + event.id + "\">" + escapeHtml(eventLabel(event)) + "</option>";
       }).join("");
     byId("category-filter").innerHTML = "<option value=\"\">" + t("Todas las categorias") + "</option>" +
       state.categories.map(function (category) {
@@ -48,7 +49,7 @@
   function renderMarks() {
     var marks = filteredMarks();
     byId("marks-body").innerHTML = marks.map(function (mark) {
-      return "<tr><td><strong>" + escapeHtml(mark.athlete) + "</strong></td><td>" + escapeHtml(mark.event) +
+      return "<tr><td><strong>" + escapeHtml(mark.athlete) + "</strong></td><td>" + escapeHtml(t(mark.event)) +
         "</td><td>" + escapeHtml(mark.category) + "</td><td>" + escapeHtml(mark.result) + "</td><td>" +
         formatDate(mark.date) + "</td><td>" + escapeHtml(mark.track) + "</td></tr>";
     }).join("");

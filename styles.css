@@ -283,7 +283,7 @@ td strong { color: var(--primary-dark); }
   font-weight: 700;
   padding: 4px 10px;
 }
-.state.inactive { background: #f1f2f1; color: var(--muted); }
+.state.inactive { background: var(--paper); color: var(--muted); }
 .management .table-wrap { margin-top: 20px; }
 footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align: center; }
 
