@@ -1,42 +1,40 @@
-# Despliegue en servidor PHP tradicional
+# Despliegue en nginx con PHP 8.3
 
-La aplicacion se sirve desde `admin/`; el resto del repositorio contiene configuracion y herramientas no publicas.
+La aplicacion se publica desde `/var/www/ranking.clubatleticcastellar.cat/htdocs`, el `root` nginx configurado para el dominio.
 
 ## Requisitos
 
-- Apache 2.4 con `mod_rewrite` y HTTPS configurado.
+- nginx con HTTPS y acceso al directorio de includes del virtual host.
 - PHP 8.3 con las extensiones `pdo_mysql` y `session`.
 - MySQL 8.0 o compatible.
 - Git y acceso SSH al servidor para las actualizaciones.
 
 ## Instalacion inicial
 
-1. Obtiene el codigo en una ruta gestionada por el usuario de despliegue.
+1. Instala el codigo en el `root` ya definido en el bloque `server`.
 
 ```sh
-cd /var/www
-git clone URL_DEL_REPOSITORIO ranking
-cd ranking
+cd /var/www/ranking.clubatleticcastellar.cat
+git clone URL_DEL_REPOSITORIO htdocs
+cd htdocs
 ```
 
-2. Configura Apache para que solo `admin/` sea publico.
-
-```apache
-DocumentRoot /var/www/ranking/admin
-<Directory /var/www/ranking/admin>
-  AllowOverride FileInfo
-  Require all granted
-</Directory>
-```
-
-3. Crea el entorno local del servidor y limita su lectura.
+2. Instala el fragmento nginx que enruta la API y bloquea ficheros privados. El bloque `server` facilitado ya incluye ese directorio.
 
 ```sh
-cp .env.example .env
-chmod 600 .env
+cp deploy/nginx/ranking.conf.example ../conf/nginx/ranking.conf
+nginx -t
+systemctl reload nginx
 ```
 
-Edita `.env` con los datos asignados a la aplicacion:
+3. Crea el entorno fuera de `htdocs` y limita su lectura.
+
+```sh
+cp .env.example ../.env
+chmod 600 ../.env
+```
+
+Edita `/var/www/ranking.clubatleticcastellar.cat/.env` con los datos asignados a la aplicacion:
 
 ```dotenv
 DB_HOST=127.0.0.1
@@ -46,7 +44,7 @@ DB_USER=ranking_app
 DB_PASS=una_clave_unica_del_servidor
 ```
 
-`.env` se ignora en Git y debe quedar fuera del directorio publico `admin/`.
+La API y el ejecutor de migraciones leen ese `.env`, que queda fuera del directorio publico `htdocs`.
 
 ## Configuracion de MySQL
 
@@ -72,25 +70,36 @@ mysql --user=ranking_app --password ranking_atletismo < database/init.sql
 
 El fichero `database/init.sql` crea las tablas iniciales y registra la version de partida en `schema_migrations`.
 
-## Permisos
+## Comprobacion
 
+Comprueba que la portada y la API responden, y que un fichero interno queda bloqueado:
+
+```sh
+curl -I https://ranking.clubatleticcastellar.cat/
+curl -i https://ranking.clubatleticcastellar.cat/api/auth/status
+curl -I https://ranking.clubatleticcastellar.cat/lib/env.php
+```
+
+La tercera peticion debe responder `403 Forbidden`.
+
+## Permisos
 Manten el repositorio bajo un usuario de despliegue y concede al proceso web solamente lectura del codigo y acceso a las rutas que use la aplicacion.
 
 ```sh
-chown -R deploy:www-data /var/www/ranking
-find /var/www/ranking -type d -exec chmod 750 {} \;
-find /var/www/ranking -type f -exec chmod 640 {} \;
-chmod 600 /var/www/ranking/.env
+chown -R deploy:www-data /var/www/ranking.clubatleticcastellar.cat/htdocs
+find /var/www/ranking.clubatleticcastellar.cat/htdocs -type d -exec chmod 750 {} \;
+find /var/www/ranking.clubatleticcastellar.cat/htdocs -type f -exec chmod 640 {} \;
+chmod 600 /var/www/ranking.clubatleticcastellar.cat/.env
 ```
 
-El `DocumentRoot` en `admin/` impide publicar `.env`, `database/`, `scripts/` y `storage/`. El `.htaccess` de la raiz aporta una proteccion adicional si la configuracion del hosting expone la carpeta superior.
+El fichero `conf/nginx/ranking.conf` impide publicar o ejecutar `database/`, `lib/`, `scripts/`, `storage/`, `vendor/` y otros directorios privados incluidos en `htdocs`.
 
 ## Actualizacion segura
 
 Antes de actualizar, genera una copia de seguridad de la base de datos. Despues ejecuta:
 
 ```sh
-cd /var/www/ranking
+cd /var/www/ranking.clubatleticcastellar.cat/htdocs
 git pull --ff-only
 if [ -f composer.json ]; then composer install --no-dev --optimize-autoloader; fi
 php scripts/migrate.php

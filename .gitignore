@@ -4,9 +4,9 @@
 *.orig
 *.rej
 /storage/*
-!/storage/.htaccess
 !/storage/.gitignore
 /uploads/
 /logs/
 /cache/
 /backups/
+/vendor/

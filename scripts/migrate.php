@@ -5,9 +5,10 @@ require_once dirname(__DIR__) . '/lib/env.php';
 
 $root = dirname(__DIR__);
 $directory = $root . '/database/migrations';
+$envFile = dirname($root) . '/.env';
 
 try {
-    $db = databaseConnection($root . '/.env');
+    $db = databaseConnection($envFile);
     $trackingMigration = $directory . '/001_create_migration_tracking.sql';
     $count = 0;
 

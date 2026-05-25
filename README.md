@@ -7,7 +7,7 @@ calculada automaticamente por edad.
 
 - PHP 8.3 con la extension `pdo_mysql`.
 - MySQL 8.0 o compatible.
-- Apache con `mod_rewrite` habilitado para las rutas de `/api`.
+- nginx con PHP 8.3 y el fragmento de rutas incluido en `deploy/nginx/`.
 
 ## Base de datos
 
@@ -29,18 +29,18 @@ El esquema contiene:
 - `pruebas`: catalogo de pruebas.
 - `marcas`: atleta, prueba, pista, fecha, resultado y categoria, con claves foraneas.
 
-## Despliegue PHP
+## Despliegue nginx
 
-1. Sube el repositorio conservando `admin/api/.htaccess` y sirve exclusivamente `admin/`.
-2. Copia `.env.example` como `.env` fuera del directorio publico.
+1. Publica el repositorio en el `root` nginx; `index.html` y `api/` se sirven desde la raiz.
+2. Copia `.env.example` como `.env` en el directorio padre de la raiz publica.
 3. Edita `.env` con `DB_HOST`, `DB_NAME`, `DB_USER` y `DB_PASS` del servidor.
-4. Asegurate de que Apache permite el archivo `api/.htaccess` (`AllowOverride FileInfo`).
+4. Instala `deploy/nginx/ranking.conf.example` en el directorio de includes del virtual host y recarga nginx tras ejecutar `nginx -t`.
 5. Accede a la URL configurada para la aplicacion.
 
 En la primera apertura, la aplicacion solicita crear el primer usuario de gestion.
 
-`.env` contiene credenciales y esta excluido de Git. La interfaz de `admin/` llama a
-`api/...`; `admin/api/.htaccess` redirige esas peticiones a `admin/api/index.php`.
+`.env` contiene credenciales y queda fuera del webroot. La interfaz llama a `api/...`;
+nginx redirige esas peticiones al controlador `api/index.php`.
 
 Para instalacion y actualizacion en produccion, sigue [`DEPLOY.md`](DEPLOY.md).
 
