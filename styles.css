@@ -146,6 +146,11 @@ button { font: inherit; }
 .hidden { display: none; }
 .error { color: var(--danger); font-size: 13px; font-weight: 600; margin: 0; min-height: 0; }
 .error:not(:empty) { margin-bottom: 2px; }
+.helper { color: var(--muted); font-size: 13px; margin: -12px 0 18px; }
+.status { background: #e5f4f0; border-radius: 8px; color: var(--primary-dark); margin: 0 0 18px; padding: 11px 13px; }
+.status.failure { background: #fbeaea; color: var(--danger); }
+.import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.file-button { align-items: center; display: inline-flex; }
 
 .table-wrap { overflow-x: auto; }
 table { border-collapse: collapse; min-width: 100%; }

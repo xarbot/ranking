@@ -23,6 +23,14 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
     });
   }
+  function normalizedHeader(value) {
+    return normalized(value.replace(/^\uFEFF/, "")).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  function showImportStatus(message, failure) {
+    byId("athlete-import-status").textContent = message;
+    byId("athlete-import-status").classList.remove("hidden");
+    byId("athlete-import-status").classList.toggle("failure", Boolean(failure));
+  }
   function loadData() {
     try {
       var stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -81,6 +89,107 @@
     if (chunks.length === 2) return chunks[0] * 60 + chunks[1];
     if (chunks.length === 3) return chunks[0] * 3600 + chunks[1] * 60 + chunks[2];
     return null;
+  }
+
+  function parseCsv(text, delimiter) {
+    var rows = [];
+    var row = [];
+    var field = "";
+    var quoted = false;
+    for (var index = 0; index < text.length; index += 1) {
+      var character = text[index];
+      if (quoted) {
+        if (character === '"' && text[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else if (character === '"') {
+          quoted = false;
+        } else {
+          field += character;
+        }
+      } else if (character === '"') {
+        quoted = true;
+      } else if (character === delimiter) {
+        row.push(field);
+        field = "";
+      } else if (character === "\n") {
+        row.push(field.replace(/\r$/, ""));
+        rows.push(row);
+        row = [];
+        field = "";
+      } else {
+        field += character;
+      }
+    }
+    if (quoted) throw new Error("El archivo contiene comillas sin cerrar.");
+    if (field || row.length) {
+      row.push(field.replace(/\r$/, ""));
+      rows.push(row);
+    }
+    return rows;
+  }
+  function csvRows(text) {
+    var semicolonRows = parseCsv(text, ";");
+    var commaRows = parseCsv(text, ",");
+    return (semicolonRows[0] || []).length >= (commaRows[0] || []).length ? semicolonRows : commaRows;
+  }
+  function normalizeImportedDate(value) {
+    var date = value.trim();
+    var european = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date);
+    if (european) date = european[3] + "-" + european[2] + "-" + european[1];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    var parts = date.split("-").map(Number);
+    var parsed = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (parsed.getFullYear() !== parts[0] || parsed.getMonth() !== parts[1] - 1 ||
+        parsed.getDate() !== parts[2] || date > localDateValue(new Date())) return null;
+    return date;
+  }
+  function downloadAthleteTemplate() {
+    var csv = "\uFEFFNombre;Apellidos;Fecha de nacimiento\nAna;Garcia Lopez;2010-05-18\n";
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    link.download = "plantilla-atletas.csv";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+  function importAthletes(text) {
+    var rows = csvRows(text).filter(function (row) {
+      return row.some(function (value) { return value.trim(); });
+    });
+    if (!rows.length) throw new Error("El archivo CSV esta vacio.");
+    var headers = rows[0].map(normalizedHeader);
+    var nameIndex = headers.indexOf("nombre");
+    var surnameIndex = headers.indexOf("apellidos");
+    var birthdateIndex = headers.indexOf("fecha de nacimiento");
+    if (birthdateIndex < 0) birthdateIndex = headers.indexOf("fecha_nacimiento");
+    if (nameIndex < 0 || surnameIndex < 0 || birthdateIndex < 0) {
+      throw new Error("Faltan las columnas Nombre, Apellidos o Fecha de nacimiento.");
+    }
+    var known = state.athletes.map(function (athlete) { return normalized(athleteLabel(athlete)); });
+    var imported = 0;
+    var duplicates = 0;
+    var invalid = 0;
+    rows.slice(1).forEach(function (row) {
+      var name = (row[nameIndex] || "").trim();
+      var surname = (row[surnameIndex] || "").trim();
+      var birthdate = normalizeImportedDate(row[birthdateIndex] || "");
+      var key = normalized(name + " " + surname);
+      if (!name || !surname || !birthdate) {
+        invalid += 1;
+      } else if (known.includes(key)) {
+        duplicates += 1;
+      } else {
+        state.athletes.push({ id: uid(), name: name, surname: surname, birthdate: birthdate });
+        known.push(key);
+        imported += 1;
+      }
+    });
+    if (imported) saveData();
+    var message = imported + " atletas importados";
+    if (duplicates) message += ", " + duplicates + " duplicados omitidos";
+    if (invalid) message += ", " + invalid + " filas no validas omitidas";
+    message += ".";
+    showImportStatus(message, !imported && invalid > 0);
   }
 
   function setError(name, message) { byId(name + "-error").textContent = message || ""; }
@@ -375,6 +484,25 @@
     input.addEventListener("input", updateCategoryPreview);
   });
   byId("marks-athlete-filter").addEventListener("input", renderMarks);
+  byId("download-athlete-template").addEventListener("click", downloadAthleteTemplate);
+  byId("import-athletes-file").addEventListener("change", function (event) {
+    var file = event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.addEventListener("load", function () {
+      try {
+        importAthletes(String(reader.result));
+      } catch (error) {
+        showImportStatus(error.message, true);
+      }
+      byId("import-athletes-file").value = "";
+    });
+    reader.addEventListener("error", function () {
+      showImportStatus("No se ha podido leer el archivo CSV.", true);
+      byId("import-athletes-file").value = "";
+    });
+    reader.readAsText(file);
+  });
   byId("load-events").addEventListener("click", function () {
     usualEvents.forEach(function (input) {
       if (!state.events.some(function (event) { return normalized(event.name) === normalized(input); })) {

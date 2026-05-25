@@ -100,7 +100,16 @@
 
       <section id="panel-atletas" class="panel">
         <article class="card management">
-          <div class="card-title"><h2>Atletas</h2></div>
+          <div class="card-title">
+            <h2>Atletas</h2>
+            <div class="import-actions">
+              <button class="secondary" id="download-athlete-template" type="button">Descargar plantilla</button>
+              <label class="file-button secondary" for="import-athletes-file">Importar CSV</label>
+              <input class="hidden" id="import-athletes-file" type="file" accept=".csv,text/csv">
+            </div>
+          </div>
+          <p class="helper">Columnas de importacion: Nombre, Apellidos y Fecha de nacimiento (AAAA-MM-DD).</p>
+          <p id="athlete-import-status" class="status hidden" role="status"></p>
           <form id="athlete-form" class="inline-form">
             <input type="hidden" id="athlete-id">
             <label>Nombre<input id="athlete-name" required></label>
