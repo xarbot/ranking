@@ -24,6 +24,7 @@
     <main>
       <nav class="tabs" aria-label="Secciones">
         <button class="tab active" data-panel="marcas">Marcas</button>
+        <button class="tab" data-panel="consulta-marcas">Marcas registradas</button>
         <button class="tab" data-panel="atletas">Atletas</button>
         <button class="tab" data-panel="pruebas">Pruebas</button>
         <button class="tab" data-panel="pistas">Pistas</button>
@@ -35,10 +36,11 @@
             <div class="card-title">
               <div>
                 <p class="eyebrow">Nueva entrada</p>
-                <h2>Registrar marca</h2>
+                <h2 id="mark-form-title">Registrar marca</h2>
               </div>
             </div>
             <form id="mark-form" autocomplete="off">
+              <input type="hidden" id="mark-id">
               <label>Atleta
                 <input id="mark-athlete" list="athlete-options" required placeholder="Buscar atleta...">
                 <datalist id="athlete-options"></datalist>
@@ -65,11 +67,35 @@
               </div>
               <p id="mark-error" class="error" role="alert"></p>
               <div class="actions">
-                <button class="primary" type="submit">Guardar marca</button>
+                <button class="primary" id="mark-submit" type="submit">Guardar marca</button>
+                <button class="secondary hidden" id="cancel-mark" type="button">Cancelar</button>
               </div>
             </form>
           </article>
         </div>
+      </section>
+
+      <section id="panel-consulta-marcas" class="panel">
+        <article class="card management marks-management">
+          <div class="card-title">
+            <div>
+              <p class="eyebrow">Revision</p>
+              <h2>Marcas de un atleta</h2>
+            </div>
+          </div>
+          <label class="marks-search">Buscar atleta
+            <input id="marks-athlete-filter" list="athlete-options" placeholder="Nombre o apellidos...">
+          </label>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Prueba</th><th>Marca</th><th>Categoria</th><th>Fecha</th><th>Sitio</th><th></th></tr>
+              </thead>
+              <tbody id="marks-body"></tbody>
+            </table>
+            <p id="marks-empty" class="empty">Busca un atleta para consultar sus marcas.</p>
+          </div>
+        </article>
       </section>
 
       <section id="panel-atletas" class="panel">

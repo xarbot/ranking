@@ -173,6 +173,8 @@ td strong { color: var(--primary-dark); }
 .empty { color: var(--muted); margin: 20px 4px 4px; text-align: center; }
 
 .management { max-width: 1050px; }
+.marks-management { max-width: 1120px; }
+.marks-search { margin-bottom: 20px; max-width: 420px; }
 .inline-form {
   align-items: end;
   display: flex;

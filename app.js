@@ -139,11 +139,48 @@
     byId("tracks-empty").classList.toggle("hidden", state.tracks.length > 0);
   }
 
+  function filteredAthleteMarks() {
+    var query = normalized(byId("marks-athlete-filter").value);
+    if (!query) return [];
+    var athleteIds = state.athletes.filter(function (athlete) {
+      return normalized(athleteLabel(athlete)).includes(query);
+    }).map(function (athlete) { return athlete.id; });
+    return state.marks.filter(function (mark) {
+      return athleteIds.includes(mark.athleteId);
+    }).sort(function (first, second) {
+      return second.date.localeCompare(first.date);
+    });
+  }
+
+  function renderMarks() {
+    var query = normalized(byId("marks-athlete-filter").value);
+    var marks = filteredAthleteMarks();
+    byId("marks-body").innerHTML = marks.map(function (mark) {
+      var event = itemById(state.events, mark.eventId);
+      var track = itemById(state.tracks, mark.trackId);
+      if (!event || !track) return "";
+      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td>" +
+        escapeHtml(mark.result) + "</td><td>" + escapeHtml(mark.category) + "</td><td>" +
+        formatDate(mark.date) + "</td><td>" + escapeHtml(trackLabel(track)) +
+        "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-mark=\"" + mark.id +
+        "\">Editar</button><button class=\"row-button danger\" data-delete-mark=\"" + mark.id +
+        "\">Eliminar</button></td></tr>";
+    }).join("");
+    var empty = byId("marks-empty");
+    empty.classList.toggle("hidden", marks.length > 0);
+    if (!query) {
+      empty.textContent = "Busca un atleta para consultar sus marcas.";
+    } else {
+      empty.textContent = "No hay marcas registradas para la busqueda indicada.";
+    }
+  }
+
   function render() {
     renderOptions();
     renderAthletes();
     renderEvents();
     renderTracks();
+    renderMarks();
     byId("count-athletes").textContent = state.athletes.length;
     byId("count-events").textContent = state.events.length;
     byId("count-marks").textContent = state.marks.length;
@@ -164,7 +201,11 @@
     byId(prefix + "-form").reset();
     setError(prefix, "");
     if (prefix === "mark") {
+      byId("mark-id").value = "";
       byId("mark-date").value = localDateValue(new Date());
+      byId("mark-form-title").textContent = "Registrar marca";
+      byId("mark-submit").textContent = "Guardar marca";
+      byId("cancel-mark").classList.add("hidden");
       updateCategoryPreview();
       return;
     }
@@ -253,14 +294,15 @@
       setError("mark", "Indica una marca numerica, por ejemplo 12.43 o 1:58.20.");
       return;
     }
-    var mark = { id: uid() };
+    var id = byId("mark-id").value;
+    var mark = id ? itemById(state.marks, id) : { id: uid() };
     mark.athleteId = athlete.id;
     mark.eventId = competition.id;
     mark.trackId = track.id;
     mark.date = date;
     mark.result = result;
     mark.category = category;
-    state.marks.push(mark);
+    if (!id) state.marks.push(mark);
     resetForm("mark");
     saveData();
   }
@@ -294,6 +336,30 @@
     resetForm(type);
     saveData();
   }
+  function editMark(id) {
+    var mark = itemById(state.marks, id);
+    var athlete = mark && itemById(state.athletes, mark.athleteId);
+    var event = mark && itemById(state.events, mark.eventId);
+    var track = mark && itemById(state.tracks, mark.trackId);
+    if (!mark || !athlete || !event || !track) return;
+    byId("mark-id").value = mark.id;
+    byId("mark-athlete").value = athleteLabel(athlete);
+    byId("mark-event").value = event.name;
+    byId("mark-track").value = trackLabel(track);
+    byId("mark-date").value = mark.date;
+    byId("mark-result").value = mark.result;
+    byId("mark-form-title").textContent = "Editar marca";
+    byId("mark-submit").textContent = "Actualizar marca";
+    byId("cancel-mark").classList.remove("hidden");
+    setError("mark", "");
+    updateCategoryPreview();
+    switchPanel("marcas");
+  }
+  function deleteMark(id) {
+    state.marks = state.marks.filter(function (mark) { return mark.id !== id; });
+    if (byId("mark-id").value === id) resetForm("mark");
+    saveData();
+  }
 
   document.querySelector(".tabs").addEventListener("click", function (event) {
     if (event.target.dataset.panel) switchPanel(event.target.dataset.panel);
@@ -302,12 +368,13 @@
   byId("event-form").addEventListener("submit", saveEvent);
   byId("track-form").addEventListener("submit", saveTrack);
   byId("mark-form").addEventListener("submit", saveMark);
-  ["athlete", "event", "track"].forEach(function (prefix) {
+  ["athlete", "event", "track", "mark"].forEach(function (prefix) {
     byId("cancel-" + prefix).addEventListener("click", function () { resetForm(prefix); });
   });
   [byId("mark-athlete"), byId("mark-date")].forEach(function (input) {
     input.addEventListener("input", updateCategoryPreview);
   });
+  byId("marks-athlete-filter").addEventListener("input", renderMarks);
   byId("load-events").addEventListener("click", function () {
     usualEvents.forEach(function (input) {
       if (!state.events.some(function (event) { return normalized(event.name) === normalized(input); })) {
@@ -324,6 +391,8 @@
     if (data.deleteAthlete) deleteMaster("athlete", data.deleteAthlete);
     if (data.deleteEvent) deleteMaster("event", data.deleteEvent);
     if (data.deleteTrack) deleteMaster("track", data.deleteTrack);
+    if (data.editMark) editMark(data.editMark);
+    if (data.deleteMark) deleteMark(data.deleteMark);
   });
 
   byId("mark-date").value = localDateValue(new Date());

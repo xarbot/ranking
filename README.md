@@ -12,6 +12,7 @@ sin servidor ni instalacion.
 2. Registra atletas con su fecha de nacimiento.
 3. Define las pruebas, o usa **Cargar pruebas habituales**.
 4. Introduce marcas desde la pantalla principal.
+5. Desde **Marcas registradas**, busca un atleta para revisar, editar o eliminar sus marcas.
 
 La categoria se calcula segun la edad cumplida del atleta en la fecha de la marca:
 `sub8`, `sub10`, `sub12`, `sub14`, `sub16`, `sub18`, `sub20`, `sub23`, `senior`
