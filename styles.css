@@ -316,5 +316,50 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   grid-template-columns: repeat(3, minmax(190px, 1fr));
 }
 .results { min-height: 180px; }
+.athlete-search-card { margin-bottom: 20px; }
+.athlete-search-form {
+  align-items: end;
+  display: flex;
+  gap: 12px;
+  max-width: 560px;
+}
+.athlete-search-form label { flex: 1; }
+.latest-title { margin-bottom: 21px; }
+.athlete-button {
+  background: transparent;
+  border: 0;
+  color: var(--primary-dark);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+}
+.athlete-button:hover { color: var(--primary); }
+.history { display: grid; gap: 20px; }
+.history.hidden { display: none; }
+.athlete-history-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+.history-categories { display: grid; gap: 20px; }
+.category-history .eyebrow { color: var(--muted); }
+.category-history h3 {
+  color: var(--primary-dark);
+  margin: 0 0 18px;
+  text-transform: uppercase;
+}
+.event-history + .event-history {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+.event-history h4 {
+  color: var(--primary);
+  font-size: 18px;
+  margin: 0 0 10px;
+}
 @media (max-width: 600px) {
   .filter-grid { grid-template-columns: 1fr; }

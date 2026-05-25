@@ -616,14 +616,6 @@
     });
     reader.readAsText(file);
   });
-  byId("load-events").addEventListener("click", async function () {
-    try {
-      await request("/events/seed", { method: "POST", body: "{}" });
-      await refreshData();
-    } catch (error) {
-      setError("event", error.message);
-    }
-  });
   document.body.addEventListener("click", function (event) {
     var data = event.target.dataset;
     if (data.editAthlete) { editMaster("athlete", data.editAthlete); switchPanel("atletas"); }

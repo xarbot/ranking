@@ -39,10 +39,12 @@ El esquema contiene:
 4. Instala `deploy/nginx/ranking.conf.example` en el directorio de includes del virtual host y recarga nginx tras ejecutar `nginx -t`.
 5. Accede a `/admin/` para crear el primer usuario de gestion.
 
-La ruta `/` es publica y presenta solamente la mejor marca de cada atleta en cada prueba,
-ordenada segun gane el resultado menor o mayor, con filtros por prueba, categoria y atleta.
+La ruta `/` es publica y presenta primero las ultimas marcas introducidas. Al seleccionar un
+atleta muestra su historial completo, agrupado por categoria y prueba; dentro de cada prueba
+ordena de mejor a peor segun gane el resultado menor o mayor.
 La ruta `/admin/` requiere autenticacion para modificar datos y el criterio de cada prueba.
-La consulta utiliza `GET /api/public/marks`, que no devuelve usuarios ni fechas de nacimiento.
+La consulta utiliza `GET /api/public/marks` y `GET /api/public/athletes/{id}/history`, que no
+devuelven usuarios ni fechas de nacimiento.
 
 `.env` contiene credenciales y queda fuera del webroot. Las interfaces llaman a `api/...`;
 nginx redirige esas peticiones al controlador `api/index.php`.
@@ -56,7 +58,7 @@ Para instalacion y actualizacion en produccion, sigue [`DEPLOY.md`](DEPLOY.md).
 3. Desde **Usuarios**, crea, edita, activa o desactiva las cuentas necesarias.
 4. Crea las pistas de atletismo.
 5. Registra atletas manualmente o importalos desde CSV usando la plantilla descargable.
-6. Define las pruebas y su criterio de ranking, o usa **Cargar pruebas habituales**.
+6. Define las pruebas y su criterio de ranking.
 7. Introduce marcas y revisalas desde el panel de gestion.
 
 La categoria se calcula en la API segun la edad cumplida del atleta en la fecha de la

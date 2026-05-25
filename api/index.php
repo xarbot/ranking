@@ -135,25 +135,6 @@ function usualResultDirection(string $event): string
     return in_array($event, HIGHER_RESULT_EVENTS, true) ? 'higher' : 'lower';
 }
 
-function comparableResult(string $result): float
-{
-    $clean = str_replace(',', '.', preg_replace('/[^\d:,.]/', '', $result) ?? '');
-    $chunks = array_map('floatval', explode(':', $clean));
-    return match (count($chunks)) {
-        3 => $chunks[0] * 3600 + $chunks[1] * 60 + $chunks[2],
-        2 => $chunks[0] * 60 + $chunks[1],
-        default => $chunks[0],
-    };
-}
-
-function isBetterPublicMark(array $candidate, array $current): bool
-{
-    if ($candidate['resultDirection'] === 'higher') {
-        return $candidate['_value'] > $current['_value'];
-    }
-    return $candidate['_value'] < $current['_value'];
-}
-
 function categoryForDates(string $birthdate, string $performanceDate): string
 {
     $birth = new DateTimeImmutable($birthdate);
@@ -318,6 +299,11 @@ function publicMarks(PDO $db): array
         $db,
         "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection FROM pruebas ORDER BY nombre"
     )->fetchAll();
+    $athletes = execute(
+        $db,
+        "SELECT DISTINCT a.id, CONCAT(a.nombre, ' ', a.apellidos) AS name
+         FROM atletas a JOIN marcas m ON m.atleta_id = a.id ORDER BY a.apellidos, a.nombre"
+    )->fetchAll();
     $marks = execute(
         $db,
         "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
@@ -329,35 +315,41 @@ function publicMarks(PDO $db): array
          JOIN atletas a ON a.id = m.atleta_id
          JOIN pruebas p ON p.id = m.prueba_id
          JOIN pistas t ON t.id = m.pista_id
-         ORDER BY m.fecha DESC, m.id DESC"
+         ORDER BY m.creado_en DESC, m.id DESC LIMIT 30"
     )->fetchAll();
-    $best = [];
-    foreach ($marks as $mark) {
-        $key = $mark['eventId'] . ':' . $mark['athleteId'];
-        $mark['_value'] = comparableResult($mark['result']);
-        if (!isset($best[$key]) || isBetterPublicMark($mark, $best[$key])) {
-            $best[$key] = $mark;
-        }
-    }
-    $marks = array_values($best);
-    usort($marks, static function (array $first, array $second): int {
-        $event = strcasecmp($first['event'], $second['event']);
-        if ($event !== 0) {
-            return $event;
-        }
-        $result = $first['resultDirection'] === 'higher'
-            ? $second['_value'] <=> $first['_value']
-            : $first['_value'] <=> $second['_value'];
-        return $result !== 0 ? $result : strcasecmp($first['athlete'], $second['athlete']);
-    });
-    foreach ($marks as &$mark) {
-        unset($mark['athleteId'], $mark['resultDirection'], $mark['_value']);
-    }
-    unset($mark);
-    $categories = [
-        'sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master',
+    $totalMarks = (int) execute($db, 'SELECT COUNT(*) AS total FROM marcas')->fetch()['total'];
+    return [
+        'events' => $events,
+        'athletes' => $athletes,
+        'marks' => $marks,
+        'counts' => ['athletes' => count($athletes), 'events' => count($events), 'marks' => $totalMarks],
     ];
-    return compact('events', 'categories', 'marks');
+}
+
+function publicAthleteHistory(PDO $db, int $athleteId): array
+{
+    $athlete = execute(
+        $db,
+        "SELECT id, CONCAT(nombre, ' ', apellidos) AS name FROM atletas WHERE id = ?",
+        [$athleteId]
+    )->fetch();
+    if (!$athlete) {
+        throw new ApiException('El atleta indicado no existe.', 404);
+    }
+    $marks = execute(
+        $db,
+        "SELECT m.id, m.prueba_id AS eventId, p.nombre AS event,
+         CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,
+         m.resultado AS result, m.categoria AS category, DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
+         CONCAT(t.nombre, ' - ', t.localidad) AS track
+         FROM marcas m
+         JOIN pruebas p ON p.id = m.prueba_id
+         JOIN pistas t ON t.id = m.pista_id
+         WHERE m.atleta_id = ?
+         ORDER BY m.categoria, p.nombre, m.fecha DESC, m.id DESC",
+        [$athleteId]
+    )->fetchAll();
+    return compact('athlete', 'marks');
 }
 
 function createItem(PDO $db, string $resource, array $payload): void
@@ -526,6 +518,9 @@ function route(PDO $db, string $method, string $path, array $payload): array
     }
     if ($method === 'GET' && $path === '/public/marks') {
         return [publicMarks($db), 200];
+    }
+    if ($method === 'GET' && preg_match('#^/public/athletes/(\d+)/history$#', $path, $matches)) {
+        return [publicAthleteHistory($db, (int) $matches[1]), 200];
     }
     $actor = requireUser($db);
     if ($method === 'GET' && $path === '/bootstrap') {
