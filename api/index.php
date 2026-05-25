@@ -135,6 +135,17 @@ function usualResultDirection(string $event): string
     return in_array($event, HIGHER_RESULT_EVENTS, true) ? 'higher' : 'lower';
 }
 
+function comparableResult(string $result): float
+{
+    $clean = str_replace(',', '.', preg_replace('/[^\d:,.]/', '', $result) ?? '');
+    $chunks = array_map('floatval', explode(':', $clean));
+    return match (count($chunks)) {
+        3 => $chunks[0] * 3600 + $chunks[1] * 60 + $chunks[2],
+        2 => $chunks[0] * 60 + $chunks[1],
+        default => $chunks[0],
+    };
+}
+
 function categoryForDates(string $birthdate, string $performanceDate): string
 {
     $birth = new DateTimeImmutable($birthdate);
@@ -321,9 +332,70 @@ function publicMarks(PDO $db): array
     return [
         'events' => $events,
         'athletes' => $athletes,
+        'categories' => ['sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master'],
         'marks' => $marks,
         'counts' => ['athletes' => count($athletes), 'events' => count($events), 'marks' => $totalMarks],
     ];
+}
+
+function publicRanking(PDO $db, int $eventId, ?string $category): array
+{
+    $categories = ['sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master'];
+    if ($category !== null && !in_array($category, $categories, true)) {
+        throw new ApiException('La categoria indicada no existe.');
+    }
+    $event = execute(
+        $db,
+        "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection
+         FROM pruebas WHERE id = ?",
+        [$eventId]
+    )->fetch();
+    if (!$event) {
+        throw new ApiException('La prueba indicada no existe.', 404);
+    }
+    $parameters = [$eventId];
+    $categorySql = '';
+    if ($category !== null) {
+        $categorySql = ' AND m.categoria = ?';
+        $parameters[] = $category;
+    }
+    $marks = execute(
+        $db,
+        "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
+         p.nombre AS event, CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,
+         m.resultado AS result, m.categoria AS category, DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
+         CONCAT(t.nombre, ' - ', t.localidad) AS track
+         FROM marcas m
+         JOIN atletas a ON a.id = m.atleta_id
+         JOIN pruebas p ON p.id = m.prueba_id
+         JOIN pistas t ON t.id = m.pista_id
+         WHERE m.prueba_id = ?{$categorySql}",
+        $parameters
+    )->fetchAll();
+    $best = [];
+    foreach ($marks as $mark) {
+        $mark['_value'] = comparableResult($mark['result']);
+        $key = (string) $mark['athleteId'];
+        $better = !isset($best[$key]) ||
+            ($mark['resultDirection'] === 'higher'
+                ? $mark['_value'] > $best[$key]['_value']
+                : $mark['_value'] < $best[$key]['_value']);
+        if ($better) {
+            $best[$key] = $mark;
+        }
+    }
+    $marks = array_values($best);
+    usort($marks, static function (array $first, array $second): int {
+        $result = $first['resultDirection'] === 'higher'
+            ? $second['_value'] <=> $first['_value']
+            : $first['_value'] <=> $second['_value'];
+        return $result !== 0 ? $result : strcasecmp($first['athlete'], $second['athlete']);
+    });
+    foreach ($marks as &$mark) {
+        unset($mark['_value']);
+    }
+    unset($mark);
+    return compact('event', 'category', 'marks');
 }
 
 function publicAthleteHistory(PDO $db, int $athleteId): array
@@ -518,6 +590,14 @@ function route(PDO $db, string $method, string $path, array $payload): array
     }
     if ($method === 'GET' && $path === '/public/marks') {
         return [publicMarks($db), 200];
+    }
+    if ($method === 'GET' && $path === '/public/ranking') {
+        $eventId = filter_var($_GET['eventId'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if (!$eventId) {
+            throw new ApiException('Selecciona una prueba para consultar el ranking.');
+        }
+        $category = trim((string) ($_GET['category'] ?? ''));
+        return [publicRanking($db, (int) $eventId, $category === '' ? null : $category), 200];
     }
     if ($method === 'GET' && preg_match('#^/public/athletes/(\d+)/history$#', $path, $matches)) {
         return [publicAthleteHistory($db, (int) $matches[1]), 200];

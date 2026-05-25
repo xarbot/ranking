@@ -42,9 +42,12 @@ El esquema contiene:
 La ruta `/` es publica y presenta primero las ultimas marcas introducidas. Al seleccionar un
 atleta muestra su historial completo, agrupado por categoria y prueba; dentro de cada prueba
 ordena de mejor a peor segun gane el resultado menor o mayor.
+Los desplegables permiten obtener el ranking de una prueba, opcionalmente limitado a una
+categoria. El ranking presenta la mejor marca de cada atleta ordenada segun el criterio de la
+prueba, y el nombre del atleta enlaza igualmente con su historial.
 La ruta `/admin/` requiere autenticacion para modificar datos y el criterio de cada prueba.
-La consulta utiliza `GET /api/public/marks` y `GET /api/public/athletes/{id}/history`, que no
-devuelven usuarios ni fechas de nacimiento.
+La consulta utiliza `GET /api/public/marks`, `GET /api/public/ranking` y
+`GET /api/public/athletes/{id}/history`, que no devuelven usuarios ni fechas de nacimiento.
 
 `.env` contiene credenciales y queda fuera del webroot. Las interfaces llaman a `api/...`;
 nginx redirige esas peticiones al controlador `api/index.php`.

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], athletes: [], marks: [], counts: {}, history: null };
+  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, history: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -44,8 +44,24 @@
       return "<option value=\"" + escapeHtml(athlete.name) + "\"></option>";
     }).join("");
   }
+  function renderFilters() {
+    var eventId = byId("event-filter").value;
+    var category = byId("category-filter").value;
+    byId("event-filter").innerHTML = "<option value=\"\">" + t("Todas las pruebas") + "</option>" +
+      state.events.map(function (event) {
+        return "<option value=\"" + event.id + "\">" + escapeHtml(eventLabel(event)) + "</option>";
+      }).join("");
+    byId("category-filter").innerHTML = "<option value=\"\">" + t("Todas las categorias") + "</option>" +
+      state.categories.map(function (item) {
+        return "<option value=\"" + item + "\">" + escapeHtml(item.toUpperCase()) + "</option>";
+      }).join("");
+    byId("event-filter").value = eventId;
+    byId("category-filter").value = category;
+    byId("category-filter").disabled = !eventId;
+  }
   function renderMarks() {
-    var marks = state.marks;
+    var marks = state.ranking ? state.ranking.marks : state.marks;
+    byId("results-title").textContent = state.ranking ? t("Ranking por prueba") : t("Ultimas marcas registradas");
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return "<tr><td><button class=\"athlete-button\" type=\"button\" data-athlete-id=\"" + mark.athleteId + "\">" +
         escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(t(mark.event)) +
@@ -88,6 +104,7 @@
   }
 
   function render() {
+    renderFilters();
     renderSearch();
     renderMarks();
     renderHistory();
@@ -100,9 +117,43 @@
       var response = await fetch("/api/public/marks");
       var data = await response.json().catch(function () { return {}; });
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
-      state = data;
+      state = {
+        events: data.events || [],
+        categories: data.categories || [],
+        athletes: data.athletes || [],
+        marks: data.marks || [],
+        counts: data.counts || {},
+        ranking: null,
+        history: null
+      };
       showError("");
       render();
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
+  async function loadRanking() {
+    var eventId = byId("event-filter").value;
+    state.history = null;
+    byId("athlete-search").value = "";
+    renderHistory();
+    if (!eventId) {
+      state.ranking = null;
+      byId("category-filter").disabled = true;
+      renderMarks();
+      return;
+    }
+    byId("category-filter").disabled = false;
+    var category = byId("category-filter").value;
+    try {
+      var url = "/api/public/ranking?eventId=" + encodeURIComponent(eventId) + "&category=" + encodeURIComponent(category);
+      var response = await fetch(url);
+      var data = await response.json().catch(function () { return {}; });
+      if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
+      state.ranking = data;
+      showError("");
+      renderMarks();
     } catch (error) {
       showError(error.message);
     }
@@ -138,6 +189,21 @@
     selectSearchedAthlete();
   });
   byId("athlete-search").addEventListener("change", selectSearchedAthlete);
+  byId("event-filter").addEventListener("change", function () {
+    if (!byId("event-filter").value) byId("category-filter").value = "";
+    loadRanking();
+  });
+  byId("category-filter").addEventListener("change", loadRanking);
+  byId("clear-filters").addEventListener("click", function () {
+    byId("event-filter").value = "";
+    byId("category-filter").value = "";
+    byId("athlete-search").value = "";
+    state.ranking = null;
+    state.history = null;
+    renderFilters();
+    renderMarks();
+    renderHistory();
+  });
   byId("marks-body").addEventListener("click", function (event) {
     var button = event.target.closest("[data-athlete-id]");
     if (button) loadHistory(button.dataset.athleteId);
@@ -150,6 +216,7 @@
   });
   document.addEventListener("rankinglanguagechange", function () {
     renderSearch();
+    renderFilters();
     renderMarks();
     renderHistory();
   });
