@@ -1,6 +1,6 @@
 # Ranking de Atletismo
 
-Aplicacion de marcas de atletismo con consulta publica en `/`, panel de gestion
+Aplicacion de mejores marcas de atletismo con consulta publica en `/`, panel de gestion
 autenticado en `/admin/`, persistencia MySQL y categoria calculada por edad.
 
 Tanto la consulta publica como el panel de gestion permiten alternar castellano y catalan.
@@ -28,7 +28,7 @@ El esquema contiene:
 - `usuarios`: cuentas con contrasena cifrada para acceder a la gestion de datos.
 - `atletas`: nombre, apellidos y fecha de nacimiento.
 - `pistas`: instalaciones y localidad.
-- `pruebas`: catalogo de pruebas.
+- `pruebas`: catalogo de pruebas y criterio de ranking (`menor` para tiempos o `mayor` para saltos/lanzamientos).
 - `marcas`: atleta, prueba, pista, fecha, resultado y categoria, con claves foraneas.
 
 ## Despliegue nginx
@@ -39,8 +39,9 @@ El esquema contiene:
 4. Instala `deploy/nginx/ranking.conf.example` en el directorio de includes del virtual host y recarga nginx tras ejecutar `nginx -t`.
 5. Accede a `/admin/` para crear el primer usuario de gestion.
 
-La ruta `/` es publica y presenta las marcas registradas con filtros por prueba,
-categoria y atleta. La ruta `/admin/` requiere autenticacion para modificar datos.
+La ruta `/` es publica y presenta solamente la mejor marca de cada atleta en cada prueba,
+ordenada segun gane el resultado menor o mayor, con filtros por prueba, categoria y atleta.
+La ruta `/admin/` requiere autenticacion para modificar datos y el criterio de cada prueba.
 La consulta utiliza `GET /api/public/marks`, que no devuelve usuarios ni fechas de nacimiento.
 
 `.env` contiene credenciales y queda fuera del webroot. Las interfaces llaman a `api/...`;
@@ -55,7 +56,7 @@ Para instalacion y actualizacion en produccion, sigue [`DEPLOY.md`](DEPLOY.md).
 3. Desde **Usuarios**, crea, edita, activa o desactiva las cuentas necesarias.
 4. Crea las pistas de atletismo.
 5. Registra atletas manualmente o importalos desde CSV usando la plantilla descargable.
-6. Define las pruebas, o usa **Cargar pruebas habituales**.
+6. Define las pruebas y su criterio de ranking, o usa **Cargar pruebas habituales**.
 7. Introduce marcas y revisalas desde el panel de gestion.
 
 La categoria se calcula en la API segun la edad cumplida del atleta en la fecha de la

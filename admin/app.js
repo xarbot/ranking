@@ -262,7 +262,9 @@
     byId("events-body").innerHTML = state.events.slice().sort(function (a, b) {
       return a.name.localeCompare(b.name, "es");
     }).map(function (event) {
-      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td class=\"row-actions\">" +
+      var direction = event.resultDirection === "higher" ? t("Marca mas alta") : t("Marca mas baja");
+      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td>" +
+        direction + "</td><td class=\"row-actions\">" +
         "<button class=\"row-button\" data-edit-event=\"" + event.id +
         "\">" + t("Editar") + "</button><button class=\"row-button danger\" data-delete-event=\"" + event.id +
         "\">" + t("Eliminar") + "</button></td></tr>";
@@ -388,7 +390,10 @@
     var id = byId("event-id").value;
     try {
       await request("/events" + (id ? "/" + id : ""), {
-        method: id ? "PUT" : "POST", body: JSON.stringify({ name: byId("event-name").value.trim() })
+        method: id ? "PUT" : "POST", body: JSON.stringify({
+          name: byId("event-name").value.trim(),
+          resultDirection: byId("event-direction").value
+        })
       });
       resetForm("event");
       await refreshData();
@@ -475,6 +480,7 @@
       byId("athlete-birthdate").value = item.birthdate;
     } else if (prefix === "event") {
       byId("event-name").value = item.name;
+      byId("event-direction").value = item.resultDirection || "lower";
     } else {
       byId("track-name").value = item.name;
       byId("track-city").value = item.city;

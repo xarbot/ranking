@@ -83,7 +83,7 @@ curl -i https://ranking.clubatleticcastellar.cat/api/public/marks
 curl -I https://ranking.clubatleticcastellar.cat/lib/env.php
 ```
 
-La tercera peticion debe responder `403 Forbidden`.
+La cuarta peticion debe responder `403 Forbidden`; la API publica debe responder `200`.
 
 ## Permisos
 Manten el repositorio bajo un usuario de despliegue y concede al proceso web solamente lectura del codigo y acceso a las rutas que use la aplicacion.
@@ -108,6 +108,9 @@ if [ -f composer.json ]; then composer install --no-dev --optimize-autoloader; f
 php scripts/migrate.php
 ```
 
+
+La version que incorpora el ranking por mejores marcas aplica `002_add_pruebas_sentido_resultado.sql`.
+Esta migracion anade el criterio a `pruebas` y clasifica saltos, lanzamientos y pruebas
 Actualmente la aplicacion no utiliza Composer ni cache de servidor, por lo que no hay dependencias o cache que limpiar. Si se incorporan en una version futura, se documentara el comando correspondiente en este procedimiento.
 
 Las migraciones de `database/migrations/` se aplican por orden de nombre y solo una vez. Si una migracion falla, conserva el backup y resuelve el error antes de publicar la nueva version.

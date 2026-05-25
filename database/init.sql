@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS atletas (
 CREATE TABLE IF NOT EXISTS pruebas (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   nombre VARCHAR(120) NOT NULL,
+  sentido_resultado ENUM('menor', 'mayor') NOT NULL DEFAULT 'menor',
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -70,5 +71,6 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 ) ENGINE=InnoDB;
 
 INSERT IGNORE INTO schema_migrations (version)
-VALUES ('001_create_migration_tracking.sql');
+VALUES ('001_create_migration_tracking.sql'),
+       ('002_add_pruebas_sentido_resultado.sql');
 

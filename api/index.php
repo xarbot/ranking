@@ -20,6 +20,10 @@ const USUAL_EVENTS = [
     'Peso', 'Disco', 'Jabalina', 'Martillo', 'Decatlon', 'Heptatlon',
 ];
 
+const HIGHER_RESULT_EVENTS = [
+    'Altura', 'Longitud', 'Triple salto', 'Pertiga', 'Peso', 'Disco', 'Jabalina', 'Martillo', 'Decatlon', 'Heptatlon',
+];
+
 final class ApiException extends RuntimeException
 {
     public function __construct(string $message, public readonly int $status = 400)
@@ -110,6 +114,44 @@ function requiredResult(array $payload): string
         throw new ApiException('Indica una marca numerica, por ejemplo 12.43 o 1:58.20.');
     }
     return $result;
+}
+
+function requiredResultDirection(array $payload): string
+{
+    $direction = (string) ($payload['resultDirection'] ?? '');
+    if (!in_array($direction, ['lower', 'higher'], true)) {
+        throw new ApiException('Indica si en la prueba gana la marca menor o la mayor.');
+    }
+    return $direction;
+}
+
+function storedResultDirection(string $direction): string
+{
+    return $direction === 'higher' ? 'mayor' : 'menor';
+}
+
+function usualResultDirection(string $event): string
+{
+    return in_array($event, HIGHER_RESULT_EVENTS, true) ? 'higher' : 'lower';
+}
+
+function comparableResult(string $result): float
+{
+    $clean = str_replace(',', '.', preg_replace('/[^\d:,.]/', '', $result) ?? '');
+    $chunks = array_map('floatval', explode(':', $clean));
+    return match (count($chunks)) {
+        3 => $chunks[0] * 3600 + $chunks[1] * 60 + $chunks[2],
+        2 => $chunks[0] * 60 + $chunks[1],
+        default => $chunks[0],
+    };
+}
+
+function isBetterPublicMark(array $candidate, array $current): bool
+{
+    if ($candidate['resultDirection'] === 'higher') {
+        return $candidate['_value'] > $current['_value'];
+    }
+    return $candidate['_value'] < $current['_value'];
 }
 
 function categoryForDates(string $birthdate, string $performanceDate): string
@@ -252,7 +294,10 @@ function bootstrap(PDO $db): array
          DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS birthdate
          FROM atletas ORDER BY apellidos, nombre"
     )->fetchAll();
-    $events = execute($db, 'SELECT id, nombre AS name FROM pruebas ORDER BY nombre')->fetchAll();
+    $events = execute(
+        $db,
+        "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection FROM pruebas ORDER BY nombre"
+    )->fetchAll();
     $tracks = execute(
         $db,
         'SELECT id, nombre AS name, localidad AS city FROM pistas ORDER BY nombre, localidad'
@@ -269,11 +314,15 @@ function bootstrap(PDO $db): array
 
 function publicMarks(PDO $db): array
 {
-    $events = execute($db, 'SELECT id, nombre AS name FROM pruebas ORDER BY nombre')->fetchAll();
+    $events = execute(
+        $db,
+        "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection FROM pruebas ORDER BY nombre"
+    )->fetchAll();
     $marks = execute(
         $db,
-        "SELECT m.id, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
-         p.nombre AS event, m.resultado AS result, m.categoria AS category,
+        "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
+         p.nombre AS event, CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,
+         m.resultado AS result, m.categoria AS category,
          DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
          CONCAT(t.nombre, ' - ', t.localidad) AS track
          FROM marcas m
@@ -282,6 +331,29 @@ function publicMarks(PDO $db): array
          JOIN pistas t ON t.id = m.pista_id
          ORDER BY m.fecha DESC, m.id DESC"
     )->fetchAll();
+    $best = [];
+    foreach ($marks as $mark) {
+        $key = $mark['eventId'] . ':' . $mark['athleteId'];
+        $mark['_value'] = comparableResult($mark['result']);
+        if (!isset($best[$key]) || isBetterPublicMark($mark, $best[$key])) {
+            $best[$key] = $mark;
+        }
+    }
+    $marks = array_values($best);
+    usort($marks, static function (array $first, array $second): int {
+        $event = strcasecmp($first['event'], $second['event']);
+        if ($event !== 0) {
+            return $event;
+        }
+        $result = $first['resultDirection'] === 'higher'
+            ? $second['_value'] <=> $first['_value']
+            : $first['_value'] <=> $second['_value'];
+        return $result !== 0 ? $result : strcasecmp($first['athlete'], $second['athlete']);
+    });
+    foreach ($marks as &$mark) {
+        unset($mark['athleteId'], $mark['resultDirection'], $mark['_value']);
+    }
+    unset($mark);
     $categories = [
         'sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master',
     ];
@@ -297,7 +369,10 @@ function createItem(PDO $db, string $resource, array $payload): void
             requiredDate($payload, 'birthdate', 'fecha de nacimiento'),
         ]);
     } elseif ($resource === 'events') {
-        execute($db, 'INSERT INTO pruebas (nombre) VALUES (?)', [requiredText($payload, 'name', 'prueba')]);
+        execute($db, 'INSERT INTO pruebas (nombre, sentido_resultado) VALUES (?, ?)', [
+            requiredText($payload, 'name', 'prueba'),
+            storedResultDirection(requiredResultDirection($payload)),
+        ]);
     } elseif ($resource === 'tracks') {
         execute($db, 'INSERT INTO pistas (nombre, localidad) VALUES (?, ?)', [
             requiredText($payload, 'name', 'pista'),
@@ -339,7 +414,9 @@ function updateItem(PDO $db, string $resource, int $id, array $payload): void
         }
     } elseif ($resource === 'events') {
         ensureExists($db, 'pruebas', $id);
-        execute($db, 'UPDATE pruebas SET nombre = ? WHERE id = ?', [requiredText($payload, 'name', 'prueba'), $id]);
+        execute($db, 'UPDATE pruebas SET nombre = ?, sentido_resultado = ? WHERE id = ?', [
+            requiredText($payload, 'name', 'prueba'), storedResultDirection(requiredResultDirection($payload)), $id,
+        ]);
     } elseif ($resource === 'tracks') {
         ensureExists($db, 'pistas', $id);
         execute($db, 'UPDATE pistas SET nombre = ?, localidad = ? WHERE id = ?', [
@@ -472,9 +549,9 @@ function route(PDO $db, string $method, string $path, array $payload): array
         return [importAthletes($db, $payload), 200];
     }
     if ($method === 'POST' && $path === '/events/seed') {
-        $statement = $db->prepare('INSERT IGNORE INTO pruebas (nombre) VALUES (?)');
+        $statement = $db->prepare('INSERT IGNORE INTO pruebas (nombre, sentido_resultado) VALUES (?, ?)');
         foreach (USUAL_EVENTS as $name) {
-            $statement->execute([$name]);
+            $statement->execute([$name, storedResultDirection(usualResultDirection($name))]);
         }
         return [['ok' => true], 201];
     }
