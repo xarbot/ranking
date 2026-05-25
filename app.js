@@ -3,17 +3,12 @@
 
   var STORAGE_KEY = "ranking-atletismo-v1";
   var state = loadData();
-  var categories = ["sub8", "sub10", "sub12", "sub14", "sub16", "sub18", "sub20", "sub23", "senior", "master"];
   var usualEvents = [
-    ["60 m", "asc"], ["80 m", "asc"], ["100 m", "asc"], ["200 m", "asc"],
-    ["300 m", "asc"], ["400 m", "asc"], ["600 m", "asc"], ["800 m", "asc"],
-    ["1.000 m", "asc"], ["1.500 m", "asc"], ["3.000 m", "asc"], ["5.000 m", "asc"],
-    ["10.000 m", "asc"], ["60 m vallas", "asc"], ["100 m vallas", "asc"],
-    ["110 m vallas", "asc"], ["400 m vallas", "asc"], ["3.000 m obstaculos", "asc"],
-    ["4 x 100 m", "asc"], ["4 x 400 m", "asc"], ["Altura", "desc"],
-    ["Longitud", "desc"], ["Triple salto", "desc"], ["Pertiga", "desc"],
-    ["Peso", "desc"], ["Disco", "desc"], ["Jabalina", "desc"], ["Martillo", "desc"],
-    ["Decatlon", "desc"], ["Heptatlon", "desc"]
+    "60 m", "80 m", "100 m", "200 m", "300 m", "400 m", "600 m", "800 m",
+    "1.000 m", "1.500 m", "3.000 m", "5.000 m", "10.000 m", "60 m vallas",
+    "100 m vallas", "110 m vallas", "400 m vallas", "3.000 m obstaculos",
+    "4 x 100 m", "4 x 400 m", "Altura", "Longitud", "Triple salto", "Pertiga",
+    "Peso", "Disco", "Jabalina", "Martillo", "Decatlon", "Heptatlon"
   ];
 
   function byId(id) { return document.getElementById(id); }
@@ -108,11 +103,6 @@
     byId("track-options").innerHTML = state.tracks.map(function (track) {
       return "<option value=\"" + escapeHtml(trackLabel(track)) + "\"></option>";
     }).join("");
-    var selected = byId("filter-event").value;
-    byId("filter-event").innerHTML = "<option value=\"\">Todas</option>" + state.events.map(function (event) {
-      return "<option value=\"" + event.id + "\">" + escapeHtml(event.name) + "</option>";
-    }).join("");
-    byId("filter-event").value = itemById(state.events, selected) ? selected : "";
   }
 
   function renderAthletes() {
@@ -130,9 +120,8 @@
     byId("events-body").innerHTML = state.events.slice().sort(function (a, b) {
       return a.name.localeCompare(b.name, "es");
     }).map(function (event) {
-      var order = event.order === "asc" ? "Menor marca gana" : "Mayor marca gana";
-      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td>" + order +
-        "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-event=\"" + event.id +
+      return "<tr><td><strong>" + escapeHtml(event.name) + "</strong></td><td class=\"row-actions\">" +
+        "<button class=\"row-button\" data-edit-event=\"" + event.id +
         "\">Editar</button><button class=\"row-button danger\" data-delete-event=\"" + event.id +
         "\">Eliminar</button></td></tr>";
     }).join("");
@@ -150,53 +139,11 @@
     byId("tracks-empty").classList.toggle("hidden", state.tracks.length > 0);
   }
 
-  function filteredMarks() {
-    var eventId = byId("filter-event").value;
-    var category = byId("filter-category").value;
-    var athleteQuery = normalized(byId("filter-athlete").value);
-    var marks = state.marks.filter(function (mark) {
-      var athlete = itemById(state.athletes, mark.athleteId);
-      return athlete && (!eventId || mark.eventId === eventId) &&
-        (!category || mark.category === category) &&
-        (!athleteQuery || normalized(athleteLabel(athlete)).includes(athleteQuery));
-    });
-    if (eventId) {
-      var event = itemById(state.events, eventId);
-      marks.sort(function (a, b) {
-        var first = parseResult(a.result);
-        var second = parseResult(b.result);
-        if (first === null) return 1;
-        if (second === null) return -1;
-        return event.order === "asc" ? first - second : second - first;
-      });
-    } else {
-      marks.sort(function (a, b) { return b.date.localeCompare(a.date); });
-    }
-    return marks;
-  }
-  function renderRanking() {
-    var marks = filteredMarks();
-    byId("ranking-body").innerHTML = marks.map(function (mark, index) {
-      var athlete = itemById(state.athletes, mark.athleteId);
-      var event = itemById(state.events, mark.eventId);
-      var track = itemById(state.tracks, mark.trackId);
-      if (!athlete || !event || !track) return "";
-      return "<tr><td class=\"rank\">" + (index + 1) + "</td><td>" + escapeHtml(athleteLabel(athlete)) +
-        "</td><td>" + escapeHtml(event.name) + "</td><td><strong>" + escapeHtml(mark.result) +
-        "</strong></td><td><span class=\"tag\">" + mark.category + "</span></td><td>" +
-        formatDate(mark.date) + "</td><td>" + escapeHtml(trackLabel(track)) +
-        "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-mark=\"" + mark.id +
-        "\">Editar</button><button class=\"row-button danger\" data-delete-mark=\"" + mark.id +
-        "\">Eliminar</button></td></tr>";
-    }).join("");
-    byId("ranking-empty").classList.toggle("hidden", marks.length > 0);
-  }
   function render() {
     renderOptions();
     renderAthletes();
     renderEvents();
     renderTracks();
-    renderRanking();
     byId("count-athletes").textContent = state.athletes.length;
     byId("count-events").textContent = state.events.length;
     byId("count-marks").textContent = state.marks.length;
@@ -215,10 +162,14 @@
   }
   function resetForm(prefix) {
     byId(prefix + "-form").reset();
+    setError(prefix, "");
+    if (prefix === "mark") {
+      byId("mark-date").value = localDateValue(new Date());
+      updateCategoryPreview();
+      return;
+    }
     byId(prefix + "-id").value = "";
     byId("cancel-" + prefix).classList.add("hidden");
-    setError(prefix, "");
-    if (prefix === "mark") updateCategoryPreview();
   }
 
   function saveAthlete(event) {
@@ -261,7 +212,6 @@
     }
     var item = id ? itemById(state.events, id) : { id: uid() };
     item.name = name;
-    item.order = byId("event-order").value;
     if (!id) state.events.push(item);
     resetForm("event");
     saveData();
@@ -303,15 +253,14 @@
       setError("mark", "Indica una marca numerica, por ejemplo 12.43 o 1:58.20.");
       return;
     }
-    var id = byId("mark-id").value;
-    var mark = id ? itemById(state.marks, id) : { id: uid() };
+    var mark = { id: uid() };
     mark.athleteId = athlete.id;
     mark.eventId = competition.id;
     mark.trackId = track.id;
     mark.date = date;
     mark.result = result;
     mark.category = category;
-    if (!id) state.marks.push(mark);
+    state.marks.push(mark);
     resetForm("mark");
     saveData();
   }
@@ -326,7 +275,6 @@
     } else if (prefix === "event") {
       item = itemById(state.events, id);
       byId("event-name").value = item.name;
-      byId("event-order").value = item.order;
     } else {
       item = itemById(state.tracks, id);
       byId("track-name").value = item.name;
@@ -346,41 +294,6 @@
     resetForm(type);
     saveData();
   }
-  function editMark(id) {
-    var mark = itemById(state.marks, id);
-    var athlete = itemById(state.athletes, mark.athleteId);
-    var event = itemById(state.events, mark.eventId);
-    var track = itemById(state.tracks, mark.trackId);
-    byId("mark-id").value = mark.id;
-    byId("mark-athlete").value = athleteLabel(athlete);
-    byId("mark-event").value = event.name;
-    byId("mark-track").value = trackLabel(track);
-    byId("mark-date").value = mark.date;
-    byId("mark-result").value = mark.result;
-    byId("cancel-mark").classList.remove("hidden");
-    setError("mark", "");
-    updateCategoryPreview();
-  }
-
-  function exportCsv() {
-    var rows = [["Atleta", "Prueba", "Marca", "Categoria", "Fecha", "Sitio"]];
-    filteredMarks().forEach(function (mark) {
-      rows.push([
-        athleteLabel(itemById(state.athletes, mark.athleteId)),
-        itemById(state.events, mark.eventId).name,
-        mark.result, mark.category, mark.date,
-        trackLabel(itemById(state.tracks, mark.trackId))
-      ]);
-    });
-    var csv = rows.map(function (row) {
-      return row.map(function (value) { return "\"" + String(value).replace(/"/g, "\"\"") + "\""; }).join(";");
-    }).join("\n");
-    var link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
-    link.download = "ranking-atletismo.csv";
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }
 
   document.querySelector(".tabs").addEventListener("click", function (event) {
     if (event.target.dataset.panel) switchPanel(event.target.dataset.panel);
@@ -389,20 +302,16 @@
   byId("event-form").addEventListener("submit", saveEvent);
   byId("track-form").addEventListener("submit", saveTrack);
   byId("mark-form").addEventListener("submit", saveMark);
-  ["athlete", "event", "track", "mark"].forEach(function (prefix) {
+  ["athlete", "event", "track"].forEach(function (prefix) {
     byId("cancel-" + prefix).addEventListener("click", function () { resetForm(prefix); });
   });
   [byId("mark-athlete"), byId("mark-date")].forEach(function (input) {
     input.addEventListener("input", updateCategoryPreview);
   });
-  [byId("filter-event"), byId("filter-category"), byId("filter-athlete")].forEach(function (input) {
-    input.addEventListener("input", renderRanking);
-  });
-  byId("export-csv").addEventListener("click", exportCsv);
   byId("load-events").addEventListener("click", function () {
     usualEvents.forEach(function (input) {
-      if (!state.events.some(function (event) { return normalized(event.name) === normalized(input[0]); })) {
-        state.events.push({ id: uid(), name: input[0], order: input[1] });
+      if (!state.events.some(function (event) { return normalized(event.name) === normalized(input); })) {
+        state.events.push({ id: uid(), name: input });
       }
     });
     saveData();
@@ -415,12 +324,6 @@
     if (data.deleteAthlete) deleteMaster("athlete", data.deleteAthlete);
     if (data.deleteEvent) deleteMaster("event", data.deleteEvent);
     if (data.deleteTrack) deleteMaster("track", data.deleteTrack);
-    if (data.editMark) editMark(data.editMark);
-    if (data.deleteMark) {
-      state.marks = state.marks.filter(function (mark) { return mark.id !== data.deleteMark; });
-      resetForm("mark");
-      saveData();
-    }
   });
 
   byId("mark-date").value = localDateValue(new Date());

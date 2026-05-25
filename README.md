@@ -17,6 +17,3 @@ La categoria se calcula segun la edad cumplida del atleta en la fecha de la marc
 `sub8`, `sub10`, `sub12`, `sub14`, `sub16`, `sub18`, `sub20`, `sub23`, `senior`
 (23 a 34 anos) y `master` (desde 35 anos).
 
-Al filtrar el ranking por una prueba, los tiempos se ordenan de menor a mayor y las
-pruebas de distancia o puntos de mayor a menor. El ranking visible se puede exportar
-como CSV.
