@@ -92,7 +92,7 @@
       "Ruta no encontrada.": "Ruta no trobada.",
       "Error de base de datos.": "Error de base de dades.",
       "Error interno del servidor.": "Error intern del servidor.",
-      "Falta configurar config.php en el servidor.": "Falta configurar config.php al servidor.",
+      "Falta configurar el archivo .env en el servidor.": "Falta configurar el fitxer .env al servidor.",
       "Buscar atleta...": "Cerca atleta...",
       "Buscar prueba...": "Cerca prova...",
       "Buscar instalacion...": "Cerca instal·lació...",

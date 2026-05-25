@@ -11,19 +11,15 @@ calculada automaticamente por edad.
 
 ## Base de datos
 
-Crea las tablas ejecutando el esquema:
+Crea las tablas solo en una base de datos nueva ya provisionada para la aplicacion:
 
 ```sh
-mysql -u root -p < schema.sql
+mysql --user=ranking_app --password ranking_atletismo < database/init.sql
 ```
 
-Crea un usuario de aplicacion con acceso solo a esta base:
-
-```sql
-CREATE USER 'ranking_app'@'localhost' IDENTIFIED BY 'cambia_esta_clave';
-GRANT ALL PRIVILEGES ON ranking_atletismo.* TO 'ranking_app'@'localhost';
-FLUSH PRIVILEGES;
-```
+La creacion de la base y del usuario MySQL se detalla en [`DEPLOY.md`](DEPLOY.md).
+Las instalaciones existentes se actualizan mediante los SQL incrementales de
+`database/migrations/`, ejecutados por `php scripts/migrate.php`.
 
 El esquema contiene:
 
@@ -35,16 +31,18 @@ El esquema contiene:
 
 ## Despliegue PHP
 
-1. Sube `admin/`, `schema.sql` y `config.example.php`, conservando `admin/api/.htaccess`.
-2. Copia `config.example.php` como `config.php`.
-3. Edita `config.php` con el usuario y clave de MySQL del servidor.
+1. Sube el repositorio conservando `admin/api/.htaccess` y sirve exclusivamente `admin/`.
+2. Copia `.env.example` como `.env` fuera del directorio publico.
+3. Edita `.env` con `DB_HOST`, `DB_NAME`, `DB_USER` y `DB_PASS` del servidor.
 4. Asegurate de que Apache permite el archivo `api/.htaccess` (`AllowOverride FileInfo`).
-5. Accede a la ruta `/admin/` dentro de la URL donde hayas publicado la aplicacion.
+5. Accede a la URL configurada para la aplicacion.
 
 En la primera apertura, la aplicacion solicita crear el primer usuario de gestion.
 
-`config.php` contiene credenciales y esta excluido de Git. La interfaz de `admin/` llama a
+`.env` contiene credenciales y esta excluido de Git. La interfaz de `admin/` llama a
 `api/...`; `admin/api/.htaccess` redirige esas peticiones a `admin/api/index.php`.
+
+Para instalacion y actualizacion en produccion, sigue [`DEPLOY.md`](DEPLOY.md).
 
 ## Uso
 

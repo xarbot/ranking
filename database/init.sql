@@ -1,8 +1,4 @@
-CREATE DATABASE IF NOT EXISTS ranking_atletismo
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE ranking_atletismo;
+-- Ejecutar sobre una base de datos vacia ya creada para la aplicacion.
 
 CREATE TABLE IF NOT EXISTS usuarios (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -66,4 +62,13 @@ CREATE TABLE IF NOT EXISTS marcas (
   CONSTRAINT fk_marcas_prueba FOREIGN KEY (prueba_id) REFERENCES pruebas (id),
   CONSTRAINT fk_marcas_pista FOREIGN KEY (pista_id) REFERENCES pistas (id)
 ) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version VARCHAR(255) NOT NULL,
+  executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (version)
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO schema_migrations (version)
+VALUES ('001_create_migration_tracking.sql');
 

@@ -1,3 +1,12 @@
+/.env
 /config.php
 /.DS_Store
 *.orig
+*.rej
+/storage/*
+!/storage/.htaccess
+!/storage/.gitignore
+/uploads/
+/logs/
+/cache/
+/backups/

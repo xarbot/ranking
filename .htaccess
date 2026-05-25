@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteRule ^(?:database|lib|scripts|storage|uploads|logs|cache|backups)(?:/|$) - [F,L]
+
+<FilesMatch "^\.env$">
+  Require all denied
+</FilesMatch>

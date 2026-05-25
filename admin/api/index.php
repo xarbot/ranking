@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/lib/env.php';
 session_name('ranking_session');
 session_set_cookie_params([
     'httponly' => true,
@@ -36,22 +37,7 @@ function respond(array $payload, int $status = 200): never
 
 function connection(): PDO
 {
-    $configFile = dirname(__DIR__, 2) . '/config.php';
-    if (!is_file($configFile)) {
-        throw new RuntimeException('Falta configurar config.php en el servidor.');
-    }
-    $config = require $configFile;
-    $dsn = sprintf(
-        'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
-        $config['db_host'],
-        $config['db_port'],
-        $config['db_name']
-    );
-    return new PDO($dsn, $config['db_user'], $config['db_password'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
+    return databaseConnection(dirname(__DIR__, 2) . '/.env');
 }
 
 function input(): array
