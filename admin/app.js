@@ -58,7 +58,36 @@
   function editMark(id) { var x=byValue(state.marks,id), a=byValue(state.athletes,x.athleteId), e=byValue(state.events,x.eventId), c=byValue(state.cities,x.cityId);byId("mark-id").value=x.id;byId("mark-athlete").value=athleteLabel(a);byId("mark-area").value=e.area;renderEventSelect(e.id);byId("mark-city").value=cityLabel(c);byId("mark-date").value=x.date;byId("mark-result").value=x.result;byId("mark-track-name").value=x.trackName||"";byId("mark-technical-info").value=x.technicalInfo||"";byId("cancel-mark").classList.remove("hidden");updateCategory();switchPanel("marcas"); }
   function editUser(id) { var x=byValue(state.users,id);byId("user-id").value=x.id;byId("user-name").value=x.name;byId("user-username").value=x.username;byId("user-password").value="";byId("user-password").required=false;byId("user-active").checked=x.active;byId("cancel-user").classList.remove("hidden");switchPanel("usuarios"); }
 
-  function parseCsv(text) { var delimiter = (text.split("\n")[0].match(/;/g)||[]).length >= (text.split("\n")[0].match(/,/g)||[]).length ? ";" : ","; return text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean).map(function (line) { return line.split(delimiter).map(function (x) { return x.trim().replace(/^"|"$/g, ""); }); }); }
+  function parseCsv(text) {
+    var clean = text.replace(/^\uFEFF/, "");
+    var header = clean.split(/\r?\n/, 1)[0];
+    var delimiter = (header.match(/;/g) || []).length >= (header.match(/,/g) || []).length ? ";" : ",";
+    var rows = [], row = [], field = "", quoted = false;
+    for (var i = 0; i < clean.length; i += 1) {
+      var character = clean[i];
+      if (quoted) {
+        if (character === '"' && clean[i + 1] === '"') { field += '"'; i += 1; }
+        else if (character === '"') quoted = false;
+        else field += character;
+      } else if (character === '"') {
+        quoted = true;
+      } else if (character === delimiter) {
+        row.push(field.trim());
+        field = "";
+      } else if (character === "\n" || character === "\r") {
+        if (character === "\r" && clean[i + 1] === "\n") i += 1;
+        row.push(field.trim());
+        if (row.some(function (value) { return value !== ""; })) rows.push(row);
+        row = [];
+        field = "";
+      } else {
+        field += character;
+      }
+    }
+    row.push(field.trim());
+    if (row.some(function (value) { return value !== ""; })) rows.push(row);
+    return rows;
+  }
   function indexedRows(text) { var rows=parseCsv(text), keys=rows.shift().map(normalized); return rows.map(function(row){ var x={};keys.forEach(function(key,i){x[key]=row[i]||"";});return x;}); }
   function download(name, csv) { var link=document.createElement("a");link.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));link.download=name;link.click();URL.revokeObjectURL(link.href); }
   async function importAthletes(text) { var rows=indexedRows(text).map(function(x){return {name:x.nombre,surname:x.apellidos,birthdate:x["fecha de nacimiento"]||x.fecha_nacimiento,sex:normalized(x.sexo)==="femenino"?"femenino":"masculino"};});var out=await request("/athletes/import",{method:"POST",body:JSON.stringify({athletes:rows})});await refresh();status("athlete-import-status",out.imported+" atletas importados, "+out.duplicates+" duplicados y "+out.invalid+" no válidos.",out.invalid>0); }
