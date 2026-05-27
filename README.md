@@ -76,9 +76,11 @@ atletas que ya existian.
 Antes de importar resultados se selecciona el atleta al que corresponden todas las marcas,
 con acceso directo a su alta si aun no existe. La descarga de resultados es una plantilla
 `plantilla-resultados.xlsx` distribuible: incorpora desplegables dependientes para `Ambito`,
-`Grupo` y `Prueba`, y la lista de ciudades para escoger o buscar `Ciudad`. La persona que la
-rellena la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como
-CSV. El CSV no incluye el atleta y contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica
+`Grupo` y `Prueba`, y la lista de ciudades para escoger o buscar `Ciudad`. Esos cuatro campos
+tambien admiten escribir directamente un valor valido; si la version de Excel no autocompleta
+la lista, la pestaña `Ciudades` permite filtrar y copiar la ciudad. La persona que la rellena
+la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como CSV. El
+CSV no incluye el atleta y contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica
 tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`. La importacion comprueba prueba, ciudad y
 campos obligatorios antes de grabar ninguna marca.
 

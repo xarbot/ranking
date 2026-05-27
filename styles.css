@@ -22,13 +22,14 @@ body {
   font: 15px/1.45 "Segoe UI", Arial, sans-serif;
 }
 
-.topbar {
+.hero-actions {
   align-items: center;
   display: flex;
+  flex-basis: 100%;
   gap: 20px;
   justify-content: flex-end;
-  padding: 14px max(calc((100% - 1320px) / 2), 26px) 0;
 }
+.hero-actions .language-picker { color: #e1eee0; }
 .language-picker { align-items: center; display: flex; gap: 8px; }
 .language-picker select {
   height: 36px;
@@ -40,8 +41,10 @@ body {
   background: var(--primary-dark);
   color: white;
   display: flex;
-  gap: 40px;
+  column-gap: 40px;
+  flex-wrap: wrap;
   justify-content: space-between;
+  row-gap: 18px;
   padding: 34px max(calc((100% - 1320px) / 2), 26px) 38px;
 }
 
@@ -295,12 +298,11 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 @media (max-width: 960px) {
   .hero { align-items: stretch; flex-direction: column; }
   .stats { width: max-content; }
-  .user-session { justify-content: space-between; }
+  .hero-actions { justify-content: flex-start; }
   .entry-card { max-width: 520px; }
 }
 
 @media (max-width: 600px) {
-  .topbar,
   .hero, main { padding-left: 16px; padding-right: 16px; }
   .stats div { min-width: 82px; padding: 12px; }
   .tabs { overflow-x: auto; }
@@ -310,7 +312,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .row-actions { width: auto; }
 }
 .admin-link {
-  color: var(--primary);
+  color: #e1eee0;
   font-weight: 700;
   text-decoration: none;
 }

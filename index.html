@@ -4,21 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260527-1">
-    <script src="i18n.js?v=20260527-2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260527-2">
+    <script src="i18n.js?v=20260527-3" defer></script>
     <script src="app.js?v=20260525-6" defer></script>
   </head>
   <body>
-    <div class="topbar">
-      <label class="language-picker">
-        <span>Idioma</span>
-        <select id="language" aria-label="Idioma">
-          <option value="ca">Català</option>
-          <option value="es">Castellano</option>
-        </select>
-      </label>
-      <a class="admin-link" href="/admin/">Administracion</a>
-    </div>
     <header class="hero">
       <div class="hero-copy">
         <div class="brand">
@@ -31,6 +21,16 @@
         <div><strong id="count-athletes">0</strong><span>Atletas</span></div>
         <div><strong id="count-events">0</strong><span>Pruebas</span></div>
         <div><strong id="count-marks">0</strong><span>Marcas</span></div>
+      </div>
+      <div class="hero-actions">
+        <label class="language-picker">
+          <span>Idioma</span>
+          <select id="language" aria-label="Idioma">
+            <option value="ca">Català</option>
+            <option value="es">Castellano</option>
+          </select>
+        </label>
+        <a class="admin-link" href="/admin/">Administracion</a>
       </div>
     </header>
     <main>
@@ -113,6 +113,6 @@
         <div class="history-categories" id="history-categories"></div>
       </section>
     </main>
-    <footer><span>Versión en producción:</span> <strong>0.1</strong></footer>
+    <footer>v. 0.1</footer>
   </body>
 </html>

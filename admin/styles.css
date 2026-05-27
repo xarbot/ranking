@@ -42,8 +42,10 @@ body {
   background: var(--primary-dark);
   color: white;
   display: flex;
-  gap: 40px;
+  column-gap: 40px;
+  flex-wrap: wrap;
   justify-content: space-between;
+  row-gap: 18px;
   padding: 34px max(calc((100% - 1320px) / 2), 26px) 38px;
 }
 
@@ -139,6 +141,7 @@ h2 { font-size: 21px; margin: 0; }
   align-items: center;
   display: flex;
   flex-shrink: 0;
+  flex-basis: 100%;
   gap: 12px;
 }
 .user-session span { font-weight: 600; }
@@ -326,8 +329,6 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .hero { align-items: stretch; flex-direction: column; }
   .stats { width: max-content; }
   .user-session { justify-content: space-between; }
-  flex-wrap: wrap;
-  justify-content: flex-end;
   .entry-card { max-width: 520px; }
 }
 
