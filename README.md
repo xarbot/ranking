@@ -66,9 +66,12 @@ apellidos se almacenan capitalizados; al cargar la aplicacion se normalizan igua
 atletas que ya existian.
 
 Antes de importar resultados se selecciona el atleta al que corresponden todas las marcas,
-con acceso directo a su alta si aun no existe. La plantilla ya no incluye el atleta: contiene
-`Ambito`, `Grupo`, `Prueba`, `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`.
-La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
+con acceso directo a su alta si aun no existe. El preparador de resultados de la administracion
+permite anadir filas eligiendo `Ambito`, `Grupo` y `Prueba` mediante desplegables dependientes,
+y localizar `Ciudad` con autocompletado. Al terminar genera el CSV a importar, sin incluir el
+atleta, con `Ambito`, `Grupo`, `Prueba`, `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y
+`Pista`. La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna
+marca.
 
 ## Despliegue nginx
 
