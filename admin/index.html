@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
     <link rel="stylesheet" href="styles.css?v=20260527-7">
-    <script src="i18n.js?v=20260527-11" defer></script>
-    <script src="app.js?v=20260527-9" defer></script>
+    <script src="i18n.js?v=20260527-12" defer></script>
+    <script src="app.js?v=20260527-10" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -191,9 +191,20 @@
           <div class="card-title">
             <h2>Pruebas</h2>
           </div>
-          <p class="helper catalog-helper">Catálogo reglado de pruebas disponible para introducir marcas.</p>
+          <p class="helper catalog-helper">Puedes añadir pruebas nuevas y editar o eliminar las existentes.</p>
+          <form id="event-form" class="inline-form">
+            <input type="hidden" id="event-id">
+            <label>Ámbito<select id="event-area" required><option value="pista_cubierta">Pista Cubierta</option><option value="aire_libre">Aire Libre</option><option value="ruta">Ruta</option></select></label>
+            <label>Grupo<input id="event-group" required placeholder="Ej. Curses"></label>
+            <label>Prueba<input id="event-name" required></label>
+            <label>Mejor resultado<select id="event-direction" required><option value="lower">Marca mas baja</option><option value="higher">Marca mas alta</option></select></label>
+            <label class="checkbox-field"><input id="event-technical" type="checkbox"> Requiere característica técnica</label>
+            <button class="primary" type="submit">Guardar</button>
+            <button class="secondary hidden" id="cancel-event" type="button">Cancelar</button>
+          </form>
+          <p id="event-error" class="error" role="alert"></p>
           <div class="table-wrap">
-            <table><thead><tr><th>Ámbito / Grupo</th><th>Prueba</th><th>Mejor resultado</th><th>Dato técnico</th></tr></thead>
+            <table><thead><tr><th>Ámbito / Grupo</th><th>Prueba</th><th>Mejor resultado</th><th>Dato técnico</th><th></th></tr></thead>
               <tbody id="events-body"></tbody></table>
             <p id="events-empty" class="empty">No hay pruebas disponibles.</p>
           </div>

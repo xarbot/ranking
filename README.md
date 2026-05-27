@@ -48,13 +48,14 @@ El esquema contiene:
 
 ## Catalogo y clasificaciones
 
-Al abrir la gestion se crea el catalogo cerrado definido de `Pista Cubierta`, `Aire Libre` y
-`Ruta`, con sus grupos y pruebas. El apartado de pruebas es de consulta y no permite crear
-pruebas fuera del listado. Tanques y lanzamientos requieren el texto libre de caracteristica
-tecnica. En pista cubierta y aire libre se puede indicar ademas el nombre de la pista.
+La instalacion incluye un catalogo inicial de `Pista Cubierta`, `Aire Libre` y `Ruta`, con
+sus grupos y pruebas. Desde el apartado de pruebas se pueden anadir, editar y eliminar
+pruebas. Tanques y lanzamientos requieren el texto libre de caracteristica tecnica. En pista
+cubierta y aire libre se puede indicar ademas el nombre de la pista.
 
 Las clasificaciones separan sexo: `Sub8 - Masculino`, `Sub8 - Femenino`, etc. Desde los
-35 anos se generan tramos de cinco anos (`Master 35`, `Master 40`, ... `Master 100`),
+grupos Sub hasta Senior se asignan por el ano en que el atleta cumple la edad de cambio.
+Desde la fecha exacta en que cumple 35 anos se generan tramos de cinco anos (`Master 35`, `Master 40`, ... `Master 100`),
 tambien separados por sexo. En la consulta publica solo aparecen ambitos, grupos, pruebas y
 categorias que tienen marcas registradas; las pruebas se filtran de forma jerarquica por
 ambito y grupo. Las ultimas marcas muestran, cuando procede, caracteristica tecnica y nombre

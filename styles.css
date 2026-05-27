@@ -362,13 +362,31 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   font-size: 20px;
   margin: 0 0 16px;
 }
-.ranking-event + .ranking-event,
 .ranking-result + .ranking-result {
   border-top: 1px solid var(--line);
   margin-top: 18px;
   padding-top: 18px;
 }
-.ranking-event h4 {
+.ranking-cluster {
+  display: grid;
+  gap: 14px;
+}
+.ranking-cluster > h3 {
+  background: var(--primary);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 21px;
+  margin: 0;
+  padding: 12px 18px;
+}
+.ranking-cluster--curses > h3 { background: #306334; }
+.ranking-cluster--tanques > h3,
+.ranking-cluster--obstacles > h3 { background: #436f87; }
+.ranking-cluster--salts > h3 { background: #96733a; }
+.ranking-cluster--llancaments > h3 { background: #8b5143; }
+.ranking-cluster--marxa > h3 { background: #574d81; }
+.ranking-event-cards { display: grid; gap: 20px; }
+.ranking-event-card h4 {
   color: var(--primary);
   font-size: 18px;
   margin: 0 0 12px;
@@ -379,7 +397,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   font-weight: 700;
   margin: 0 0 10px;
 }
-.ranking-event .ranking-result + .ranking-result {
+.ranking-event-card .ranking-result + .ranking-result {
   margin-top: 14px;
   padding-top: 14px;
 }

@@ -9,7 +9,9 @@
   function groupLabel(group) { return t(normalized(group).replace("ç", "c") === "llancaments" ? "Llançaments" : group); }
   function eventLabel(event) { return t(areaLabel(event.area)) + " / " + groupLabel(event.eventGroup) + " / " + t(event.name || event.event || ""); }
   function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
-  function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
+  function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
+  function raceDistance(event) { var name = normalized(event.name || event.event).replace(",", "."), match; if (normalized(event.eventGroup) !== "curses") return null; if (name === "milla") return 1609; if (name.indexOf("mitja") === 0) return 21097; if (name === "marato") return 42195; match = /^(\d+(?:\.\d+)?)\s*(km)?/.exec(name); return match ? Number(match[1]) * (match[2] ? 1000 : 1) : null; }
+  function compareEvents(first, second) { var firstDistance = raceDistance(first), secondDistance = raceDistance(second); if (firstDistance !== null && secondDistance !== null) return firstDistance - secondDistance; return t(first.name || first.event).localeCompare(t(second.name || second.event)); }
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
@@ -64,7 +66,7 @@
     if (!areas.includes(area)) area = "";
     var groups = area ? unique(state.events.filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; })) : [];
     if (!groups.includes(group)) group = "";
-    var events = group ? state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }) : [];
+    var events = group ? state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents) : [];
     if (!events.some(function (event) { return String(event.id) === eventId; })) eventId = "";
     byId("area-filter").innerHTML = '<option value="">' + t("Todos los ámbitos") + '</option>' + areas.map(function (item) {
       return '<option value="' + item + '">' + escapeHtml(t(areaLabel(item))) + '</option>';
@@ -102,7 +104,7 @@
   function rankingKey(grouped) { return String(grouped.event.id) + "|" + (grouped.category || "all"); }
   function compareRankingGroups(first, second) {
     var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
-    return group || t(first.event.name).localeCompare(t(second.event.name)) ||
+    return group || compareEvents(first.event, second.event) ||
       categoryRank(first.category) - categoryRank(second.category) || String(first.category || "").localeCompare(String(second.category || ""));
   }
   function rankingTable(grouped, includeHeading) {
@@ -145,18 +147,18 @@
     byId("ranking-groups").innerHTML = cardKeys.map(function (cardKey) {
       var cardGroups = groups.filter(function (grouped) { return (group ? String(grouped.event.id) : grouped.event.eventGroup) === cardKey; });
       var cardTitle = group ? t(cardGroups[0].event.name) : groupLabel(cardKey);
-      var contents;
-      if (group) {
-        contents = cardGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("");
-      } else {
+      if (!group) {
         var eventIds = unique(cardGroups.map(function (grouped) { return String(grouped.event.id); }));
-        contents = eventIds.map(function (currentId) {
+        var tone = normalized(cardKey).replace(/[^a-z0-9]+/g, "-");
+        var eventCards = eventIds.map(function (currentId) {
           var eventGroups = cardGroups.filter(function (grouped) { return String(grouped.event.id) === currentId; });
           var currentEvent = eventGroups[0].event;
           var eventTitle = area ? t(currentEvent.name) : t(areaLabel(currentEvent.area)) + " / " + t(currentEvent.name);
-          return '<section class="ranking-event"><h4>' + escapeHtml(eventTitle) + '</h4>' + eventGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("") + '</section>';
+          return '<article class="card ranking-event-card"><h4>' + escapeHtml(eventTitle) + '</h4>' + eventGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("") + '</article>';
         }).join("");
+        return '<section class="ranking-cluster ranking-cluster--' + tone + '"><h3>' + escapeHtml(cardTitle) + '</h3><div class="ranking-event-cards">' + eventCards + '</div></section>';
       }
+      var contents = cardGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("");
       return '<article class="card ranking-group"><h3>' + escapeHtml(cardTitle) + '</h3>' + contents + '</article>';
     }).join("");
   }
