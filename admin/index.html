@@ -6,7 +6,7 @@
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
     <link rel="stylesheet" href="styles.css?v=20260527-4">
     <script src="i18n.js?v=20260527-4" defer></script>
-    <script src="app.js?v=20260527-3" defer></script>
+    <script src="app.js?v=20260527-4" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -104,19 +104,8 @@
                 <input id="mark-import-athlete" list="athlete-options" required placeholder="Buscar atleta...">
               </label>
               <button class="secondary add-athlete" id="add-import-athlete" type="button">Dar de alta este atleta</button>
-              <p class="helper bulk-helper">Prepara las filas con los desplegables y descarga el CSV para importarlo.</p>
-              <div class="import-actions"><button class="secondary" id="open-mark-template" type="button">Preparar plantilla de resultados</button><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
-              <section id="mark-template-builder" class="template-builder hidden">
-                <div class="template-actions">
-                  <h4>Plantilla de resultados</h4>
-                  <button class="secondary" id="add-template-row" type="button">Añadir fila</button>
-                </div>
-                <form id="mark-template-form">
-                  <div id="mark-template-rows" class="template-rows"></div>
-                  <button class="primary" id="download-mark-template" type="submit">Descargar CSV preparado</button>
-                </form>
-                <p id="mark-template-status" class="status hidden" role="status"></p>
-              </section>
+              <p class="helper bulk-helper">Descarga la plantilla Excel con desplegables, rellénala y guárdala como CSV para importarla.</p>
+              <div class="import-actions"><a class="file-button secondary" href="../assets/plantilla-resultados.xlsx?v=20260527-1" download="plantilla-resultados.xlsx">Descargar plantilla Excel</a><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
               <p id="mark-import-status" class="status hidden" role="status"></p>
             </section>
           </article>

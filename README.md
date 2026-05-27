@@ -66,12 +66,16 @@ apellidos se almacenan capitalizados; al cargar la aplicacion se normalizan igua
 atletas que ya existian.
 
 Antes de importar resultados se selecciona el atleta al que corresponden todas las marcas,
-con acceso directo a su alta si aun no existe. El preparador de resultados de la administracion
-permite anadir filas eligiendo `Ambito`, `Grupo` y `Prueba` mediante desplegables dependientes,
-y localizar `Ciudad` con autocompletado. Al terminar genera el CSV a importar, sin incluir el
-atleta, con `Ambito`, `Grupo`, `Prueba`, `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y
-`Pista`. La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna
-marca.
+con acceso directo a su alta si aun no existe. La descarga de resultados es una plantilla
+`plantilla-resultados.xlsx` distribuible: incorpora desplegables dependientes para `Ambito`,
+`Grupo` y `Prueba`, y la lista de ciudades para escoger o buscar `Ciudad`. La persona que la
+rellena la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como
+CSV. El CSV no incluye el atleta y contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica
+tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`. La importacion comprueba prueba, ciudad y
+campos obligatorios antes de grabar ninguna marca.
+
+La plantilla se regenera tras modificar el catalogo o las ciudades mediante
+`python3 scripts/generate_results_template.py`.
 
 ## Despliegue nginx
 
