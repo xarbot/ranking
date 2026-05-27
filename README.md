@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.6`
-- Version del repositorio: `0.6`
+- Version en produccion: `0.7`
+- Version del repositorio: `0.7`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -81,10 +81,10 @@ incorpora `Atleta` como primera columna, con el valor
 alta los que faltan indicando nombre, apellidos, fecha de nacimiento y sexo; si no se completa
 un alta, se omiten sus marcas.
 
-Cada flujo permite descargar una plantilla Microsoft Office (`.xlsx`) o una plantilla
-LibreOffice/OpenOffice (`.ods`). Ambas ofrecen `Ambito / Grupo` en una unica columna y un
-desplegable `Prueba` filtrado por la opcion anterior, ademas de las hojas auxiliares `Pruebas`
-y `Ciudades`. La persona que la rellena la devuelve en formato Excel; antes de importarla se
+Cada flujo permite descargar una plantilla Excel (`.xlsx`), compatible tambien con
+LibreOffice/OpenOffice. Ofrece `Ambito / Grupo` en una unica columna y un desplegable
+`Prueba` filtrado por la opcion anterior, ademas de las hojas auxiliares `Pruebas` y
+`Ciudades`. La persona que la rellena la devuelve en formato Excel; antes de importarla se
 guarda la hoja `Resultados` como CSV. El CSV individual contiene `Ambito / Grupo`, `Prueba`,
 `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`; el CSV multiatleta antepone
 `Atleta`. Se siguen admitiendo CSV anteriores con `Ambito` y `Grupo` separados. La fecha de
@@ -92,8 +92,7 @@ las marcas puede escribirse como `AAAA-MM-DD`, `AAAA/MM/DD`, `DD-MM-AAAA` o `DD/
 La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
 
 Las plantillas se regeneran tras modificar el catalogo o las ciudades mediante
-`php scripts/generate_results_template.php` y
-`php scripts/generate_results_template_ods.php`.
+`php scripts/generate_results_template.php`.
 
 ## Despliegue nginx
 
