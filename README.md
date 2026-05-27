@@ -1,9 +1,10 @@
 # Ranking de Atletismo
 
 Aplicacion de mejores marcas de atletismo con consulta publica en `/`, panel de gestion
-autenticado en `/admin/`, persistencia MySQL y categoria calculada por edad.
+autenticado en `/admin/`, persistencia MySQL y clasificacion calculada por edad y sexo.
 
-Tanto la consulta publica como el panel de gestion permiten alternar castellano y catalan.
+El idioma inicial es catalan. Tanto la consulta publica como la gestion permiten alternar
+castellano y catalan; los literales se pueden anadir, editar o retirar desde **Traducciones**.
 
 ## Requisitos
 
@@ -19,59 +20,60 @@ Crea las tablas solo en una base de datos nueva ya provisionada para la aplicaci
 mysql --user=ranking_app --password ranking_atletismo < database/init.sql
 ```
 
-La creacion de la base y del usuario MySQL se detalla en [`DEPLOY.md`](DEPLOY.md).
 Las instalaciones existentes se actualizan mediante los SQL incrementales de
-`database/migrations/`, ejecutados por `php scripts/migrate.php`.
+`database/migrations/`, ejecutados por `php scripts/migrate.php`. La migracion `003` infiere
+un sexo inicial para atletas existentes a partir del nombre; debe revisarse en el panel,
+porque la inferencia no puede ser exacta para todos los nombres.
 
 El esquema contiene:
 
-- `usuarios`: cuentas con contrasena cifrada para acceder a la gestion de datos.
-- `atletas`: nombre, apellidos y fecha de nacimiento.
-- `pistas`: instalaciones y localidad.
-- `pruebas`: catalogo de pruebas y criterio de ranking (`menor` para tiempos o `mayor` para saltos/lanzamientos).
-- `marcas`: atleta, prueba, pista, fecha, resultado y categoria, con claves foraneas.
+- `usuarios`: cuentas de gestion.
+- `atletas`: nombre, fecha de nacimiento y sexo (`masculino` o `femenino`).
+- `pruebas`: ambito, grupo, prueba, criterio de ranking y si exige caracteristica tecnica.
+- `ciudades`: catalogo para el autocompletado de localizacion.
+- `marcas`: atleta, prueba, ciudad, nombre opcional de pista, marca, dato tecnico y categoria.
+- `traducciones`: traduccion editable de los literales de la aplicacion.
+- `pistas`: tabla conservada unicamente para migrar marcas historicas.
+
+## Catalogo y clasificaciones
+
+Al abrir la gestion se crea el catalogo definido de `Pista Cubierta`, `Aire Libre` y `Ruta`,
+con sus grupos y pruebas. Tanques y lanzamientos requieren el texto libre de caracteristica
+tecnica. En pista cubierta y aire libre se puede indicar ademas el nombre de la pista.
+
+Las clasificaciones separan sexo: `Sub8 - Masculino`, `Sub8 - Femenino`, etc. Desde los
+35 anos se generan tramos de cinco anos (`Master 35`, `Master 40`, ... `Master 100`),
+tambien separados por sexo. En la consulta publica solo aparecen pruebas y categorias que
+tienen marcas registradas.
+
+## Ciudades
+
+El apartado **Pistas** se sustituye por **Ciudades**. `database/ciudades_es.csv` incluye los
+8.132 municipios de la relacion del INE a 1 de enero de 2026 (publicada el 4 de febrero de
+2026), obtenida del dataset CodeForSpain `ds-organizacion-administrativa`; se carga
+automaticamente la primera vez que se abre la gestion. El panel conserva una importacion CSV
+(`Ciudad`, `Provincia`) para actualizar el catalogo en el futuro. Las localidades de pistas
+historicas se trasladan automaticamente durante la migracion.
+
+## Cargas CSV
+
+La plantilla de atletas descargable incluye `Nombre`, `Apellidos`, `Fecha de nacimiento` y
+`Sexo`. Las fechas usan `AAAA-MM-DD` y el sexo es `masculino` o `femenino`.
+
+La plantilla de resultados incluye `Atleta`, `Ambito`, `Grupo`, `Prueba`, `Marca`, `Fecha`,
+`Ciudad`, `Pista` y `Caracteristica tecnica`. La importacion comprueba atleta, prueba,
+ciudad y campos obligatorios antes de grabar ninguna marca. Cuando un atleta no existe, el
+panel lo indica para darlo de alta con nacimiento y sexo y volver a cargar el fichero.
 
 ## Despliegue nginx
 
 1. Publica el repositorio en el `root` nginx; `/` sirve los listados y `/admin/` la gestion.
 2. Copia `.env.example` como `.env` en el directorio padre de la raiz publica.
 3. Edita `.env` con `DB_HOST`, `DB_NAME`, `DB_USER` y `DB_PASS` del servidor.
-4. Instala `deploy/nginx/ranking.conf.example` en el directorio de includes del virtual host y recarga nginx tras ejecutar `nginx -t`.
-5. Accede a `/admin/` para crear el primer usuario de gestion.
-
-La ruta `/` es publica y presenta primero las ultimas marcas introducidas. Al seleccionar un
-atleta muestra su historial completo, agrupado por categoria y prueba; dentro de cada prueba
-ordena de mejor a peor segun gane el resultado menor o mayor.
-Los desplegables permiten obtener rankings por prueba, por categoria o combinando ambas. Cada
-prueba presenta las 20 mejores marcas de atletas, ordenadas segun su criterio, y permite cargar
-20 resultados mas cuando existen. El nombre del atleta enlaza igualmente con su historial.
-La ruta `/admin/` requiere autenticacion para modificar datos y el criterio de cada prueba.
-La consulta utiliza `GET /api/public/marks`, `GET /api/public/ranking` y
-`GET /api/public/athletes/{id}/history`, que no devuelven usuarios ni fechas de nacimiento.
+4. Instala `deploy/nginx/ranking.conf.example`, recarga nginx tras ejecutar `nginx -t` y ejecuta las migraciones.
+5. Accede a `/admin/` para crear el primer usuario de gestion y registrar marcas.
 
 `.env` contiene credenciales y queda fuera del webroot. Las interfaces llaman a `api/...`;
 nginx redirige esas peticiones al controlador `api/index.php`.
 
-Para instalacion y actualizacion en produccion, sigue [`DEPLOY.md`](DEPLOY.md).
-
-## Uso
-
-1. Consulta los listados abiertos desde `/`; no exponen usuarios ni fechas de nacimiento.
-2. Inicia sesion desde `/admin/` con un usuario de gestion.
-3. Desde **Usuarios**, crea, edita, activa o desactiva las cuentas necesarias.
-4. Crea las pistas de atletismo.
-5. Registra atletas manualmente o importalos desde CSV usando la plantilla descargable.
-6. Define las pruebas y su criterio de ranking.
-7. Introduce marcas y revisalas desde el panel de gestion.
-
-La categoria se calcula en la API segun la edad cumplida del atleta en la fecha de la
-marca: `sub8`, `sub10`, `sub12`, `sub14`, `sub16`, `sub18`, `sub20`, `sub23`,
-`senior` (23 a 34 anos) y `master` (desde 35 anos).
-
-## Importacion de atletas
-
-El CSV puede estar separado por punto y coma o coma y debe incluir las columnas `Nombre`,
-`Apellidos` y `Fecha de nacimiento`. Las fechas admitidas son `AAAA-MM-DD` y `DD/MM/AAAA`.
-
-Los datos introducidos en versiones anteriores que usaban `localStorage` no se migran
-automaticamente a MySQL.
+Fuente del catalogo de municipios: <https://github.com/codeforspain/ds-organizacion-administrativa> (datos derivados del INE, consultado en mayo de 2026).

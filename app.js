@@ -5,7 +5,9 @@
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
-  function eventLabel(event) { return t(event.name); }
+  function areaLabel(area) { return { pista_cubierta: "Pista Cubierta", aire_libre: "Aire Libre", ruta: "Ruta" }[area] || area; }
+  function eventLabel(event) { return t(areaLabel(event.area)) + " / " + t(event.eventGroup) + " / " + t(event.name); }
+  function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
   function escapeHtml(value) {
     return String(value).replace(/[&<>"']/g, function (char) {
@@ -30,9 +32,12 @@
     return difference || String(second.date).localeCompare(String(first.date));
   }
   function categoryRank(category) {
-    var order = ["sub8", "sub10", "sub12", "sub14", "sub16", "sub18", "sub20", "sub23", "senior", "master"];
-    var position = order.indexOf(category);
-    return position === -1 ? order.length : position;
+    var names = ["Sub8", "Sub10", "Sub12", "Sub14", "Sub16", "Sub18", "Sub20", "Sub23", "Senior"];
+    var base = String(category).split(" - ")[0];
+    var position = names.indexOf(base);
+    if (position >= 0) return position;
+    var master = /Master (\d+)/.exec(base);
+    return master ? 10 + Number(master[1]) : 999;
   }
   function showError(message) {
     byId("public-error").textContent = t(message || "");
@@ -53,7 +58,7 @@
       }).join("");
     byId("category-filter").innerHTML = "<option value=\"\">" + t("Todas las categorias") + "</option>" +
       state.categories.map(function (item) {
-        return "<option value=\"" + item + "\">" + escapeHtml(item.toUpperCase()) + "</option>";
+        return "<option value=\"" + item + "\">" + escapeHtml(categoryLabel(item)) + "</option>";
       }).join("");
     byId("event-filter").value = eventId;
     byId("category-filter").value = category;
@@ -63,9 +68,9 @@
     byId("results-title").textContent = t("Ultimas marcas registradas");
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return "<tr><td><button class=\"athlete-button\" type=\"button\" data-athlete-id=\"" + mark.athleteId + "\">" +
-        escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(t(mark.event)) +
-        "</td><td>" + escapeHtml(mark.category) + "</td><td>" + escapeHtml(mark.result) + "</td><td>" +
-        formatDate(mark.date) + "</td><td>" + escapeHtml(mark.track) + "</td></tr>";
+        escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(eventLabel(mark)) +
+        "</td><td>" + escapeHtml(categoryLabel(mark.category)) + "</td><td>" + escapeHtml(mark.result) + "</td><td>" +
+        formatDate(mark.date) + "</td><td>" + escapeHtml(mark.city) + "</td></tr>";
     }).join("");
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
   }
@@ -75,27 +80,27 @@
     var eventId = byId("event-filter").value;
     var category = byId("category-filter").value;
     var event = state.events.find(function (item) { return String(item.id) === eventId; });
-    var title = event ? t(event.name) : category.toUpperCase();
-    if (event && category) title += " - " + category.toUpperCase();
+    var title = event ? eventLabel(event) : categoryLabel(category);
+    if (event && category) title += " - " + categoryLabel(category);
     byId("ranking-title").textContent = title;
     byId("ranking-empty").classList.toggle("hidden", state.ranking.groups.length > 0);
     byId("ranking-groups").innerHTML = state.ranking.groups.map(function (group) {
-      var key = String(group.event.id);
+      var key = String(group.event.id) + "|" + group.category;
       var visible = state.rankingVisible[key] || 20;
       var rows = group.marks.slice(0, visible).map(function (mark, index) {
         return "<tr><td>" + (index + 1) + "</td><td><button class=\"athlete-button\" type=\"button\" data-athlete-id=\"" +
-          mark.athleteId + "\">" + escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(t(mark.event)) +
-          "</td><td>" + escapeHtml(mark.category) + "</td><td><strong>" + escapeHtml(mark.result) +
-          "</strong></td><td>" + formatDate(mark.date) + "</td><td>" + escapeHtml(mark.track) + "</td></tr>";
+          mark.athleteId + "\">" + escapeHtml(mark.athlete) + "</button></td><td>" + escapeHtml(eventLabel(mark)) +
+          "</td><td>" + escapeHtml(categoryLabel(mark.category)) + "</td><td><strong>" + escapeHtml(mark.result) +
+          "</strong></td><td>" + formatDate(mark.date) + "</td><td>" + escapeHtml(mark.city) + "</td></tr>";
       }).join("");
       var more = visible < group.marks.length
         ? "<button class=\"ranking-more\" type=\"button\" data-more-event=\"" + key + "\" aria-label=\"" +
           escapeHtml(t("Mostrar 20 resultados mas")) + "\">+</button>"
         : "";
-      return "<article class=\"card ranking-group\"><h3>" + escapeHtml(t(group.event.name)) +
+      return "<article class=\"card ranking-group\"><h3>" + escapeHtml(eventLabel(group.event) + " - " + categoryLabel(group.category)) +
         "</h3><div class=\"table-wrap\"><table><thead><tr><th>#</th><th>" + t("Atleta") +
         "</th><th>" + t("Prueba") + "</th><th>" + t("Categoria") + "</th><th>" + t("Marca") +
-        "</th><th>" + t("Fecha") + "</th><th>" + t("Sitio") + "</th></tr></thead><tbody>" +
+        "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" +
         rows + "</tbody></table></div>" + more + "</article>";
     }).join("");
   }
@@ -110,8 +115,9 @@
     var grouped = Object.create(null);
     history.marks.forEach(function (mark) {
       if (!grouped[mark.category]) grouped[mark.category] = Object.create(null);
-      if (!grouped[mark.category][mark.event]) grouped[mark.category][mark.event] = [];
-      grouped[mark.category][mark.event].push(mark);
+      var event = eventLabel(mark);
+      if (!grouped[mark.category][event]) grouped[mark.category][event] = [];
+      grouped[mark.category][event].push(mark);
     });
     var categories = Object.keys(grouped).sort(function (first, second) {
       return categoryRank(first) - categoryRank(second) || first.localeCompare(second);
@@ -121,13 +127,13 @@
         return t(first).localeCompare(t(second));
       });
       return "<article class=\"card category-history\"><p class=\"eyebrow\">" + t("Categoria") + "</p><h3>" +
-        escapeHtml(category.toUpperCase()) + "</h3>" + events.map(function (event) {
+        escapeHtml(categoryLabel(category)) + "</h3>" + events.map(function (event) {
           var rows = grouped[category][event].slice().sort(compareHistory).map(function (mark) {
             return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong></td><td>" + formatDate(mark.date) +
-              "</td><td>" + escapeHtml(mark.track) + "</td></tr>";
+              "</td><td>" + escapeHtml(mark.city) + "</td></tr>";
           }).join("");
-          return "<section class=\"event-history\"><h4>" + escapeHtml(t(event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
-            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Sitio") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div></section>";
+          return "<section class=\"event-history\"><h4>" + escapeHtml(event) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
+            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div></section>";
         }).join("") + "</article>";
     }).join("");
     byId("history-empty").classList.toggle("hidden", history.marks.length > 0);
@@ -148,6 +154,7 @@
       var response = await fetch("/api/public/marks");
       var data = await response.json().catch(function () { return {}; });
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
+      if (window.RankingI18n.setManagedTranslations) window.RankingI18n.setManagedTranslations(data.translations || []);
       state = {
         events: data.events || [],
         categories: data.categories || [],

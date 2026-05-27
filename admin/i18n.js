@@ -4,6 +4,34 @@
   var STORAGE_KEY = "ranking-language";
   var dictionaries = {
     ca: {
+      "Ciudades": "Ciutats",
+      "Traducciones": "Traduccions",
+      "Ámbito": "Àmbit",
+      "Pista Cubierta": "Pista Coberta",
+      "Aire Libre": "Aire Lliure",
+      "Ruta": "Ruta",
+      "Ciudad": "Ciutat",
+      "Buscar ciudad...": "Cerca ciutat...",
+      "Nombre de la pista de atletismo (opcional)": "Nom de la pista d'atletisme (opcional)",
+      "Característica técnica (alçada tanques, pes artefacte, ...)": "Característica tècnica (alçada tanques, pes artefacte, ...)",
+      "Sexo": "Sexe",
+      "Femenino": "Femení",
+      "Master": "Màster",
+      "Senior": "Sènior",
+      "Masculino": "Masculí",
+      "Grupo": "Grup",
+      "Requiere característica técnica": "Requereix característica tècnica",
+      "Si": "Sí",
+      "No": "No",
+      "Ciudades españolas": "Ciutats espanyoles",
+      "Importar ciudades CSV": "Importa ciutats CSV",
+      "Provincia": "Província",
+      "Traducciones de literales": "Traduccions de literals",
+      "Literal": "Literal",
+      "Català": "Català",
+      "Castellano": "Castellà",
+      "Descargar plantilla de resultados": "Descarrega la plantilla de resultats",
+      "Importar resultados CSV": "Importa resultats CSV",
       "Ranking de Atletismo": "Rànquing d'Atletisme",
       "Idioma": "Idioma",
       "Castellano": "Castellà",
@@ -122,12 +150,13 @@
       "Minimo 8 caracteres": "Mínim 8 caràcters"
     }
   };
+  var managed = { ca: {}, es: {} };
   var storedText = new WeakMap();
   var storedAttributes = new WeakMap();
-  var language = localStorage.getItem(STORAGE_KEY) === "ca" ? "ca" : "es";
+  var language = localStorage.getItem(STORAGE_KEY) === "es" ? "es" : "ca";
 
   function t(value) {
-    return (dictionaries[language] && dictionaries[language][value]) || value;
+    return (managed[language] && managed[language][value]) || (dictionaries[language] && dictionaries[language][value]) || value;
   }
   function translateTextNode(node) {
     if (!storedText.has(node)) storedText.set(node, node.nodeValue);
@@ -156,7 +185,7 @@
     if (selector) selector.value = language;
   }
   function setLanguage(value) {
-    language = value === "ca" ? "ca" : "es";
+    language = value === "es" ? "es" : "ca";
     localStorage.setItem(STORAGE_KEY, language);
     apply(document.body);
     document.dispatchEvent(new CustomEvent("rankinglanguagechange"));
@@ -166,6 +195,12 @@
     apply: apply,
     language: function () { return language; },
     setLanguage: setLanguage,
+    setManagedTranslations: function (rows) {
+      managed = { ca: {}, es: {} };
+      (rows || []).forEach(function (row) { managed.ca[row.literal] = row.ca; managed.es[row.literal] = row.es; });
+      apply(document.body);
+      document.dispatchEvent(new CustomEvent("rankinglanguagechange"));
+    },
     t: t
   };
 

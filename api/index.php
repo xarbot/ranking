@@ -4,697 +4,102 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/env.php';
 
 session_name('ranking_session');
-session_set_cookie_params([
-    'httponly' => true,
-    'samesite' => 'Strict',
-    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-    'path' => '/',
-]);
+session_set_cookie_params(['httponly' => true, 'samesite' => 'Strict', 'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', 'path' => '/']);
 session_start();
 
-const USUAL_EVENTS = [
-    '60 m', '80 m', '100 m', '200 m', '300 m', '400 m', '600 m', '800 m',
-    '1.000 m', '1.500 m', '3.000 m', '5.000 m', '10.000 m', '60 m vallas',
-    '100 m vallas', '110 m vallas', '400 m vallas', '3.000 m obstaculos',
-    '4 x 100 m', '4 x 400 m', 'Altura', 'Longitud', 'Triple salto', 'Pertiga',
-    'Peso', 'Disco', 'Jabalina', 'Martillo', 'Decatlon', 'Heptatlon',
+const EVENT_AREAS = ['pista_cubierta', 'aire_libre', 'ruta'];
+const EVENT_CATALOGUE = [
+    'pista_cubierta' => [
+        'Curses' => ['60', '80', '100', '120', '150', '200', '300', '400', '600', '800', '1000', '1500', 'Milla', '2000', '3000', '5000', '10000'],
+        'Tanques' => ['60 mt', '80 mt', '100 mt', '110 mt', '220 mt', '300 mt', '400 mt'],
+        'Relleus' => ['4x60', '4x80', '4x100', '4x200', '4x300', '4x400', '3x600'],
+        'Obstacles' => ['1000 sense ria', '1500', '2000', '3000'],
+        'Salts' => ['Llargada', 'Triple', 'Alcada', 'Perxa'],
+        'Llancaments' => ['Pes', 'Disc', 'Javelina', 'Martell', 'Martell pesat'],
+        'Marxa' => ['1000', '2000', '3000', '5000', '10000'],
+    ],
+    'aire_libre' => [],
+    'ruta' => [
+        'Curses' => ['Milla', '5km', '10km', 'Mitja marato', 'Marato'],
+        'Marxa' => ['1km', '2km', '3km', '5km', '10km', 'Mitja marato', 'Marato'],
+    ],
 ];
 
-const HIGHER_RESULT_EVENTS = [
-    'Altura', 'Longitud', 'Triple salto', 'Pertiga', 'Peso', 'Disco', 'Jabalina', 'Martillo', 'Decatlon', 'Heptatlon',
-];
+final class ApiException extends RuntimeException { public function __construct(string $message, public readonly int $status = 400) { parent::__construct($message); } }
+function respond(array $payload, int $status = 200): never { http_response_code($status); header('Content-Type: application/json; charset=utf-8'); echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR); exit; }
+function connection(): PDO { return databaseConnection(dirname(__DIR__, 2) . '/.env'); }
+function execute(PDO $db, string $sql, array $parameters = []): PDOStatement { $statement = $db->prepare($sql); $statement->execute($parameters); return $statement; }
+function input(): array { $content = file_get_contents('php://input'); if (!$content) return []; try { $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR); } catch (JsonException) { throw new ApiException('La peticion contiene JSON no valido.'); } if (!is_array($data)) throw new ApiException('La peticion contiene JSON no valido.'); return $data; }
+function path(): string { $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: ''; $position = strpos($uri, '/api'); return $position === false ? '/' : (substr($uri, $position + 4) ?: '/'); }
+function requiredText(array $payload, string $key, string $label): string { $value = trim((string) ($payload[$key] ?? '')); if ($value === '') throw new ApiException("El campo {$label} es obligatorio."); return $value; }
+function optionalText(array $payload, string $key): ?string { $value = trim((string) ($payload[$key] ?? '')); return $value === '' ? null : $value; }
+function requiredId(array $payload, string $key, string $label): int { $id = filter_var($payload[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]); if (!$id) throw new ApiException("El campo {$label} no es valido."); return (int) $id; }
+function requiredDate(array $payload, string $key, string $label): string { $value = requiredText($payload, $key, $label); $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value); $errors = DateTimeImmutable::getLastErrors(); if (!$date || ($errors !== false && ($errors['warning_count'] || $errors['error_count'])) || $date->format('Y-m-d') !== $value) throw new ApiException("El campo {$label} debe tener formato AAAA-MM-DD."); if ($date > new DateTimeImmutable('today')) throw new ApiException("El campo {$label} no puede estar en el futuro."); return $value; }
+function requiredSex(array $payload): string { $sex = (string) ($payload['sex'] ?? ''); if (!in_array($sex, ['masculino', 'femenino'], true)) throw new ApiException('Indica el sexo del atleta.'); return $sex; }
+function requiredResult(array $payload): string { $value = requiredText($payload, 'result', 'marca'); $clean = preg_replace('/[^\d:.,]/', '', $value); if (!$clean || !preg_match('/^(?:\d+(?:[.,]\d+)?|(?:\d+:){1,2}\d+(?:[.,]\d+)?)$/', $clean)) throw new ApiException('Indica una marca numerica, por ejemplo 12.43 o 1:58.20.'); return $value; }
+function resultDirection(array $payload): string { $value = (string) ($payload['resultDirection'] ?? 'lower'); if (!in_array($value, ['lower', 'higher'], true)) throw new ApiException('Indica el criterio de ranking.'); return $value === 'higher' ? 'mayor' : 'menor'; }
+function eventArea(array $payload): string { $area = (string) ($payload['area'] ?? ''); if (!in_array($area, EVENT_AREAS, true)) throw new ApiException('Indica el ambito de la prueba.'); return $area; }
+function ensureExists(PDO $db, string $table, int $id): void { if (!execute($db, "SELECT id FROM {$table} WHERE id = ?", [$id])->fetch()) throw new ApiException('El registro no existe.', 404); }
+function comparableResult(string $result): float { $parts = array_map('floatval', explode(':', str_replace(',', '.', preg_replace('/[^\d:,.]/', '', $result) ?? ''))); return match (count($parts)) { 3 => $parts[0] * 3600 + $parts[1] * 60 + $parts[2], 2 => $parts[0] * 60 + $parts[1], default => $parts[0] }; }
+function categoryForDates(string $birthdate, string $date, string $sex): string { $birth = new DateTimeImmutable($birthdate); $performance = new DateTimeImmutable($date); if ($performance < $birth) throw new ApiException('La fecha de la marca no puede ser anterior al nacimiento.'); $age = $birth->diff($performance)->y; $base = match (true) { $age < 8 => 'Sub8', $age < 10 => 'Sub10', $age < 12 => 'Sub12', $age < 14 => 'Sub14', $age < 16 => 'Sub16', $age < 18 => 'Sub18', $age < 20 => 'Sub20', $age < 23 => 'Sub23', $age < 35 => 'Senior', default => 'Master ' . min(100, intdiv($age, 5) * 5) }; return $base . ' - ' . ($sex === 'femenino' ? 'Femenino' : 'Masculino'); }
+function currentUser(PDO $db): ?array { if (empty($_SESSION['user_id'])) return null; $user = execute($db, 'SELECT id, nombre AS name, usuario AS username, activo AS active FROM usuarios WHERE id = ? AND activo = 1', [(int) $_SESSION['user_id']])->fetch(); if (!$user) { unset($_SESSION['user_id']); return null; } $user['active'] = (bool) $user['active']; return $user; }
+function requireUser(PDO $db): array { $user = currentUser($db); if (!$user) throw new ApiException('Debes iniciar sesion para continuar.', 401); return $user; }
+function requiredUsername(array $payload): string { $username = strtolower(requiredText($payload, 'username', 'usuario')); if (!preg_match('/^[a-z0-9._-]{3,100}$/', $username)) throw new ApiException('El usuario no es valido.'); return $username; }
+function requiredPassword(array $payload, bool $optional = false): ?string { $password = (string) ($payload['password'] ?? ''); if ($optional && $password === '') return null; if (strlen($password) < 8) throw new ApiException('La contrasena debe tener al menos 8 caracteres.'); return $password; }
+function users(PDO $db): array { $rows = execute($db, 'SELECT id, nombre AS name, usuario AS username, activo AS active FROM usuarios ORDER BY nombre')->fetchAll(); foreach ($rows as &$row) $row['active'] = (bool) $row['active']; return $rows; }
+function createUser(PDO $db, array $payload, bool $force = false): int { execute($db, 'INSERT INTO usuarios (nombre, usuario, password_hash, activo) VALUES (?, ?, ?, ?)', [requiredText($payload, 'name', 'nombre'), requiredUsername($payload), password_hash((string) requiredPassword($payload), PASSWORD_DEFAULT), ($force || !array_key_exists('active', $payload) || $payload['active']) ? 1 : 0]); return (int) $db->lastInsertId(); }
+function updateUser(PDO $db, int $id, array $payload, array $actor): void { ensureExists($db, 'usuarios', $id); $active = !array_key_exists('active', $payload) || (bool) $payload['active']; if ($id === (int) $actor['id'] && !$active) throw new ApiException('No puedes desactivar tu propio usuario.'); $params = [requiredText($payload, 'name', 'nombre'), requiredUsername($payload), $active ? 1 : 0]; $sql = 'UPDATE usuarios SET nombre = ?, usuario = ?, activo = ?'; $password = requiredPassword($payload, true); if ($password !== null) { $sql .= ', password_hash = ?'; $params[] = password_hash($password, PASSWORD_DEFAULT); } $sql .= ' WHERE id = ?'; $params[] = $id; execute($db, $sql, $params); }
+function deleteUser(PDO $db, int $id, array $actor): void { if ($id === (int) $actor['id']) throw new ApiException('No puedes eliminar tu propio usuario.'); ensureExists($db, 'usuarios', $id); execute($db, 'DELETE FROM usuarios WHERE id = ?', [$id]); }
 
-final class ApiException extends RuntimeException
-{
-    public function __construct(string $message, public readonly int $status = 400)
-    {
-        parent::__construct($message);
+function seedCatalogue(PDO $db): void {
+    $catalogue = EVENT_CATALOGUE; $catalogue['aire_libre'] = $catalogue['pista_cubierta'];
+    $statement = $db->prepare('INSERT IGNORE INTO pruebas (nombre, ambito, grupo, sentido_resultado, informacion_adicional) VALUES (?, ?, ?, ?, ?)');
+    foreach ($catalogue as $area => $groups) foreach ($groups as $group => $names) foreach ($names as $name) {
+        $higher = in_array($group, ['Salts', 'Llancaments'], true); $extra = in_array($group, ['Tanques', 'Llancaments'], true);
+        $statement->execute([$name, $area, $group, $higher ? 'mayor' : 'menor', $extra ? 1 : 0]);
     }
 }
+function events(PDO $db, bool $onlyWithMarks = false): array { $join = $onlyWithMarks ? ' JOIN marcas m ON m.prueba_id = p.id' : ''; return execute($db, "SELECT DISTINCT p.id, p.nombre AS name, p.ambito AS area, p.grupo AS eventGroup, p.informacion_adicional AS requiresTechnicalInfo, CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection FROM pruebas p{$join} ORDER BY FIELD(p.ambito, 'pista_cubierta', 'aire_libre', 'ruta'), p.grupo, p.nombre")->fetchAll(); }
+function seedCities(PDO $db): void { if ((int) execute($db, 'SELECT COUNT(*) FROM ciudades')->fetchColumn() >= 8000) return; $handle = fopen(dirname(__DIR__) . '/database/ciudades_es.csv', 'rb'); if (!$handle) throw new RuntimeException('No se encuentra el catalogo de ciudades.'); fgetcsv($handle, separator: ';'); $statement = $db->prepare('INSERT IGNORE INTO ciudades (nombre, provincia) VALUES (?, ?)'); while (($row = fgetcsv($handle, separator: ';')) !== false) { if (count($row) >= 2 && trim($row[0]) !== '') $statement->execute([trim($row[0]), trim($row[1])]); } fclose($handle); }
+function cities(PDO $db): array { return execute($db, 'SELECT id, nombre AS name, provincia AS province FROM ciudades ORDER BY nombre, provincia')->fetchAll(); }
+function translations(PDO $db): array { return execute($db, 'SELECT id, literal AS literal, castellano AS es, catalan AS ca FROM traducciones ORDER BY literal')->fetchAll(); }
+function locationSql(): string { return "CONCAT(COALESCE(c.nombre, t.localidad, ''), CASE WHEN COALESCE(m.nombre_pista, t.nombre, '') = '' THEN '' ELSE CONCAT(' - ', COALESCE(m.nombre_pista, t.nombre)) END)"; }
+function marksSelect(): string { return "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, m.ciudad_id AS cityId, m.nombre_pista AS trackName, m.caracteristica_tecnica AS technicalInfo, DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date, m.resultado AS result, m.categoria AS category FROM marcas m"; }
+function bootstrap(PDO $db): array { seedCatalogue($db); seedCities($db); $athletes = execute($db, "SELECT id, nombre AS name, apellidos AS surname, DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS birthdate, sexo AS sex FROM atletas ORDER BY apellidos, nombre")->fetchAll(); $events = events($db); $cities = cities($db); $marks = execute($db, marksSelect() . ' ORDER BY m.fecha DESC, m.id DESC')->fetchAll(); $users = users($db); $translations = translations($db); return compact('athletes', 'events', 'cities', 'marks', 'users', 'translations'); }
+function publicMarks(PDO $db): array { $events = events($db, true); $athletes = execute($db, "SELECT DISTINCT a.id, CONCAT(a.nombre, ' ', a.apellidos) AS name FROM atletas a JOIN marcas m ON m.atleta_id = a.id ORDER BY a.apellidos, a.nombre")->fetchAll(); $categories = execute($db, 'SELECT DISTINCT categoria FROM marcas ORDER BY categoria')->fetchAll(PDO::FETCH_COLUMN); $location = locationSql(); $marks = execute($db, "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete, p.nombre AS event, p.ambito AS area, p.grupo AS eventGroup, CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection, m.resultado AS result, m.categoria AS category, DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date, {$location} AS city FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id ORDER BY m.creado_en DESC, m.id DESC LIMIT 30")->fetchAll(); $total = (int) execute($db, 'SELECT COUNT(*) FROM marcas')->fetchColumn(); return ['events' => $events, 'athletes' => $athletes, 'categories' => $categories, 'marks' => $marks, 'translations' => translations($db), 'counts' => ['athletes' => count($athletes), 'events' => count($events), 'marks' => $total]]; }
+function publicRanking(PDO $db, ?int $eventId, ?string $category): array { if ($eventId === null && $category === null) throw new ApiException('Selecciona una prueba o una categoria.'); $filters=[]; $params=[]; if ($eventId !== null) { $filters[]='m.prueba_id = ?'; $params[]=$eventId; } if ($category !== null) { $filters[]='m.categoria = ?'; $params[]=$category; } $location=locationSql(); $rows=execute($db, "SELECT m.atleta_id AS athleteId,m.prueba_id AS eventId,CONCAT(a.nombre,' ',a.apellidos) AS athlete,p.nombre AS event,p.ambito AS area,p.grupo AS eventGroup,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,DATE_FORMAT(m.fecha,'%Y-%m-%d') AS date,{$location} AS city FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id WHERE ".implode(' AND ', $filters),$params)->fetchAll(); $grouped=[]; foreach($rows as $row){$row['_value']=comparableResult($row['result']);$key=$row['eventId'].'|'.$row['category'];$athlete=(string)$row['athleteId'];if(!isset($grouped[$key]))$grouped[$key]=['event'=>['id'=>$row['eventId'],'name'=>$row['event'],'area'=>$row['area'],'eventGroup'=>$row['eventGroup']],'category'=>$row['category'],'marks'=>[]];$old=$grouped[$key]['marks'][$athlete]??null;if(!$old || ($row['resultDirection']==='higher' ? $row['_value']>$old['_value'] : $row['_value']<$old['_value']))$grouped[$key]['marks'][$athlete]=$row;} $groups=array_values($grouped); foreach($groups as &$group){$group['marks']=array_values($group['marks']);usort($group['marks'],static fn($a,$b)=>$a['resultDirection']==='higher'?($b['_value']<=>$a['_value']):($a['_value']<=>$b['_value']));foreach($group['marks'] as &$mark)unset($mark['_value']);} return compact('eventId','category','groups'); }
+function publicHistory(PDO $db, int $id): array { $athlete=execute($db,"SELECT id, CONCAT(nombre,' ',apellidos) AS name FROM atletas WHERE id = ?",[$id])->fetch(); if(!$athlete)throw new ApiException('El atleta indicado no existe.',404);$location=locationSql();$marks=execute($db,"SELECT p.nombre AS event,p.ambito AS area,p.grupo AS eventGroup,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,DATE_FORMAT(m.fecha,'%Y-%m-%d') AS date,{$location} AS city FROM marcas m JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id WHERE m.atleta_id=? ORDER BY m.fecha DESC",[$id])->fetchAll();return compact('athlete','marks'); }
 
-function respond(array $payload, int $status = 200): never
-{
-    http_response_code($status);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-    exit;
-}
+function writeAthlete(PDO $db, array $payload, ?int $id = null): void { $values=[requiredText($payload,'name','nombre'),requiredText($payload,'surname','apellidos'),requiredDate($payload,'birthdate','fecha de nacimiento'),requiredSex($payload)]; if($id===null){execute($db,'INSERT INTO atletas (nombre, apellidos, fecha_nacimiento, sexo) VALUES (?, ?, ?, ?)', $values);return;} ensureExists($db,'atletas',$id);$values[]=$id;execute($db,'UPDATE atletas SET nombre=?, apellidos=?, fecha_nacimiento=?, sexo=? WHERE id=?',$values); foreach(execute($db,'SELECT id, fecha FROM marcas WHERE atleta_id=?',[$id])->fetchAll() as $mark) execute($db,'UPDATE marcas SET categoria=? WHERE id=?',[categoryForDates($payload['birthdate'],$mark['fecha'],$payload['sex']),$mark['id']]); }
+function writeEvent(PDO $db, array $payload, ?int $id = null): void { $values=[requiredText($payload,'name','prueba'),eventArea($payload),requiredText($payload,'eventGroup','grupo'),resultDirection($payload),!empty($payload['requiresTechnicalInfo'])?1:0]; if($id===null){execute($db,'INSERT INTO pruebas (nombre, ambito, grupo, sentido_resultado, informacion_adicional) VALUES (?, ?, ?, ?, ?)',$values);return;} ensureExists($db,'pruebas',$id);$values[]=$id;execute($db,'UPDATE pruebas SET nombre=?, ambito=?, grupo=?, sentido_resultado=?, informacion_adicional=? WHERE id=?',$values); }
+function markPayload(PDO $db, array $payload): array { $athleteId=requiredId($payload,'athleteId','atleta');$eventId=requiredId($payload,'eventId','prueba');$cityId=requiredId($payload,'cityId','ciudad');$date=requiredDate($payload,'date','fecha');$athlete=execute($db,'SELECT fecha_nacimiento, sexo FROM atletas WHERE id=?',[$athleteId])->fetch();$event=execute($db,'SELECT informacion_adicional, ambito FROM pruebas WHERE id=?',[$eventId])->fetch();if(!$athlete||!$event)throw new ApiException('El atleta o prueba no existe.');ensureExists($db,'ciudades',$cityId);$technical=optionalText($payload,'technicalInfo');if((bool)$event['informacion_adicional']&&!$technical)throw new ApiException('La caracteristica tecnica es obligatoria para esta prueba.');$track=in_array($event['ambito'],['pista_cubierta','aire_libre'],true)?optionalText($payload,'trackName'):null;return [$athleteId,$eventId,$cityId,$track,$date,requiredResult($payload),$technical,categoryForDates($athlete['fecha_nacimiento'],$date,$athlete['sexo'])]; }
+function writeMark(PDO $db, array $payload, ?int $id=null): void { $values=markPayload($db,$payload); if($id===null){execute($db,'INSERT INTO marcas (atleta_id,prueba_id,ciudad_id,nombre_pista,fecha,resultado,caracteristica_tecnica,categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',$values);return;}ensureExists($db,'marcas',$id);$values[]=$id;execute($db,'UPDATE marcas SET atleta_id=?,prueba_id=?,ciudad_id=?,nombre_pista=?,fecha=?,resultado=?,caracteristica_tecnica=?,categoria=? WHERE id=?',$values); }
+function importAthletes(PDO $db, array $payload): array { $rows=$payload['athletes']??null;if(!is_array($rows))throw new ApiException('No se han recibido atletas.');$imported=$duplicates=$invalid=0;foreach($rows as $row){try{writeAthlete($db,$row);$imported++;}catch(PDOException $e){if($e->getCode()==='23000')$duplicates++;else throw $e;}catch(ApiException){$invalid++;}}return compact('imported','duplicates','invalid'); }
+function importCities(PDO $db,array $payload): array{$rows=$payload['cities']??null;if(!is_array($rows))throw new ApiException('No se han recibido ciudades.');$count=0;$s=$db->prepare('INSERT IGNORE INTO ciudades (nombre, provincia) VALUES (?, ?)');foreach($rows as $row){if(!is_array($row)||trim((string)($row['name']??''))==='')continue;$s->execute([trim($row['name']),trim((string)($row['province']??''))]);$count+=$s->rowCount();}return ['imported'=>$count];}
+function importMarks(PDO $db,array $payload): array{$rows=$payload['marks']??null;if(!is_array($rows))throw new ApiException('No se han recibido marcas.');$errors=[];$valid=[];foreach($rows as $index=>$row){try{if(!is_array($row))throw new ApiException('Fila no valida.');$valid[]=$row;markPayload($db,$row);}catch(ApiException $e){$errors[]=['row'=>$index+2,'error'=>$e->getMessage()];}}if($errors)return ['imported'=>0,'errors'=>$errors];foreach($valid as $row)writeMark($db,$row);return ['imported'=>count($valid),'errors'=>[]];}
+function writeTranslation(PDO $db,array $payload,?int $id=null):void{$values=[requiredText($payload,'literal','literal'),requiredText($payload,'es','castellano'),requiredText($payload,'ca','catalan')];if($id===null){execute($db,'INSERT INTO traducciones (literal,castellano,catalan) VALUES (?, ?, ?)',$values);return;}ensureExists($db,'traducciones',$id);$values[]=$id;execute($db,'UPDATE traducciones SET literal=?,castellano=?,catalan=? WHERE id=?',$values);}
 
-function connection(): PDO
-{
-    return databaseConnection(dirname(__DIR__, 2) . '/.env');
+function route(PDO $db,string $method,string $path,array $payload): array {
+ if($method==='GET'&&$path==='/auth/status'){return [['setupRequired'=>(int)execute($db,'SELECT COUNT(*) FROM usuarios')->fetchColumn()===0,'user'=>currentUser($db)],200];}
+ if($method==='POST'&&$path==='/auth/setup'){if((int)execute($db,'SELECT COUNT(*) FROM usuarios')->fetchColumn()!==0)throw new ApiException('La configuracion inicial ya se ha realizado.',409);$_SESSION['user_id']=createUser($db,$payload,true);session_regenerate_id(true);return [['user'=>currentUser($db)],201];}
+ if($method==='POST'&&$path==='/auth/login'){$user=execute($db,'SELECT id,password_hash,activo FROM usuarios WHERE usuario=?',[requiredUsername($payload)])->fetch();if(!$user||!(bool)$user['activo']||!password_verify((string)($payload['password']??''),$user['password_hash']))throw new ApiException('Usuario o contrasena incorrectos.',401);$_SESSION['user_id']=(int)$user['id'];session_regenerate_id(true);return [['user'=>currentUser($db)],200];}
+ if($method==='POST'&&$path==='/auth/logout'){unset($_SESSION['user_id']);return [['ok'=>true],200];}
+ if($method==='GET'&&$path==='/public/translations')return [['translations'=>translations($db)],200];
+ if($method==='GET'&&$path==='/public/marks')return [publicMarks($db),200];
+ if($method==='GET'&&$path==='/public/ranking'){$raw=trim((string)($_GET['eventId']??''));$id=$raw===''?null:filter_var($raw,FILTER_VALIDATE_INT);return [publicRanking($db,$id?(int)$id:null,trim((string)($_GET['category']??''))?:null),200];}
+ if($method==='GET'&&preg_match('#^/public/athletes/(\d+)/history$#',$path,$m))return [publicHistory($db,(int)$m[1]),200];
+ $actor=requireUser($db);
+ if($method==='GET'&&$path==='/bootstrap')return [bootstrap($db),200];
+ if($method==='POST'&&$path==='/events/seed'){seedCatalogue($db);return [['ok'=>true],201];}
+ if($method==='POST'&&$path==='/athletes/import')return [importAthletes($db,$payload),200];
+ if($method==='POST'&&$path==='/cities/import')return [importCities($db,$payload),200];
+ if($method==='POST'&&$path==='/marks/import')return [importMarks($db,$payload),200];
+ if($method==='POST'&&$path==='/users'){createUser($db,$payload);return [['ok'=>true],201];}
+ if($method==='POST'&&$path==='/athletes'){writeAthlete($db,$payload);return [['ok'=>true],201];}
+ if($method==='POST'&&$path==='/events'){writeEvent($db,$payload);return [['ok'=>true],201];}
+ if($method==='POST'&&$path==='/marks'){writeMark($db,$payload);return [['ok'=>true],201];}
+ if($method==='POST'&&$path==='/translations'){writeTranslation($db,$payload);return [['ok'=>true],201];}
+ if(preg_match('#^/(users|athletes|events|marks|translations)/(\d+)$#',$path,$m)){$resource=$m[1];$id=(int)$m[2];if($method==='PUT'){if($resource==='users')updateUser($db,$id,$payload,$actor);elseif($resource==='athletes')writeAthlete($db,$payload,$id);elseif($resource==='events')writeEvent($db,$payload,$id);elseif($resource==='marks')writeMark($db,$payload,$id);else writeTranslation($db,$payload,$id);return [['ok'=>true],200];}if($method==='DELETE'){if($resource==='users'){deleteUser($db,$id,$actor);}else{$table=['athletes'=>'atletas','events'=>'pruebas','marks'=>'marcas','translations'=>'traducciones'][$resource];ensureExists($db,$table,$id);execute($db,"DELETE FROM {$table} WHERE id=?",[$id]);}return [['ok'=>true],200];}}
+ throw new ApiException('Ruta no encontrada.',404);
 }
-
-function input(): array
-{
-    $content = file_get_contents('php://input');
-    if ($content === '' || $content === false) {
-        return [];
-    }
-    try {
-        $value = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
-    } catch (JsonException) {
-        throw new ApiException('La peticion contiene JSON no valido.');
-    }
-    if (!is_array($value)) {
-        throw new ApiException('La peticion contiene JSON no valido.');
-    }
-    return $value;
-}
-
-function path(): string
-{
-    $uriPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '';
-    $position = strpos($uriPath, '/api');
-    if ($position === false) {
-        return '/';
-    }
-    $apiPath = substr($uriPath, $position + 4);
-    return $apiPath === '' ? '/' : $apiPath;
-}
-
-function requiredText(array $payload, string $key, string $label): string
-{
-    $value = trim((string) ($payload[$key] ?? ''));
-    if ($value === '') {
-        throw new ApiException("El campo {$label} es obligatorio.");
-    }
-    return $value;
-}
-
-function requiredDate(array $payload, string $key, string $label): string
-{
-    $value = requiredText($payload, $key, $label);
-    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-    $errors = DateTimeImmutable::getLastErrors();
-    if (!$date || ($errors !== false && ($errors['warning_count'] || $errors['error_count'])) ||
-        $date->format('Y-m-d') !== $value) {
-        throw new ApiException("El campo {$label} debe tener formato AAAA-MM-DD.");
-    }
-    if ($date > new DateTimeImmutable('today')) {
-        throw new ApiException("El campo {$label} no puede estar en el futuro.");
-    }
-    return $value;
-}
-
-function requiredId(array $payload, string $key, string $label): int
-{
-    $id = filter_var($payload[$key] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-    if (!$id) {
-        throw new ApiException("El campo {$label} no es valido.");
-    }
-    return $id;
-}
-
-function requiredResult(array $payload): string
-{
-    $result = requiredText($payload, 'result', 'resultado');
-    $clean = preg_replace('/[^\d:.,]/', '', $result);
-    if (!$clean || !preg_match('/^(?:\d+(?:[.,]\d+)?|(?:\d+:){1,2}\d+(?:[.,]\d+)?)$/', $clean)) {
-        throw new ApiException('Indica una marca numerica, por ejemplo 12.43 o 1:58.20.');
-    }
-    return $result;
-}
-
-function requiredResultDirection(array $payload): string
-{
-    $direction = (string) ($payload['resultDirection'] ?? '');
-    if (!in_array($direction, ['lower', 'higher'], true)) {
-        throw new ApiException('Indica si en la prueba gana la marca menor o la mayor.');
-    }
-    return $direction;
-}
-
-function storedResultDirection(string $direction): string
-{
-    return $direction === 'higher' ? 'mayor' : 'menor';
-}
-
-function usualResultDirection(string $event): string
-{
-    return in_array($event, HIGHER_RESULT_EVENTS, true) ? 'higher' : 'lower';
-}
-
-function comparableResult(string $result): float
-{
-    $clean = str_replace(',', '.', preg_replace('/[^\d:,.]/', '', $result) ?? '');
-    $chunks = array_map('floatval', explode(':', $clean));
-    return match (count($chunks)) {
-        3 => $chunks[0] * 3600 + $chunks[1] * 60 + $chunks[2],
-        2 => $chunks[0] * 60 + $chunks[1],
-        default => $chunks[0],
-    };
-}
-
-function categoryForDates(string $birthdate, string $performanceDate): string
-{
-    $birth = new DateTimeImmutable($birthdate);
-    $performance = new DateTimeImmutable($performanceDate);
-    if ($performance < $birth) {
-        throw new ApiException('La fecha de la marca no puede ser anterior al nacimiento.');
-    }
-    $age = $birth->diff($performance)->y;
-    foreach ([
-        8 => 'sub8', 10 => 'sub10', 12 => 'sub12', 14 => 'sub14',
-        16 => 'sub16', 18 => 'sub18', 20 => 'sub20', 23 => 'sub23',
-        35 => 'senior',
-    ] as $limit => $category) {
-        if ($age < $limit) {
-            return $category;
-        }
-    }
-    return 'master';
-}
-
-function execute(PDO $db, string $sql, array $parameters = []): PDOStatement
-{
-    $statement = $db->prepare($sql);
-    $statement->execute($parameters);
-    return $statement;
-}
-
-function requiredUsername(array $payload): string
-{
-    $username = strtolower(requiredText($payload, 'username', 'usuario'));
-    if (!preg_match('/^[a-z0-9._-]{3,100}$/', $username)) {
-        throw new ApiException('El usuario debe tener al menos 3 caracteres y solo usar letras, numeros, punto, guion o guion bajo.');
-    }
-    return $username;
-}
-
-function requiredPassword(array $payload, bool $optional = false): ?string
-{
-    $password = (string) ($payload['password'] ?? '');
-    if ($optional && $password === '') {
-        return null;
-    }
-    if (strlen($password) < 8) {
-        throw new ApiException('La contrasena debe tener al menos 8 caracteres.');
-    }
-    return $password;
-}
-
-function currentUser(PDO $db): ?array
-{
-    if (empty($_SESSION['user_id'])) {
-        return null;
-    }
-    $user = execute(
-        $db,
-        'SELECT id, nombre AS name, usuario AS username, activo AS active FROM usuarios WHERE id = ? AND activo = 1',
-        [(int) $_SESSION['user_id']]
-    )->fetch();
-    if (!$user) {
-        unset($_SESSION['user_id']);
-        return null;
-    }
-    $user['active'] = (bool) $user['active'];
-    return $user;
-}
-
-function requireUser(PDO $db): array
-{
-    $user = currentUser($db);
-    if (!$user) {
-        throw new ApiException('Debes iniciar sesion para continuar.', 401);
-    }
-    return $user;
-}
-
-function users(PDO $db): array
-{
-    $rows = execute(
-        $db,
-        'SELECT id, nombre AS name, usuario AS username, activo AS active FROM usuarios ORDER BY nombre, usuario'
-    )->fetchAll();
-    return array_map(static function (array $user): array {
-        $user['active'] = (bool) $user['active'];
-        return $user;
-    }, $rows);
-}
-
-function createUser(PDO $db, array $payload, bool $forceActive = false): int
-{
-    $active = $forceActive || !array_key_exists('active', $payload) || (bool) $payload['active'];
-    execute($db, 'INSERT INTO usuarios (nombre, usuario, password_hash, activo) VALUES (?, ?, ?, ?)', [
-        requiredText($payload, 'name', 'nombre'),
-        requiredUsername($payload),
-        password_hash(requiredPassword($payload), PASSWORD_DEFAULT),
-        $active ? 1 : 0,
-    ]);
-    return (int) $db->lastInsertId();
-}
-
-function updateUser(PDO $db, int $id, array $payload, array $actor): void
-{
-    ensureExists($db, 'usuarios', $id);
-    $active = !array_key_exists('active', $payload) || (bool) $payload['active'];
-    if ($id === (int) $actor['id'] && !$active) {
-        throw new ApiException('No puedes desactivar tu propio usuario.');
-    }
-    $parameters = [requiredText($payload, 'name', 'nombre'), requiredUsername($payload), $active ? 1 : 0];
-    $sql = 'UPDATE usuarios SET nombre = ?, usuario = ?, activo = ?';
-    $password = requiredPassword($payload, true);
-    if ($password !== null) {
-        $sql .= ', password_hash = ?';
-        $parameters[] = password_hash($password, PASSWORD_DEFAULT);
-    }
-    $sql .= ' WHERE id = ?';
-    $parameters[] = $id;
-    execute($db, $sql, $parameters);
-}
-
-function deleteUser(PDO $db, int $id, array $actor): void
-{
-    if ($id === (int) $actor['id']) {
-        throw new ApiException('No puedes eliminar tu propio usuario.');
-    }
-    ensureExists($db, 'usuarios', $id);
-    $activeUsers = (int) execute($db, 'SELECT COUNT(*) AS total FROM usuarios WHERE activo = 1')->fetch()['total'];
-    $target = execute($db, 'SELECT activo FROM usuarios WHERE id = ?', [$id])->fetch();
-    if ($target && (bool) $target['activo'] && $activeUsers <= 1) {
-        throw new ApiException('Debe existir al menos un usuario activo.');
-    }
-    execute($db, 'DELETE FROM usuarios WHERE id = ?', [$id]);
-}
-
-function bootstrap(PDO $db): array
-{
-    $athletes = execute(
-        $db,
-        "SELECT id, nombre AS name, apellidos AS surname,
-         DATE_FORMAT(fecha_nacimiento, '%Y-%m-%d') AS birthdate
-         FROM atletas ORDER BY apellidos, nombre"
-    )->fetchAll();
-    $events = execute(
-        $db,
-        "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection FROM pruebas ORDER BY nombre"
-    )->fetchAll();
-    $tracks = execute(
-        $db,
-        'SELECT id, nombre AS name, localidad AS city FROM pistas ORDER BY nombre, localidad'
-    )->fetchAll();
-    $marks = execute(
-        $db,
-        "SELECT id, atleta_id AS athleteId, prueba_id AS eventId, pista_id AS trackId,
-         DATE_FORMAT(fecha, '%Y-%m-%d') AS date, resultado AS result, categoria AS category
-         FROM marcas ORDER BY fecha DESC, id DESC"
-    )->fetchAll();
-    $users = users($db);
-    return compact('athletes', 'events', 'tracks', 'marks', 'users');
-}
-
-function publicMarks(PDO $db): array
-{
-    $events = execute(
-        $db,
-        "SELECT id, nombre AS name, CASE sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection FROM pruebas ORDER BY nombre"
-    )->fetchAll();
-    $athletes = execute(
-        $db,
-        "SELECT DISTINCT a.id, CONCAT(a.nombre, ' ', a.apellidos) AS name
-         FROM atletas a JOIN marcas m ON m.atleta_id = a.id ORDER BY a.apellidos, a.nombre"
-    )->fetchAll();
-    $marks = execute(
-        $db,
-        "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
-         p.nombre AS event, CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,
-         m.resultado AS result, m.categoria AS category,
-         DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
-         CONCAT(t.nombre, ' - ', t.localidad) AS track
-         FROM marcas m
-         JOIN atletas a ON a.id = m.atleta_id
-         JOIN pruebas p ON p.id = m.prueba_id
-         JOIN pistas t ON t.id = m.pista_id
-         ORDER BY m.creado_en DESC, m.id DESC LIMIT 30"
-    )->fetchAll();
-    $totalMarks = (int) execute($db, 'SELECT COUNT(*) AS total FROM marcas')->fetch()['total'];
-    return [
-        'events' => $events,
-        'athletes' => $athletes,
-        'categories' => ['sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master'],
-        'marks' => $marks,
-        'counts' => ['athletes' => count($athletes), 'events' => count($events), 'marks' => $totalMarks],
-    ];
-}
-
-function publicRanking(PDO $db, ?int $eventId, ?string $category): array
-{
-    $categories = ['sub8', 'sub10', 'sub12', 'sub14', 'sub16', 'sub18', 'sub20', 'sub23', 'senior', 'master'];
-    if ($category !== null && !in_array($category, $categories, true)) {
-        throw new ApiException('La categoria indicada no existe.');
-    }
-    if ($eventId === null && $category === null) {
-        throw new ApiException('Selecciona una prueba o una categoria para consultar el ranking.');
-    }
-    $parameters = [];
-    $filters = [];
-    if ($eventId !== null) {
-        $filters[] = 'm.prueba_id = ?';
-        $parameters[] = $eventId;
-    }
-    if ($category !== null) {
-        $filters[] = 'm.categoria = ?';
-        $parameters[] = $category;
-    }
-    $marks = execute(
-        $db,
-        "SELECT m.id, m.atleta_id AS athleteId, m.prueba_id AS eventId, CONCAT(a.nombre, ' ', a.apellidos) AS athlete,
-         p.nombre AS event, CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,
-         m.resultado AS result, m.categoria AS category, DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
-         CONCAT(t.nombre, ' - ', t.localidad) AS track
-         FROM marcas m
-         JOIN atletas a ON a.id = m.atleta_id
-         JOIN pruebas p ON p.id = m.prueba_id
-         JOIN pistas t ON t.id = m.pista_id
-         WHERE " . implode(' AND ', $filters),
-        $parameters
-    )->fetchAll();
-    $grouped = [];
-    foreach ($marks as $mark) {
-        $mark['_value'] = comparableResult($mark['result']);
-        $eventKey = (string) $mark['eventId'];
-        $athleteKey = (string) $mark['athleteId'];
-        if (!isset($grouped[$eventKey])) {
-            $grouped[$eventKey] = [
-                'event' => [
-                    'id' => $mark['eventId'],
-                    'name' => $mark['event'],
-                    'resultDirection' => $mark['resultDirection'],
-                ],
-                'marks' => [],
-            ];
-        }
-        $better = !isset($grouped[$eventKey]['marks'][$athleteKey]) ||
-            ($mark['resultDirection'] === 'higher'
-                ? $mark['_value'] > $grouped[$eventKey]['marks'][$athleteKey]['_value']
-                : $mark['_value'] < $grouped[$eventKey]['marks'][$athleteKey]['_value']);
-        if ($better) {
-            $grouped[$eventKey]['marks'][$athleteKey] = $mark;
-        }
-    }
-    $groups = array_values($grouped);
-    usort($groups, static fn(array $first, array $second): int => strcasecmp($first['event']['name'], $second['event']['name']));
-    foreach ($groups as &$group) {
-        $group['marks'] = array_values($group['marks']);
-        usort($group['marks'], static function (array $first, array $second): int {
-            $result = $first['resultDirection'] === 'higher'
-                ? $second['_value'] <=> $first['_value']
-                : $first['_value'] <=> $second['_value'];
-            return $result !== 0 ? $result : strcasecmp($first['athlete'], $second['athlete']);
-        });
-        foreach ($group['marks'] as &$mark) {
-            unset($mark['_value']);
-        }
-        unset($mark);
-    }
-    unset($group);
-    return compact('eventId', 'category', 'groups');
-}
-
-function publicAthleteHistory(PDO $db, int $athleteId): array
-{
-    $athlete = execute(
-        $db,
-        "SELECT id, CONCAT(nombre, ' ', apellidos) AS name FROM atletas WHERE id = ?",
-        [$athleteId]
-    )->fetch();
-    if (!$athlete) {
-        throw new ApiException('El atleta indicado no existe.', 404);
-    }
-    $marks = execute(
-        $db,
-        "SELECT m.id, m.prueba_id AS eventId, p.nombre AS event,
-         CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,
-         m.resultado AS result, m.categoria AS category, DATE_FORMAT(m.fecha, '%Y-%m-%d') AS date,
-         CONCAT(t.nombre, ' - ', t.localidad) AS track
-         FROM marcas m
-         JOIN pruebas p ON p.id = m.prueba_id
-         JOIN pistas t ON t.id = m.pista_id
-         WHERE m.atleta_id = ?
-         ORDER BY m.categoria, p.nombre, m.fecha DESC, m.id DESC",
-        [$athleteId]
-    )->fetchAll();
-    return compact('athlete', 'marks');
-}
-
-function createItem(PDO $db, string $resource, array $payload): void
-{
-    if ($resource === 'athletes') {
-        execute($db, 'INSERT INTO atletas (nombre, apellidos, fecha_nacimiento) VALUES (?, ?, ?)', [
-            requiredText($payload, 'name', 'nombre'),
-            requiredText($payload, 'surname', 'apellidos'),
-            requiredDate($payload, 'birthdate', 'fecha de nacimiento'),
-        ]);
-    } elseif ($resource === 'events') {
-        execute($db, 'INSERT INTO pruebas (nombre, sentido_resultado) VALUES (?, ?)', [
-            requiredText($payload, 'name', 'prueba'),
-            storedResultDirection(requiredResultDirection($payload)),
-        ]);
-    } elseif ($resource === 'tracks') {
-        execute($db, 'INSERT INTO pistas (nombre, localidad) VALUES (?, ?)', [
-            requiredText($payload, 'name', 'pista'),
-            requiredText($payload, 'city', 'localidad'),
-        ]);
-    } else {
-        writeMark($db, $payload);
-    }
-}
-
-function ensureExists(PDO $db, string $table, int $id): void
-{
-    if (!execute($db, "SELECT id FROM {$table} WHERE id = ?", [$id])->fetch()) {
-        throw new ApiException('El registro no existe.', 404);
-    }
-}
-
-function updateItem(PDO $db, string $resource, int $id, array $payload): void
-{
-    if ($resource === 'athletes') {
-        ensureExists($db, 'atletas', $id);
-        $birthdate = requiredDate($payload, 'birthdate', 'fecha de nacimiento');
-        $firstDate = execute($db, 'SELECT MIN(fecha) AS first_date FROM marcas WHERE atleta_id = ?', [$id])
-            ->fetch()['first_date'];
-        if ($firstDate && $firstDate < $birthdate) {
-            throw new ApiException('La fecha de nacimiento es posterior a una marca del atleta.');
-        }
-        execute($db, 'UPDATE atletas SET nombre = ?, apellidos = ?, fecha_nacimiento = ? WHERE id = ?', [
-            requiredText($payload, 'name', 'nombre'),
-            requiredText($payload, 'surname', 'apellidos'),
-            $birthdate,
-            $id,
-        ]);
-        foreach (execute($db, 'SELECT id, fecha FROM marcas WHERE atleta_id = ?', [$id])->fetchAll() as $mark) {
-            execute($db, 'UPDATE marcas SET categoria = ? WHERE id = ?', [
-                categoryForDates($birthdate, $mark['fecha']),
-                $mark['id'],
-            ]);
-        }
-    } elseif ($resource === 'events') {
-        ensureExists($db, 'pruebas', $id);
-        execute($db, 'UPDATE pruebas SET nombre = ?, sentido_resultado = ? WHERE id = ?', [
-            requiredText($payload, 'name', 'prueba'), storedResultDirection(requiredResultDirection($payload)), $id,
-        ]);
-    } elseif ($resource === 'tracks') {
-        ensureExists($db, 'pistas', $id);
-        execute($db, 'UPDATE pistas SET nombre = ?, localidad = ? WHERE id = ?', [
-            requiredText($payload, 'name', 'pista'),
-            requiredText($payload, 'city', 'localidad'),
-            $id,
-        ]);
-    } else {
-        writeMark($db, $payload, $id);
-    }
-}
-
-function writeMark(PDO $db, array $payload, ?int $id = null): void
-{
-    $athleteId = requiredId($payload, 'athleteId', 'atleta');
-    $eventId = requiredId($payload, 'eventId', 'prueba');
-    $trackId = requiredId($payload, 'trackId', 'pista');
-    $performanceDate = requiredDate($payload, 'date', 'fecha');
-    $result = requiredResult($payload);
-    $athlete = execute($db, 'SELECT fecha_nacimiento FROM atletas WHERE id = ?', [$athleteId])->fetch();
-    if (!$athlete) {
-        throw new ApiException('El atleta indicado no existe.');
-    }
-    ensureExists($db, 'pruebas', $eventId);
-    ensureExists($db, 'pistas', $trackId);
-    $category = categoryForDates($athlete['fecha_nacimiento'], $performanceDate);
-    if ($id === null) {
-        execute(
-            $db,
-            'INSERT INTO marcas (atleta_id, prueba_id, pista_id, fecha, resultado, categoria) VALUES (?, ?, ?, ?, ?, ?)',
-            [$athleteId, $eventId, $trackId, $performanceDate, $result, $category]
-        );
-    } else {
-        ensureExists($db, 'marcas', $id);
-        execute(
-            $db,
-            'UPDATE marcas SET atleta_id = ?, prueba_id = ?, pista_id = ?, fecha = ?, resultado = ?, categoria = ? WHERE id = ?',
-            [$athleteId, $eventId, $trackId, $performanceDate, $result, $category, $id]
-        );
-    }
-}
-
-function importAthletes(PDO $db, array $payload): array
-{
-    $rows = $payload['athletes'] ?? null;
-    if (!is_array($rows)) {
-        throw new ApiException('No se han recibido atletas para importar.');
-    }
-    $imported = $duplicates = $invalid = 0;
-    foreach ($rows as $row) {
-        try {
-            if (!is_array($row)) {
-                throw new ApiException('Fila no valida.');
-            }
-            execute($db, 'INSERT INTO atletas (nombre, apellidos, fecha_nacimiento) VALUES (?, ?, ?)', [
-                requiredText($row, 'name', 'nombre'),
-                requiredText($row, 'surname', 'apellidos'),
-                requiredDate($row, 'birthdate', 'fecha de nacimiento'),
-            ]);
-            $imported++;
-        } catch (PDOException $exception) {
-            if ($exception->getCode() === '23000') {
-                $duplicates++;
-            } else {
-                throw $exception;
-            }
-        } catch (ApiException) {
-            $invalid++;
-        }
-    }
-    return compact('imported', 'duplicates', 'invalid');
-}
-
-function route(PDO $db, string $method, string $path, array $payload): array
-{
-    if ($method === 'GET' && $path === '/auth/status') {
-        $total = (int) execute($db, 'SELECT COUNT(*) AS total FROM usuarios')->fetch()['total'];
-        return [[
-            'setupRequired' => $total === 0,
-            'user' => currentUser($db),
-        ], 200];
-    }
-    if ($method === 'POST' && $path === '/auth/setup') {
-        $total = (int) execute($db, 'SELECT COUNT(*) AS total FROM usuarios')->fetch()['total'];
-        if ($total !== 0) {
-            throw new ApiException('La configuracion inicial ya se ha realizado.', 409);
-        }
-        $_SESSION['user_id'] = createUser($db, $payload, true);
-        session_regenerate_id(true);
-        return [['user' => currentUser($db)], 201];
-    }
-    if ($method === 'POST' && $path === '/auth/login') {
-        $username = requiredUsername($payload);
-        $user = execute($db, 'SELECT id, password_hash, activo FROM usuarios WHERE usuario = ?', [$username])->fetch();
-        $password = (string) ($payload['password'] ?? '');
-        if (!$user || !(bool) $user['activo'] || !password_verify($password, $user['password_hash'])) {
-            throw new ApiException('Usuario o contrasena incorrectos.', 401);
-        }
-        session_regenerate_id(true);
-        $_SESSION['user_id'] = (int) $user['id'];
-        return [['user' => currentUser($db)], 200];
-    }
-    if ($method === 'POST' && $path === '/auth/logout') {
-        unset($_SESSION['user_id']);
-        session_regenerate_id(true);
-        return [['ok' => true], 200];
-    }
-    if ($method === 'GET' && $path === '/public/marks') {
-        return [publicMarks($db), 200];
-    }
-    if ($method === 'GET' && $path === '/public/ranking') {
-        $rawEventId = trim((string) ($_GET['eventId'] ?? ''));
-        $eventId = $rawEventId === '' ? null : filter_var($rawEventId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if ($rawEventId !== '' && !$eventId) {
-            throw new ApiException('La prueba indicada no existe.');
-        }
-        $category = trim((string) ($_GET['category'] ?? ''));
-        return [publicRanking($db, $eventId === null ? null : (int) $eventId, $category === '' ? null : $category), 200];
-    }
-    if ($method === 'GET' && preg_match('#^/public/athletes/(\d+)/history$#', $path, $matches)) {
-        return [publicAthleteHistory($db, (int) $matches[1]), 200];
-    }
-    $actor = requireUser($db);
-    if ($method === 'GET' && $path === '/bootstrap') {
-        return [bootstrap($db), 200];
-    }
-    if ($method === 'POST' && $path === '/users') {
-        createUser($db, $payload);
-        return [['ok' => true], 201];
-    }
-    if (preg_match('#^/users/(\d+)$#', $path, $matches)) {
-        if ($method === 'PUT') {
-            updateUser($db, (int) $matches[1], $payload, $actor);
-            return [['ok' => true], 200];
-        }
-        if ($method === 'DELETE') {
-            deleteUser($db, (int) $matches[1], $actor);
-            return [['ok' => true], 200];
-        }
-    }
-    if ($method === 'POST' && $path === '/athletes/import') {
-        return [importAthletes($db, $payload), 200];
-    }
-    if ($method === 'POST' && $path === '/events/seed') {
-        $statement = $db->prepare('INSERT IGNORE INTO pruebas (nombre, sentido_resultado) VALUES (?, ?)');
-        foreach (USUAL_EVENTS as $name) {
-            $statement->execute([$name, storedResultDirection(usualResultDirection($name))]);
-        }
-        return [['ok' => true], 201];
-    }
-    if ($method === 'POST' && preg_match('#^/(athletes|events|tracks|marks)$#', $path, $matches)) {
-        createItem($db, $matches[1], $payload);
-        return [['ok' => true], 201];
-    }
-    if (preg_match('#^/(athletes|events|tracks|marks)/(\d+)$#', $path, $matches)) {
-        $resource = $matches[1];
-        $id = (int) $matches[2];
-        if ($method === 'PUT') {
-            updateItem($db, $resource, $id, $payload);
-            return [['ok' => true], 200];
-        }
-        if ($method === 'DELETE') {
-            $table = ['athletes' => 'atletas', 'events' => 'pruebas', 'tracks' => 'pistas', 'marks' => 'marcas'][$resource];
-            ensureExists($db, $table, $id);
-            execute($db, "DELETE FROM {$table} WHERE id = ?", [$id]);
-            return [['ok' => true], 200];
-        }
-    }
-    throw new ApiException('Ruta no encontrada.', 404);
-}
-
-try {
-    $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
-    $payload = in_array($method, ['POST', 'PUT'], true) ? input() : [];
-    $db = connection();
-    $db->beginTransaction();
-    [$response, $status] = route($db, $method, path(), $payload);
-    $db->commit();
-    respond($response, $status);
-} catch (ApiException $exception) {
-    if (isset($db) && $db->inTransaction()) {
-        $db->rollBack();
-    }
-    respond(['error' => $exception->getMessage()], $exception->status);
-} catch (PDOException $exception) {
-    if (isset($db) && $db->inTransaction()) {
-        $db->rollBack();
-    }
-    $message = $exception->getCode() === '23000'
-        ? 'Ya existe un registro con esos datos o tiene marcas asociadas.'
-        : 'Error de base de datos.';
-    respond(['error' => $message], $exception->getCode() === '23000' ? 409 : 500);
-} catch (RuntimeException $exception) {
-    if (isset($db) && $db->inTransaction()) {
-        $db->rollBack();
-    }
-    respond(['error' => $exception->getMessage()], 500);
-} catch (Throwable) {
-    if (isset($db) && $db->inTransaction()) {
-        $db->rollBack();
-    }
-    respond(['error' => 'Error interno del servidor.'], 500);
-}
+try{$method=strtoupper($_SERVER['REQUEST_METHOD']??'GET');$payload=in_array($method,['POST','PUT'],true)?input():[];$db=connection();$db->beginTransaction();[$response,$status]=route($db,$method,path(),$payload);$db->commit();respond($response,$status);}catch(ApiException $e){if(isset($db)&&$db->inTransaction())$db->rollBack();respond(['error'=>$e->getMessage()],$e->status);}catch(PDOException $e){if(isset($db)&&$db->inTransaction())$db->rollBack();respond(['error'=>$e->getCode()==='23000'?'Ya existe un registro con esos datos o tiene marcas asociadas.':'Error de base de datos.'],$e->getCode()==='23000'?409:500);}catch(Throwable $e){if(isset($db)&&$db->inTransaction())$db->rollBack();respond(['error'=>'Error interno del servidor.'],500);}

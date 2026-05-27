@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="ca">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,8 +12,8 @@
     <label class="language-picker">
       <span>Idioma</span>
       <select id="language" aria-label="Idioma">
-        <option value="es">Castellano</option>
         <option value="ca">Català</option>
+        <option value="es">Castellano</option>
       </select>
     </label>
 
@@ -71,7 +71,8 @@
         <button class="tab" data-panel="consulta-marcas">Marcas registradas</button>
         <button class="tab" data-panel="atletas">Atletas</button>
         <button class="tab" data-panel="pruebas">Pruebas</button>
-        <button class="tab" data-panel="pistas">Pistas</button>
+        <button class="tab" data-panel="ciudades">Ciudades</button>
+        <button class="tab" data-panel="traducciones">Traducciones</button>
         <button class="tab" data-panel="usuarios">Usuarios</button>
       </nav>
       <p id="app-error" class="status failure hidden" role="alert"></p>
@@ -87,36 +88,22 @@
             </div>
             <form id="mark-form" autocomplete="off">
               <input type="hidden" id="mark-id">
-              <label>Atleta
-                <input id="mark-athlete" list="athlete-options" required placeholder="Buscar atleta...">
-                <datalist id="athlete-options"></datalist>
-              </label>
-              <label>Prueba
-                <input id="mark-event" list="event-options" required placeholder="Buscar prueba...">
-                <datalist id="event-options"></datalist>
-              </label>
+              <label>Atleta<input id="mark-athlete" list="athlete-options" required placeholder="Buscar atleta..."><datalist id="athlete-options"></datalist></label>
               <div class="fields two">
-                <label>Fecha
-                  <input id="mark-date" type="date" required>
-                </label>
-                <label>Resultado
-                  <input id="mark-result" required placeholder="Ej. 12.43 o 1:58.20">
-                </label>
+                <label>Ámbito<select id="mark-area" required><option value="pista_cubierta">Pista Cubierta</option><option value="aire_libre">Aire Libre</option><option value="ruta">Ruta</option></select></label>
+                <label>Prueba<select id="mark-event" required></select></label>
               </div>
-              <label>Sitio / pista
-                <input id="mark-track" list="track-options" required placeholder="Buscar instalacion...">
-                <datalist id="track-options"></datalist>
-              </label>
-              <div class="category-box">
-                <span>Categoria calculada</span>
-                <strong id="mark-category">Selecciona atleta y fecha</strong>
-              </div>
+              <div class="fields two"><label>Fecha<input id="mark-date" type="date" required></label><label>Marca<input id="mark-result" required placeholder="Ej. 12.43 o 1:58.20"></label></div>
+              <label>Ciudad<input id="mark-city" list="city-options" required placeholder="Buscar ciudad..."><datalist id="city-options"></datalist></label>
+              <label id="track-name-field">Nombre de la pista de atletismo (opcional)<input id="mark-track-name"></label>
+              <label id="technical-field" class="hidden">Característica técnica (alçada tanques, pes artefacte, ...)<input id="mark-technical-info"></label>
+              <div class="category-box"><span>Categoría calculada</span><strong id="mark-category">Selecciona atleta y fecha</strong></div>
               <p id="mark-error" class="error" role="alert"></p>
-              <div class="actions">
-                <button class="primary" id="mark-submit" type="submit">Guardar marca</button>
-                <button class="secondary hidden" id="cancel-mark" type="button">Cancelar</button>
-              </div>
+              <div class="actions"><button class="primary" id="mark-submit" type="submit">Guardar marca</button><button class="secondary hidden" id="cancel-mark" type="button">Cancelar</button></div>
             </form>
+            <hr>
+            <div class="import-actions"><button class="secondary" id="download-mark-template" type="button">Descargar plantilla de resultados</button><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
+            <p id="mark-import-status" class="status hidden" role="status"></p>
           </article>
         </div>
       </section>
@@ -135,7 +122,7 @@
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Prueba</th><th>Marca</th><th>Categoria</th><th>Fecha</th><th>Sitio</th><th></th></tr>
+                <tr><th>Prueba</th><th>Marca</th><th>Categoría</th><th>Fecha</th><th>Ciudad</th><th></th></tr>
               </thead>
               <tbody id="marks-body"></tbody>
             </table>
@@ -154,19 +141,20 @@
               <input class="hidden" id="import-athletes-file" type="file" accept=".csv,text/csv">
             </div>
           </div>
-          <p class="helper">Columnas de importacion: Nombre, Apellidos y Fecha de nacimiento (AAAA-MM-DD).</p>
+          <p class="helper">Columnas de importación: Nombre, Apellidos, Fecha de nacimiento (AAAA-MM-DD) y Sexo (masculino/femenino).</p>
           <p id="athlete-import-status" class="status hidden" role="status"></p>
           <form id="athlete-form" class="inline-form">
             <input type="hidden" id="athlete-id">
             <label>Nombre<input id="athlete-name" required></label>
             <label>Apellidos<input id="athlete-surname" required></label>
             <label>Fecha de nacimiento<input id="athlete-birthdate" type="date" required></label>
+            <label>Sexo<select id="athlete-sex" required><option value="femenino">Femenino</option><option value="masculino">Masculino</option></select></label>
             <button class="primary" type="submit">Guardar</button>
             <button class="secondary hidden" id="cancel-athlete" type="button">Cancelar</button>
           </form>
           <p id="athlete-error" class="error" role="alert"></p>
           <div class="table-wrap">
-            <table><thead><tr><th>Atleta</th><th>Fecha de nacimiento</th><th></th></tr></thead>
+            <table><thead><tr><th>Atleta</th><th>Fecha de nacimiento</th><th>Sexo</th><th></th></tr></thead>
               <tbody id="athletes-body"></tbody></table>
             <p id="athletes-empty" class="empty">Anade el primer atleta para registrar marcas.</p>
           </div>
@@ -180,41 +168,43 @@
           </div>
           <form id="event-form" class="inline-form">
             <input type="hidden" id="event-id">
-            <label>Prueba<input id="event-name" required placeholder="Ej. 100 m"></label>
+            <label>Ámbito<select id="event-area" required><option value="pista_cubierta">Pista Cubierta</option><option value="aire_libre">Aire Libre</option><option value="ruta">Ruta</option></select></label>
+            <label>Grupo<input id="event-group" required placeholder="Curses"></label>
+            <label>Prueba<input id="event-name" required placeholder="Ej. 100"></label>
             <label>Criterio de ranking
               <select id="event-direction" required>
                 <option value="lower">Gana la marca mas baja (carreras / tiempos)</option>
                 <option value="higher">Gana la marca mas alta (saltos / lanzamientos)</option>
               </select>
             </label>
+            <label class="checkbox-field"><input id="event-technical" type="checkbox"> Requiere característica técnica</label>
             <button class="primary" type="submit">Guardar</button>
             <button class="secondary hidden" id="cancel-event" type="button">Cancelar</button>
           </form>
           <p id="event-error" class="error" role="alert"></p>
           <div class="table-wrap">
-            <table><thead><tr><th>Prueba</th><th>Mejor resultado</th><th></th></tr></thead>
+            <table><thead><tr><th>Ámbito / Grupo</th><th>Prueba</th><th>Mejor resultado</th><th>Dato técnico</th><th></th></tr></thead>
               <tbody id="events-body"></tbody></table>
             <p id="events-empty" class="empty">Crea la primera prueba para registrar marcas.</p>
           </div>
         </article>
       </section>
 
-      <section id="panel-pistas" class="panel">
+      <section id="panel-ciudades" class="panel">
         <article class="card management">
-          <div class="card-title"><h2>Pistas de atletismo</h2></div>
-          <form id="track-form" class="inline-form">
-            <input type="hidden" id="track-id">
-            <label>Nombre de la instalacion<input id="track-name" required></label>
-            <label>Localidad<input id="track-city" required></label>
-            <button class="primary" type="submit">Guardar</button>
-            <button class="secondary hidden" id="cancel-track" type="button">Cancelar</button>
-          </form>
-          <p id="track-error" class="error" role="alert"></p>
-          <div class="table-wrap">
-            <table><thead><tr><th>Pista</th><th>Localidad</th><th></th></tr></thead>
-              <tbody id="tracks-body"></tbody></table>
-            <p id="tracks-empty" class="empty">Registra las pistas donde se realizan las marcas.</p>
-          </div>
+          <div class="card-title"><h2>Ciudades españolas</h2><div class="import-actions"><label class="file-button secondary" for="import-cities-file">Importar ciudades CSV</label><input class="hidden" id="import-cities-file" type="file" accept=".csv,text/csv"></div></div>
+          <p class="helper">El autocompletado de marcas utiliza este catálogo. Carga el CSV oficial con columnas Ciudad y Provincia.</p>
+          <p id="city-import-status" class="status hidden"></p>
+          <div class="table-wrap"><table><thead><tr><th>Ciudad</th><th>Provincia</th></tr></thead><tbody id="cities-body"></tbody></table><p id="cities-empty" class="empty">No hay ciudades cargadas.</p></div>
+        </article>
+      </section>
+
+      <section id="panel-traducciones" class="panel">
+        <article class="card management">
+          <div class="card-title"><h2>Traducciones de literales</h2></div>
+          <form id="translation-form" class="inline-form"><input type="hidden" id="translation-id"><label>Literal<input id="translation-literal" required></label><label>Castellano<input id="translation-es" required></label><label>Català<input id="translation-ca" required></label><button class="primary" type="submit">Guardar</button><button class="secondary hidden" id="cancel-translation" type="button">Cancelar</button></form>
+          <p id="translation-error" class="error" role="alert"></p>
+          <div class="table-wrap"><table><thead><tr><th>Literal</th><th>Castellano</th><th>Català</th><th></th></tr></thead><tbody id="translations-body"></tbody></table><p id="translations-empty" class="empty">No hay traducciones personalizadas.</p></div>
         </article>
       </section>
 
