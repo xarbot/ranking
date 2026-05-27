@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.7`
-- Version del repositorio: `0.7`
+- Version en produccion: `0.8`
+- Version del repositorio: `0.8`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -88,7 +88,8 @@ LibreOffice/OpenOffice. Ofrece `Ambito / Grupo` en una unica columna y un desple
 guarda la hoja `Resultados` como CSV. El CSV individual contiene `Ambito / Grupo`, `Prueba`,
 `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`; el CSV multiatleta antepone
 `Atleta`. Se siguen admitiendo CSV anteriores con `Ambito` y `Grupo` separados. La fecha de
-las marcas puede escribirse como `AAAA-MM-DD`, `AAAA/MM/DD`, `DD-MM-AAAA` o `DD/MM/AAAA`.
+las marcas puede escribirse como `AAAA-MM-DD`, `AAAA/MM/DD`, `DD-MM-AAAA`, `DD/MM/AAAA`
+o con dia, mes y ano abreviados, como `1/7/94` (`1994-07-01`).
 La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
 
 Las plantillas se regeneran tras modificar el catalogo o las ciudades mediante

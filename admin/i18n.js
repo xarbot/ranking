@@ -25,7 +25,7 @@
       "Carga masiva de resultados": "Càrrega massiva de resultats",
       "Descarga la plantilla": "Descarrega la plantilla",
       "Marcas de varios atletas": "Marques de diversos atletes",
-      "La plantilla Excel, compatible con LibreOffice, agrupa Ámbito / Grupo y filtra la Prueba; la fecha admite AAAA-MM-DD o DD/MM/AAAA.": "La plantilla Excel, compatible amb LibreOffice, agrupa Àmbit / Grup i filtra la Prova; la data admet AAAA-MM-DD o DD/MM/AAAA.",
+      "La plantilla Excel, compatible con LibreOffice, agrupa Ámbito / Grupo y filtra la Prueba; la fecha admite AAAA-MM-DD, DD/MM/AAAA o D/M/AA.": "La plantilla Excel, compatible amb LibreOffice, agrupa Àmbit / Grup i filtra la Prova; la data admet AAAA-MM-DD, DD/MM/AAAA o D/M/AA.",
       "El fichero incluye la columna Atleta con Nombre y Apellidos. Antes de cargar marcas se revisan las altas necesarias.": "El fitxer inclou la columna Atleta amb Nom i Cognoms. Abans de carregar marques es revisen les altes necessàries.",
       "Atletas no encontrados": "Atletes no trobats",
       "Corrige nombre y apellidos para vincular un atleta existente, o completa fecha y sexo para darlo de alta. Las filas no completadas y sus marcas se omitirán.": "Corregeix nom i cognoms per vincular un atleta existent, o completa data i sexe per donar-lo d'alta. Les files no completades i les seves marques s'ometran.",

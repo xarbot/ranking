@@ -257,14 +257,15 @@ button { font: inherit; }
 .status { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: var(--primary-dark); margin: 0 0 18px; padding: 11px 13px; }
 .status.failure { background: #fbeaea; border-color: #f2c9c9; color: var(--danger); }
 .import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.import-modes { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.management.imports-management { max-width: 1280px; }
+.import-modes { display: grid; gap: 18px; grid-template-columns: minmax(250px, .8fr) minmax(560px, 1.45fr); }
 .bulk-import { border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 12px; padding: 18px; }
 .bulk-import h3 { color: var(--primary-dark); font-size: 17px; margin: 0; }
 .bulk-import .add-athlete { justify-self: start; }
 .bulk-import .status { margin: 0; }
 .missing-athletes { border-top: 1px solid var(--line); display: grid; gap: 12px; padding-top: 14px; }
 .missing-athletes h4 { color: var(--primary-dark); font-size: 16px; margin: 0; }
-.missing-athlete-row { align-items: end; display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 10px; }
+.missing-athlete-row { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.35fr) minmax(170px, 1.25fr) minmax(120px, .95fr); margin-top: 10px; }
 .missing-athlete-row label { min-width: 0; }
 .catalog-helper { margin-top: 0; }
 .bulk-helper { margin: 0; }

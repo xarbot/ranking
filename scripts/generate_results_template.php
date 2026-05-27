@@ -145,7 +145,7 @@ function buildCitySearchSheet(array $cities): string
 
 function buildEventSearchSheet(array $catalogue): string
 {
-    $help = 'Filtra esta tabla para buscar opciones y copia Ámbito / Grupo y Prueba en Resultados.';
+    $help = 'Filtra esta tabla y copia Ámbito / Grupo y Prueba en Resultados. Fecha admitida: AAAA-MM-DD, DD/MM/AAAA o D/M/AA.';
     $rows = sheetRow(1, ['Ámbito / Grupo', 'Prueba', 'Característica técnica', 'Ayuda'], 1);
     $row = 2;
     foreach ($catalogue as $area => $groups) {
