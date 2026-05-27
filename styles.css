@@ -362,6 +362,27 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   font-size: 20px;
   margin: 0 0 16px;
 }
+.ranking-event + .ranking-event,
+.ranking-result + .ranking-result {
+  border-top: 1px solid var(--line);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+.ranking-event h4 {
+  color: var(--primary);
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+.ranking-category {
+  color: var(--primary-dark);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.ranking-event .ranking-result + .ranking-result {
+  margin-top: 14px;
+  padding-top: 14px;
+}
 .ranking-more {
   align-items: center;
   background: var(--primary);

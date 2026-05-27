@@ -6,7 +6,8 @@
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
   function areaLabel(area) { return { pista_cubierta: "Pista Cubierta", aire_libre: "Aire Libre", ruta: "Ruta" }[area] || area; }
-  function eventLabel(event) { return t(areaLabel(event.area)) + " / " + t(event.eventGroup) + " / " + t(event.name || event.event || ""); }
+  function groupLabel(group) { return t(normalized(group).replace("ç", "c") === "llancaments" ? "Llançaments" : group); }
+  function eventLabel(event) { return t(areaLabel(event.area)) + " / " + groupLabel(event.eventGroup) + " / " + t(event.name || event.event || ""); }
   function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
   function escapeHtml(value) {
@@ -15,7 +16,8 @@
     });
   }
   function detailLine(value) { return value ? '<span class="cell-detail">' + escapeHtml(value) + '</span>' : ""; }
-  function eventCell(mark) { return escapeHtml(eventLabel(mark)) + detailLine(mark.technicalInfo); }
+  function technicalDetail(value) { return normalized(value) === "no" ? "" : detailLine(value); }
+  function eventCell(mark) { return escapeHtml(eventLabel(mark)) + technicalDetail(mark.technicalInfo); }
   function cityCell(mark) { return escapeHtml(mark.city) + detailLine(mark.trackName); }
   function unique(values) { return values.filter(function (value, index) { return values.indexOf(value) === index; }); }
   function formatDate(value) {
@@ -68,7 +70,7 @@
       return '<option value="' + item + '">' + escapeHtml(t(areaLabel(item))) + '</option>';
     }).join("");
     byId("group-filter").innerHTML = '<option value="">' + t("Todos los grupos") + '</option>' + groups.map(function (item) {
-      return '<option value="' + escapeHtml(item) + '">' + escapeHtml(t(item)) + '</option>';
+      return '<option value="' + escapeHtml(item) + '">' + escapeHtml(groupLabel(item)) + '</option>';
     }).join("");
     byId("event-filter").innerHTML = '<option value="">' + t("Todas las pruebas") + '</option>' + events.map(function (event) {
       return '<option value="' + event.id + '">' + escapeHtml(t(event.name)) + '</option>';
@@ -97,6 +99,29 @@
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
   }
 
+  function rankingKey(grouped) { return String(grouped.event.id) + "|" + (grouped.category || "all"); }
+  function compareRankingGroups(first, second) {
+    var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
+    return group || t(first.event.name).localeCompare(t(second.event.name)) ||
+      categoryRank(first.category) - categoryRank(second.category) || String(first.category || "").localeCompare(String(second.category || ""));
+  }
+  function rankingTable(grouped, includeHeading) {
+    var key = rankingKey(grouped);
+    var visible = state.rankingVisible[key] || 20;
+    var rows = grouped.marks.slice(0, visible).map(function (mark, index) {
+      return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
+        mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
+        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td><strong>' + escapeHtml(mark.result) +
+        '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td></tr>';
+    }).join("");
+    var heading = includeHeading && grouped.category ? '<p class="ranking-category">' + escapeHtml(categoryLabel(grouped.category)) + '</p>' : "";
+    var more = visible < grouped.marks.length
+      ? '<button class="ranking-more" type="button" data-more-event="' + key + '" aria-label="' + escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
+      : "";
+    return '<section class="ranking-result">' + heading + '<div class="table-wrap"><table><thead><tr><th>#</th><th>' + t("Atleta") +
+      '</th><th>' + t("Prueba") + '</th><th>' + t("Categoria") + '</th><th>' + t("Marca") +
+      '</th><th>' + t("Fecha") + '</th><th>' + t("Ciudad") + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + more + '</section>';
+  }
   function renderRanking() {
     if (!state.ranking) return;
     var area = byId("area-filter").value;
@@ -104,29 +129,35 @@
     var eventId = byId("event-filter").value;
     var category = byId("category-filter").value;
     var event = state.events.find(function (item) { return String(item.id) === eventId; });
-    var selected = event ? eventLabel(event) : [area ? t(areaLabel(area)) : "", group ? t(group) : ""].filter(Boolean).join(" / ");
+    var selected = event ? eventLabel(event) : [area ? t(areaLabel(area)) : "", group ? groupLabel(group) : ""].filter(Boolean).join(" / ");
     var title = selected || categoryLabel(category);
     if (selected && category) title += " - " + categoryLabel(category);
     byId("ranking-title").textContent = title;
-    byId("ranking-empty").classList.toggle("hidden", state.ranking.groups.length > 0);
-    byId("ranking-groups").innerHTML = state.ranking.groups.map(function (grouped) {
-      var key = String(grouped.event.id) + "|" + grouped.category;
-      var visible = state.rankingVisible[key] || 20;
-      var rows = grouped.marks.slice(0, visible).map(function (mark, index) {
-        return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
-          mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
-          '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td><strong>' + escapeHtml(mark.result) +
-          '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td></tr>';
-      }).join("");
-      var more = visible < grouped.marks.length
-        ? '<button class="ranking-more" type="button" data-more-event="' + key + '" aria-label="' +
-          escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
-        : "";
-      return '<article class="card ranking-group"><h3>' + escapeHtml(eventLabel(grouped.event) + " - " + categoryLabel(grouped.category)) +
-        '</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>' + t("Atleta") +
-        '</th><th>' + t("Prueba") + '</th><th>' + t("Categoria") + '</th><th>' + t("Marca") +
-        '</th><th>' + t("Fecha") + '</th><th>' + t("Ciudad") + '</th></tr></thead><tbody>' +
-        rows + '</tbody></table></div>' + more + '</article>';
+    var groups = state.ranking.groups.slice().sort(compareRankingGroups);
+    byId("ranking-empty").classList.toggle("hidden", groups.length > 0);
+    if (eventId) {
+      byId("ranking-groups").innerHTML = '<article class="card ranking-group">' + groups.map(function (grouped) { return rankingTable(grouped, false); }).join("") + '</article>';
+      return;
+    }
+    var showCategory = !category;
+    var cardKeys = unique(groups.map(function (grouped) { return group ? String(grouped.event.id) : grouped.event.eventGroup; }));
+    if (!group) cardKeys.sort(function (first, second) { return groupLabel(first).localeCompare(groupLabel(second)); });
+    byId("ranking-groups").innerHTML = cardKeys.map(function (cardKey) {
+      var cardGroups = groups.filter(function (grouped) { return (group ? String(grouped.event.id) : grouped.event.eventGroup) === cardKey; });
+      var cardTitle = group ? t(cardGroups[0].event.name) : groupLabel(cardKey);
+      var contents;
+      if (group) {
+        contents = cardGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("");
+      } else {
+        var eventIds = unique(cardGroups.map(function (grouped) { return String(grouped.event.id); }));
+        contents = eventIds.map(function (currentId) {
+          var eventGroups = cardGroups.filter(function (grouped) { return String(grouped.event.id) === currentId; });
+          var currentEvent = eventGroups[0].event;
+          var eventTitle = area ? t(currentEvent.name) : t(areaLabel(currentEvent.area)) + " / " + t(currentEvent.name);
+          return '<section class="ranking-event"><h4>' + escapeHtml(eventTitle) + '</h4>' + eventGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("") + '</section>';
+        }).join("");
+      }
+      return '<article class="card ranking-group"><h3>' + escapeHtml(cardTitle) + '</h3>' + contents + '</article>';
     }).join("");
   }
 
