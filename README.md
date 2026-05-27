@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.9`
-- Version del repositorio: `0.9`
+- Version en produccion: `1.0`
+- Version del repositorio: `1.0`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este

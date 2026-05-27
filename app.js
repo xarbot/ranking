@@ -6,7 +6,7 @@
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
   function areaLabel(area) { return { pista_cubierta: "Pista Cubierta", aire_libre: "Aire Libre", ruta: "Ruta" }[area] || area; }
-  function eventLabel(event) { return t(areaLabel(event.area)) + " / " + t(event.eventGroup) + " / " + t(event.name); }
+  function eventLabel(event) { return t(areaLabel(event.area)) + " / " + t(event.eventGroup) + " / " + t(event.name || event.event || ""); }
   function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es"); }
   function escapeHtml(value) {
