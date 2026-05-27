@@ -23,7 +23,7 @@
       "Selecciona un atleta de la lista.": "Selecciona un atleta de la llista.",
       "No hay marcas registradas.": "No hi ha marques registrades.",
       "Carga masiva de resultados": "Càrrega massiva de resultats",
-      "Descarga la plantilla compatible con hojas de búsqueda para pruebas y ciudades, rellénala y guárdala como CSV para importarla.": "Descarrega la plantilla compatible amb fulls de cerca per a proves i ciutats, omple-la i desa-la com a CSV per importar-la.",
+      "En LibreOffice activa Herramientas > Entrada automática para completar los campos al escribir.": "Al LibreOffice activa Eines > Entrada automàtica per completar els camps mentre escrius.",
       "Descargar plantilla Excel": "Descarrega la plantilla Excel",
       "Atleta de las marcas": "Atleta de les marques",
       "Dar de alta este atleta": "Dona d’alta aquest atleta",

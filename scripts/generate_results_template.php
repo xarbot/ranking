@@ -167,13 +167,13 @@ function validation(string $kind, string $reference, string $formula, string $pr
         . xml($formula) . '</formula1></dataValidation>';
 }
 
-function buildResultsSheet(): string
+function buildResultsSheet(array $cities, array $catalogue): string
 {
     $items = [
-        validation('Ámbito', 'A2:A501', 'Ambitos', 'Escribe o busca opciones en la pestaña Pruebas.', 'Escoge un ámbito de la lista.'),
-        validation('Grupo', 'B2:B501', 'INDIRECT("Grupos_"&SUBSTITUTE(A2," ","_"))', 'Escribe o busca opciones en la pestaña Pruebas.', 'Escoge un grupo válido para el ámbito.'),
-        validation('Prueba', 'C2:C501', 'INDIRECT("Proves_"&SUBSTITUTE(A2," ","_")&"_"&SUBSTITUTE(B2,"ç","c"))', 'Escribe o busca opciones en la pestaña Pruebas.', 'Escoge una prueba válida para el grupo.'),
-        validation('Ciudad', 'G2:G501', 'Ciudades', 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
+        validation('Ámbito', 'A2:A501', 'Ambitos', 'En Calc activa Herramientas > Entrada automática.', 'Escoge un ámbito de la lista.'),
+        validation('Grupo', 'B2:B501', 'INDIRECT("Grupos_"&SUBSTITUTE(A2," ","_"))', 'En Calc activa Herramientas > Entrada automática.', 'Escoge un grupo válido para el ámbito.'),
+        validation('Prueba', 'C2:C501', 'INDIRECT("Proves_"&SUBSTITUTE(A2," ","_")&"_"&SUBSTITUTE(B2,"ç","c"))', 'En Calc activa Herramientas > Entrada automática.', 'Escoge una prueba válida para el grupo.'),
+        validation('Ciudad', 'G2:G501', 'Ciudades', 'En Calc activa Herramientas > Entrada automática.', 'Escoge una ciudad de la lista.'),
     ];
     $widths = [20, 18, 24, 35, 14, 16, 38, 34];
     $columns = '';
@@ -181,7 +181,37 @@ function buildResultsSheet(): string
         $number = $position + 1;
         $columns .= '<col min="' . $number . '" max="' . $number . '" width="' . $width . '" customWidth="1"/>';
     }
-    return worksheet(sheetRow(1, HEADERS, 1), $columns, '<dataValidations count="4">' . implode('', $items) . '</dataValidations>');
+    $rows = sheetRow(1, HEADERS, 1);
+    $areas = array_keys($catalogue);
+    $groups = [];
+    $events = [];
+    foreach ($catalogue as $areaGroups) {
+        foreach ($areaGroups as $group => $areaEvents) {
+            if (!in_array($group, $groups, true)) {
+                $groups[] = $group;
+            }
+            foreach ($areaEvents as $event) {
+                if (!in_array($event, $events, true)) {
+                    $events[] = $event;
+                }
+            }
+        }
+    }
+    $seedCount = max(count($areas), count($groups), count($events), count($cities));
+    $seedStart = ENTRY_ROWS + 3;
+    for ($position = 0; $position < $seedCount; $position++) {
+        $rows .= sheetRow($seedStart + $position, [
+            $areas[$position] ?? '',
+            $groups[$position] ?? '',
+            $events[$position] ?? '',
+            '',
+            '',
+            '',
+            $cities[$position] ?? '',
+            '__AUTOINPUT__',
+        ]);
+    }
+    return worksheet($rows, $columns, '<dataValidations count="4">' . implode('', $items) . '</dataValidations>');
 }
 
 function styles(): string
@@ -244,7 +274,7 @@ try {
         'docProps/app.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Club Atlètic Castellar</Application></Properties>',
         'xl/workbook.xml' => $workbook,
         'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
-        'xl/worksheets/sheet1.xml' => buildResultsSheet(),
+        'xl/worksheets/sheet1.xml' => buildResultsSheet($cities, $catalogue),
         'xl/worksheets/sheet2.xml' => $listSheet,
         'xl/worksheets/sheet3.xml' => $citySearchSheet,
         'xl/worksheets/sheet4.xml' => $eventSearchSheet,

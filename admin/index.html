@@ -6,7 +6,7 @@
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
     <link rel="stylesheet" href="styles.css?v=20260527-5">
     <script src="i18n.js?v=20260527-6" defer></script>
-    <script src="app.js?v=20260527-4" defer></script>
+    <script src="app.js?v=20260527-5" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -104,8 +104,8 @@
                 <input id="mark-import-athlete" list="athlete-options" required placeholder="Buscar atleta...">
               </label>
               <button class="secondary add-athlete" id="add-import-athlete" type="button">Dar de alta este atleta</button>
-              <p class="helper bulk-helper">Descarga la plantilla compatible con hojas de búsqueda para pruebas y ciudades, rellénala y guárdala como CSV para importarla.</p>
-              <div class="import-actions"><a class="file-button secondary" href="../assets/plantilla-resultados.xlsx?v=20260527-3" download="plantilla-resultados.xlsx">Descargar plantilla Excel</a><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
+              <p class="helper bulk-helper">En LibreOffice activa Herramientas &gt; Entrada automática para completar los campos al escribir.</p>
+              <div class="import-actions"><a class="file-button secondary" href="../assets/plantilla-resultados.xlsx?v=20260527-4" download="plantilla-resultados.xlsx">Descargar plantilla Excel</a><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
               <p id="mark-import-status" class="status hidden" role="status"></p>
             </section>
           </article>
@@ -220,6 +220,6 @@
         </article>
       </section>
     </main>
-    <footer id="app-footer" class="hidden">v. 0.2</footer>
+    <footer id="app-footer" class="hidden">v. 0.3</footer>
   </body>
 </html>

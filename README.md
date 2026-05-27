@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.2`
-- Version del repositorio: `0.2`
+- Version en produccion: `0.3`
+- Version del repositorio: `0.3`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -78,9 +78,11 @@ Antes de importar resultados se selecciona el atleta al que corresponden todas l
 con acceso directo a su alta si aun no existe. La descarga de resultados es una plantilla
 `plantilla-resultados.xlsx` distribuible: incorpora desplegables dependientes para `Ambito`,
 `Grupo` y `Prueba`, y la lista de ciudades para escoger o buscar `Ciudad`. Esos cuatro campos
-tambien admiten escribir directamente un valor valido. La plantilla no usa macros ni funciones
-de autocompletado propias de una aplicacion: en Excel, LibreOffice y OpenOffice las pestanas
-`Pruebas` y `Ciudades` permiten filtrar y copiar valores. La persona que la rellena
+tambien admiten escribir directamente un valor valido. La plantilla no usa macros. En
+LibreOffice u OpenOffice se activa `Herramientas > Entrada automatica`: la hoja `Resultados`
+contiene filas auxiliares marcadas como `__AUTOINPUT__` para que Calc complete los valores al
+escribir, y la importacion ignora esas filas. Las pestanas `Pruebas` y `Ciudades` tambien
+permiten filtrar y copiar valores. La persona que la rellena
 la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como CSV. El
 CSV no incluye el atleta y contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica
 tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`. La importacion comprueba prueba, ciudad y
