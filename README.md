@@ -23,7 +23,9 @@ mysql --user=ranking_app --password ranking_atletismo < database/init.sql
 Las instalaciones existentes se actualizan mediante los SQL incrementales de
 `database/migrations/`, ejecutados por `php scripts/migrate.php`. La migracion `003` infiere
 un sexo inicial para atletas existentes a partir del nombre; debe revisarse en el panel,
-porque la inferencia no puede ser exacta para todos los nombres.
+porque la inferencia no puede ser exacta para todos los nombres. La migracion `004` deja
+unicamente el catalogo reglado: las marcas asociadas a pruebas antiguas se mantienen y se
+reasignan a `Aire Libre / Curses / 100` para revisarlas posteriormente.
 
 El esquema contiene:
 
@@ -37,8 +39,9 @@ El esquema contiene:
 
 ## Catalogo y clasificaciones
 
-Al abrir la gestion se crea el catalogo definido de `Pista Cubierta`, `Aire Libre` y `Ruta`,
-con sus grupos y pruebas. Tanques y lanzamientos requieren el texto libre de caracteristica
+Al abrir la gestion se crea el catalogo cerrado definido de `Pista Cubierta`, `Aire Libre` y
+`Ruta`, con sus grupos y pruebas. El apartado de pruebas es de consulta y no permite crear
+pruebas fuera del listado. Tanques y lanzamientos requieren el texto libre de caracteristica
 tecnica. En pista cubierta y aire libre se puede indicar ademas el nombre de la pista.
 
 Las clasificaciones separan sexo: `Sub8 - Masculino`, `Sub8 - Femenino`, etc. Desde los
@@ -58,12 +61,14 @@ historicas se trasladan automaticamente durante la migracion.
 ## Cargas CSV
 
 La plantilla de atletas descargable incluye `Nombre`, `Apellidos`, `Fecha de nacimiento` y
-`Sexo`. Las fechas usan `AAAA-MM-DD` y el sexo es `masculino` o `femenino`.
+`Sexo`. Las fechas usan `AAAA-MM-DD` y el sexo es `masculino` o `femenino`. Nombres y
+apellidos se almacenan capitalizados; al cargar la aplicacion se normalizan igualmente los
+atletas que ya existian.
 
-La plantilla de resultados incluye `Atleta`, `Ambito`, `Grupo`, `Prueba`, `Marca`, `Fecha`,
-`Ciudad`, `Pista` y `Caracteristica tecnica`. La importacion comprueba atleta, prueba,
-ciudad y campos obligatorios antes de grabar ninguna marca. Cuando un atleta no existe, el
-panel lo indica para darlo de alta con nacimiento y sexo y volver a cargar el fichero.
+Antes de importar resultados se selecciona el atleta al que corresponden todas las marcas,
+con acceso directo a su alta si aun no existe. La plantilla ya no incluye el atleta: contiene
+`Ambito`, `Grupo`, `Prueba`, `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`.
+La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
 
 ## Despliegue nginx
 

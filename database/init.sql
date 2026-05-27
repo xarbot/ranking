@@ -98,4 +98,5 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 INSERT IGNORE INTO schema_migrations (version)
 VALUES ('001_create_migration_tracking.sql'),
        ('002_add_pruebas_sentido_resultado.sql'),
-       ('003_clasificacion_sexo_catalogos_ciudades_traducciones.sql');
+       ('003_clasificacion_sexo_catalogos_ciudades_traducciones.sql'),
+       ('004_catalogo_pruebas_cerrado.sql');
