@@ -138,6 +138,28 @@ function buildCitySearchSheet(array $cities): string
         . '<autoFilter ref="A1:A' . (count($cities) + 1) . '"/></worksheet>';
 }
 
+function buildEventSearchSheet(array $catalogue): string
+{
+    $help = 'Filtra esta tabla para buscar opciones y copia Ambito, Grupo y Prueba en Resultados.';
+    $rows = sheetRow(1, ['Ámbito', 'Grupo', 'Prueba', 'Característica técnica', 'Ayuda'], 1);
+    $row = 2;
+    foreach ($catalogue as $area => $groups) {
+        foreach ($groups as $group => $events) {
+            foreach ($events as $event) {
+                $technical = in_array($group, ['Tanques', 'Llançaments'], true) ? 'Sí' : 'No';
+                $rows .= sheetRow($row, [$area, $group, $event, $technical, $row === 2 ? $help : '']);
+                $row++;
+            }
+        }
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
+        . '<cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="20" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/><col min="4" max="4" width="26" customWidth="1"/><col min="5" max="5" width="90" customWidth="1"/></cols>'
+        . '<sheetData>' . $rows . '</sheetData>'
+        . '<autoFilter ref="A1:E' . ($row - 1) . '"/></worksheet>';
+}
+
 function validation(string $kind, string $reference, string $formula, string $prompt, string $error): string
 {
     return '<dataValidation type="list" allowBlank="0" showInputMessage="1" showErrorMessage="1" errorStyle="stop" sqref="' . $reference
@@ -148,9 +170,9 @@ function validation(string $kind, string $reference, string $formula, string $pr
 function buildResultsSheet(): string
 {
     $items = [
-        validation('Ámbito', 'A2:A501', 'Ambitos', 'Escribe o escoge el ámbito.', 'Escoge un ámbito de la lista.'),
-        validation('Grupo', 'B2:B501', 'INDIRECT("Grupos_"&SUBSTITUTE(A2," ","_"))', 'Tras indicar ámbito, escribe o escoge el grupo.', 'Escoge un grupo válido para el ámbito.'),
-        validation('Prueba', 'C2:C501', 'INDIRECT("Proves_"&SUBSTITUTE(A2," ","_")&"_"&SUBSTITUTE(B2,"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
+        validation('Ámbito', 'A2:A501', 'Ambitos', 'Escribe o busca opciones en la pestaña Pruebas.', 'Escoge un ámbito de la lista.'),
+        validation('Grupo', 'B2:B501', 'INDIRECT("Grupos_"&SUBSTITUTE(A2," ","_"))', 'Escribe o busca opciones en la pestaña Pruebas.', 'Escoge un grupo válido para el ámbito.'),
+        validation('Prueba', 'C2:C501', 'INDIRECT("Proves_"&SUBSTITUTE(A2," ","_")&"_"&SUBSTITUTE(B2,"ç","c"))', 'Escribe o busca opciones en la pestaña Pruebas.', 'Escoge una prueba válida para el grupo.'),
         validation('Ciudad', 'G2:G501', 'Ciudades', 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
     ];
     $widths = [20, 18, 24, 35, 14, 16, 38, 34];
@@ -206,24 +228,26 @@ try {
     $cities = readCities($cityFile);
     [$listSheet, $ranges] = buildListSheet($cities, $catalogue);
     $citySearchSheet = buildCitySearchSheet($cities);
+    $eventSearchSheet = buildEventSearchSheet($catalogue);
     $defined = '';
     foreach ($ranges as [$name, $reference]) {
         $defined .= '<definedName name="' . xml($name) . '">' . xml($reference) . '</definedName>';
     }
     $workbook = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-        . '<sheets><sheet name="Resultados" sheetId="1" r:id="rId1"/><sheet name="Listas" sheetId="2" state="hidden" r:id="rId2"/><sheet name="Ciudades" sheetId="3" r:id="rId3"/></sheets>'
+        . '<sheets><sheet name="Resultados" sheetId="1" r:id="rId1"/><sheet name="Listas" sheetId="2" state="hidden" r:id="rId2"/><sheet name="Ciudades" sheetId="3" r:id="rId3"/><sheet name="Pruebas" sheetId="4" r:id="rId4"/></sheets>'
         . '<definedNames>' . $defined . '</definedNames><calcPr calcId="191029" calcMode="auto"/></workbook>';
     $files = [
-        '[Content_Types].xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>',
+        '[Content_Types].xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>',
         '_rels/.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>',
         'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>Club Atlètic Castellar</dc:creator><dc:title>Plantilla de resultats</dc:title></cp:coreProperties>',
         'docProps/app.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Club Atlètic Castellar</Application></Properties>',
         'xl/workbook.xml' => $workbook,
-        'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+        'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
         'xl/worksheets/sheet1.xml' => buildResultsSheet(),
         'xl/worksheets/sheet2.xml' => $listSheet,
         'xl/worksheets/sheet3.xml' => $citySearchSheet,
+        'xl/worksheets/sheet4.xml' => $eventSearchSheet,
         'xl/styles.xml' => styles(),
     ];
     writeZip($output, $files);

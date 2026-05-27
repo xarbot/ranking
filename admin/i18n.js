@@ -23,7 +23,7 @@
       "Selecciona un atleta de la lista.": "Selecciona un atleta de la llista.",
       "No hay marcas registradas.": "No hi ha marques registrades.",
       "Carga masiva de resultados": "Càrrega massiva de resultats",
-      "Descarga la plantilla Excel con desplegables y búsqueda de ciudades, rellénala y guárdala como CSV para importarla.": "Descarrega la plantilla Excel amb desplegables i cerca de ciutats, omple-la i desa-la com a CSV per importar-la.",
+      "Descarga la plantilla compatible con hojas de búsqueda para pruebas y ciudades, rellénala y guárdala como CSV para importarla.": "Descarrega la plantilla compatible amb fulls de cerca per a proves i ciutats, omple-la i desa-la com a CSV per importar-la.",
       "Descargar plantilla Excel": "Descarrega la plantilla Excel",
       "Atleta de las marcas": "Atleta de les marques",
       "Dar de alta este atleta": "Dona d’alta aquest atleta",
