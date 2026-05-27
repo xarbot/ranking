@@ -367,6 +367,12 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   margin-top: 18px;
   padding-top: 18px;
 }
+.ranking-result .table-wrap { overflow-x: auto; }
+.ranking-result table { table-layout: auto; }
+.ranking-result th:first-child,
+.ranking-result td:first-child { width: 42px; }
+.ranking-result th:nth-child(2),
+.ranking-result td:nth-child(2) { min-width: 190px; white-space: nowrap; }
 .ranking-cluster {
   display: grid;
   gap: 14px;
