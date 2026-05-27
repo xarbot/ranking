@@ -125,6 +125,7 @@
       "Al editar, deja la contrasena vacia para conservar la actual.": "En editar, deixa la contrasenya buida per conservar l'actual.",
       "No hay usuarios registrados.": "No hi ha usuaris registrats.",
       "Datos almacenados en la base de datos MySQL.": "Dades emmagatzemades a la base de dades MySQL.",
+      "Versión en producción:": "Versió en producció:",
       "Editar": "Edita",
       "Eliminar": "Elimina",
       "Actualizar marca": "Actualitza la marca",

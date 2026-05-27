@@ -6,6 +6,14 @@ autenticado en `/admin/`, persistencia MySQL y clasificacion calculada por edad 
 El idioma inicial es catalan. Tanto la consulta publica como la gestion permiten alternar
 castellano y catalan; los literales se pueden anadir, editar o retirar desde **Traducciones**.
 
+## Version
+
+- Version en produccion: `0.1`
+- Version del repositorio: `0.1`
+
+El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada commit
+publicado debe incrementar la version en `0.1` y actualizar este apartado y los pies.
+
 ## Requisitos
 
 - PHP 8.3 con la extension `pdo_mysql`.
@@ -75,7 +83,7 @@ tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`. La importacion comprueba prueba,
 campos obligatorios antes de grabar ninguna marca.
 
 La plantilla se regenera tras modificar el catalogo o las ciudades mediante
-`python3 scripts/generate_results_template.py`.
+`php scripts/generate_results_template.php`.
 
 ## Despliegue nginx
 
