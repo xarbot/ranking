@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.5`
-- Version del repositorio: `0.5`
+- Version en produccion: `0.6`
+- Version del repositorio: `0.6`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -82,12 +82,14 @@ alta los que faltan indicando nombre, apellidos, fecha de nacimiento y sexo; si 
 un alta, se omiten sus marcas.
 
 Cada flujo permite descargar una plantilla Microsoft Office (`.xlsx`) o una plantilla
-LibreOffice/OpenOffice (`.ods`). Ambas usan desplegables estandar para introducir valores y
-hojas auxiliares `Pruebas` y `Ciudades` para filtrar y copiar opciones. La persona que la
-rellena la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como
-CSV. El CSV individual contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica tecnica`, `Marca`,
-`Fecha`, `Ciudad` y `Pista`; el CSV multiatleta antepone `Atleta`. La importacion comprueba
-prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
+LibreOffice/OpenOffice (`.ods`). Ambas ofrecen `Ambito / Grupo` en una unica columna y un
+desplegable `Prueba` filtrado por la opcion anterior, ademas de las hojas auxiliares `Pruebas`
+y `Ciudades`. La persona que la rellena la devuelve en formato Excel; antes de importarla se
+guarda la hoja `Resultados` como CSV. El CSV individual contiene `Ambito / Grupo`, `Prueba`,
+`Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`; el CSV multiatleta antepone
+`Atleta`. Se siguen admitiendo CSV anteriores con `Ambito` y `Grupo` separados. La fecha de
+las marcas puede escribirse como `AAAA-MM-DD`, `AAAA/MM/DD`, `DD-MM-AAAA` o `DD/MM/AAAA`.
+La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
 
 Las plantillas se regeneran tras modificar el catalogo o las ciudades mediante
 `php scripts/generate_results_template.php` y

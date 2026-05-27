@@ -4,7 +4,7 @@ declare(strict_types=1);
 /** Generates the distributable results workbook with catalogue-backed dropdowns. */
 
 const ENTRY_ROWS = 500;
-const HEADERS = ['Ámbito', 'Grupo', 'Prueba', 'Característica técnica', 'Marca', 'Fecha', 'Ciudad', 'Pista'];
+const HEADERS = ['Ámbito / Grupo', 'Prueba', 'Característica técnica', 'Marca', 'Fecha', 'Ciudad', 'Pista'];
 
 $root = dirname(__DIR__);
 $cityFile = $root . '/database/ciudades_es.csv';
@@ -95,16 +95,20 @@ function readCities(string $cityFile): array
 
 function buildListSheet(array $cities, array $catalogue): array
 {
-    $columns = [['Ciudad', ...$cities], ['Ámbito', ...array_keys($catalogue)]];
-    $ranges = [['Ciudades', "'Listas'!\$A\$2:\$A\$" . (count($cities) + 1)], ['Ambitos', "'Listas'!\$B\$2:\$B\$4"]];
+    $scopes = [];
     foreach ($catalogue as $area => $groups) {
-        $columns[] = ['Grupos ' . $area, ...array_keys($groups)];
-        $letter = column(count($columns));
-        $ranges[] = ['Grupos_' . safeName($area), "'Listas'!\${$letter}\$2:\${$letter}\$" . (count($groups) + 1)];
+        foreach ($groups as $group => $_events) {
+            $scopes[] = $area . ' / ' . $group;
+        }
+    }
+    $columns = [['Ciudad', ...$cities], ['Ámbito / Grupo', ...$scopes]];
+    $ranges = [['Ciudades', "'Listas'!\$A\$2:\$A\$" . (count($cities) + 1)], ['Ambitos_Grupos', "'Listas'!\$B\$2:\$B\$" . (count($scopes) + 1)]];
+    foreach ($catalogue as $area => $groups) {
         foreach ($groups as $group => $events) {
-            $columns[] = ['Pruebas ' . $area . ' ' . $group, ...$events];
+            $scope = $area . ' / ' . $group;
+            $columns[] = ['Pruebas ' . $scope, ...$events];
             $letter = column(count($columns));
-            $ranges[] = ['Proves_' . safeName($area) . '_' . safeName($group), "'Listas'!\${$letter}\$2:\${$letter}\$" . (count($events) + 1)];
+            $ranges[] = ['Proves_' . safeName($scope), "'Listas'!\${$letter}\$2:\${$letter}\$" . (count($events) + 1)];
         }
     }
     $rowCount = max(array_map('count', $columns));
@@ -141,14 +145,14 @@ function buildCitySearchSheet(array $cities): string
 
 function buildEventSearchSheet(array $catalogue): string
 {
-    $help = 'Filtra esta tabla para buscar opciones y copia Ambito, Grupo y Prueba en Resultados.';
-    $rows = sheetRow(1, ['Ámbito', 'Grupo', 'Prueba', 'Característica técnica', 'Ayuda'], 1);
+    $help = 'Filtra esta tabla para buscar opciones y copia Ámbito / Grupo y Prueba en Resultados.';
+    $rows = sheetRow(1, ['Ámbito / Grupo', 'Prueba', 'Característica técnica', 'Ayuda'], 1);
     $row = 2;
     foreach ($catalogue as $area => $groups) {
         foreach ($groups as $group => $events) {
             foreach ($events as $event) {
                 $technical = in_array($group, ['Tanques', 'Llançaments'], true) ? 'Sí' : 'No';
-                $rows .= sheetRow($row, [$area, $group, $event, $technical, $row === 2 ? $help : '']);
+                $rows .= sheetRow($row, [$area . ' / ' . $group, $event, $technical, $row === 2 ? $help : '']);
                 $row++;
             }
         }
@@ -156,9 +160,9 @@ function buildEventSearchSheet(array $catalogue): string
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
         . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
-        . '<cols><col min="1" max="1" width="22" customWidth="1"/><col min="2" max="2" width="20" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/><col min="4" max="4" width="26" customWidth="1"/><col min="5" max="5" width="90" customWidth="1"/></cols>'
+        . '<cols><col min="1" max="1" width="36" customWidth="1"/><col min="2" max="2" width="26" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/><col min="4" max="4" width="90" customWidth="1"/></cols>'
         . '<sheetData>' . $rows . '</sheetData>'
-        . '<autoFilter ref="A1:E' . ($row - 1) . '"/></worksheet>';
+        . '<autoFilter ref="A1:D' . ($row - 1) . '"/></worksheet>';
 }
 
 function validation(string $kind, string $reference, string $formula, string $prompt, string $error): string
@@ -171,24 +175,22 @@ function validation(string $kind, string $reference, string $formula, string $pr
 function buildResultsSheet(bool $includeAthlete = false): string
 {
     $offset = $includeAthlete ? 1 : 0;
-    $area = column(1 + $offset);
-    $group = column(2 + $offset);
-    $event = column(3 + $offset);
-    $city = column(7 + $offset);
+    $scope = column(1 + $offset);
+    $event = column(2 + $offset);
+    $city = column(6 + $offset);
     $items = [
-        validation('Ámbito', $area . '2:' . $area . '501', 'Ambitos', 'Escribe o escoge el ámbito.', 'Escoge un ámbito de la lista.'),
-        validation('Grupo', $group . '2:' . $group . '501', 'INDIRECT("Grupos_"&SUBSTITUTE(' . $area . '2," ","_"))', 'Tras indicar ámbito, escribe o escoge el grupo.', 'Escoge un grupo válido para el ámbito.'),
-        validation('Prueba', $event . '2:' . $event . '501', 'INDIRECT("Proves_"&SUBSTITUTE(' . $area . '2," ","_")&"_"&SUBSTITUTE(' . $group . '2,"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
+        validation('Ámbito / Grupo', $scope . '2:' . $scope . '501', 'Ambitos_Grupos', 'Escribe o escoge el ámbito y grupo.', 'Escoge un ámbito y grupo de la lista.'),
+        validation('Prueba', $event . '2:' . $event . '501', 'INDIRECT("Proves_"&SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(' . $scope . '2," ","_"),"/","_"),"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
         validation('Ciudad', $city . '2:' . $city . '501', 'Ciudades', 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
     ];
     $headers = $includeAthlete ? ['Atleta', ...HEADERS] : HEADERS;
-    $widths = $includeAthlete ? [34, 20, 18, 24, 35, 14, 16, 38, 34] : [20, 18, 24, 35, 14, 16, 38, 34];
+    $widths = $includeAthlete ? [34, 34, 24, 35, 14, 16, 38, 34] : [34, 24, 35, 14, 16, 38, 34];
     $columns = '';
     foreach ($widths as $position => $width) {
         $number = $position + 1;
         $columns .= '<col min="' . $number . '" max="' . $number . '" width="' . $width . '" customWidth="1"/>';
     }
-    return worksheet(sheetRow(1, $headers, 1), $columns, '<dataValidations count="4">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'I' : 'H');
+    return worksheet(sheetRow(1, $headers, 1), $columns, '<dataValidations count="3">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'H' : 'G');
 }
 
 function styles(): string

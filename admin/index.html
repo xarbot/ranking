@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
     <link rel="stylesheet" href="styles.css?v=20260527-6">
-    <script src="i18n.js?v=20260527-8" defer></script>
-    <script src="app.js?v=20260527-7" defer></script>
+    <script src="i18n.js?v=20260527-9" defer></script>
+    <script src="app.js?v=20260527-8" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -114,15 +114,15 @@
               </label>
               <button class="secondary add-athlete" id="add-import-athlete" type="button">Dar de alta este atleta</button>
               <label>Descarga la plantilla<select id="result-template-version"><option value="ods">LibreOffice / OpenOffice (.ods)</option><option value="xlsx">Microsoft Office (.xlsx)</option></select></label>
-              <p class="helper bulk-helper">La plantilla incluye desplegables estándar para escoger prueba y ciudad.</p>
-              <div class="import-actions"><a class="file-button secondary" id="download-results-template" href="../assets/plantilla-resultados-libreoffice.ods?v=20260527-2" download="plantilla-resultados-libreoffice.ods">Descargar plantilla</a><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
+              <p class="helper bulk-helper">La plantilla agrupa Ámbito / Grupo y filtra la Prueba; la fecha admite AAAA-MM-DD o DD/MM/AAAA.</p>
+              <div class="import-actions"><a class="file-button secondary" id="download-results-template" href="../assets/plantilla-resultados-libreoffice.ods?v=20260527-3" download="plantilla-resultados-libreoffice.ods">Descargar plantilla</a><label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv"></div>
               <p id="mark-import-status" class="status hidden" role="status"></p>
             </section>
             <section class="bulk-import">
               <h3>Marcas de varios atletas</h3>
               <p class="helper bulk-helper">El fichero incluye la columna Atleta con Nombre y Apellidos. Antes de cargar marcas se revisan las altas necesarias.</p>
               <label>Descarga la plantilla<select id="multi-result-template-version"><option value="ods">LibreOffice / OpenOffice (.ods)</option><option value="xlsx">Microsoft Office (.xlsx)</option></select></label>
-              <div class="import-actions"><a class="file-button secondary" id="download-multi-results-template" href="../assets/plantilla-resultados-atletas-libreoffice.ods?v=20260527-2" download="plantilla-resultados-atletas-libreoffice.ods">Descargar plantilla</a><label class="file-button secondary" for="import-multi-marks-file">Importar resultados CSV</label><input class="hidden" id="import-multi-marks-file" type="file" accept=".csv,text/csv"></div>
+              <div class="import-actions"><a class="file-button secondary" id="download-multi-results-template" href="../assets/plantilla-resultados-atletas-libreoffice.ods?v=20260527-3" download="plantilla-resultados-atletas-libreoffice.ods">Descargar plantilla</a><label class="file-button secondary" for="import-multi-marks-file">Importar resultados CSV</label><input class="hidden" id="import-multi-marks-file" type="file" accept=".csv,text/csv"></div>
               <p id="multi-mark-import-status" class="status hidden" role="status"></p>
               <form id="missing-athletes-form" class="missing-athletes hidden">
                 <h4>Atletas no encontrados</h4>
@@ -243,6 +243,6 @@
         </article>
       </section>
     </main>
-    <footer id="app-footer" class="hidden">v. 0.5</footer>
+    <footer id="app-footer" class="hidden">v. 0.6</footer>
   </body>
 </html>
