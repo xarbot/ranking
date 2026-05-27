@@ -162,6 +162,8 @@ main {
   border-radius: 15px;
   box-shadow: var(--shadow);
   padding: 22px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .card-title {
   align-items: center;
@@ -169,7 +171,9 @@ main {
   gap: 16px;
   justify-content: space-between;
   margin-bottom: 21px;
+  flex-wrap: wrap;
 }
+.card-title > * { min-width: 0; }
 .entry-card form { display: grid; gap: 15px; }
 
 label {
@@ -228,8 +232,8 @@ button { font: inherit; }
 .import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .file-button { align-items: center; display: inline-flex; }
 
-.table-wrap { overflow-x: auto; }
-table { border-collapse: collapse; min-width: 100%; }
+.table-wrap { max-width: 100%; overflow-x: hidden; }
+table { border-collapse: collapse; min-width: 100%; table-layout: fixed; width: 100%; }
 th {
   border-bottom: 1px solid var(--line);
   color: var(--muted);
@@ -238,11 +242,12 @@ th {
   padding: 9px 10px;
   text-align: left;
   text-transform: uppercase;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
-td { border-bottom: 1px solid #ebeeec; padding: 12px 10px; white-space: nowrap; }
+td { border-bottom: 1px solid #ebeeec; overflow-wrap: anywhere; padding: 12px 10px; vertical-align: top; white-space: normal; }
 td strong { color: var(--primary-dark); }
-.row-actions { text-align: right; white-space: nowrap; }
+.row-actions { text-align: right; white-space: normal; width: 112px; }
 .row-button {
   background: transparent;
   border: 0;
@@ -302,6 +307,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .tab { white-space: nowrap; }
   .card { padding: 17px; }
   .fields.two { grid-template-columns: 1fr; }
+  .row-actions { width: auto; }
 }
 .admin-link {
   color: var(--primary);
