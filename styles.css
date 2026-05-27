@@ -321,7 +321,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 .filter-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(3, minmax(190px, 1fr));
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
 }
 .results { min-height: 180px; }
 .athlete-search-card { margin-bottom: 20px; }
@@ -344,6 +344,12 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   text-decoration: underline;
 }
 .athlete-button:hover { color: var(--primary); }
+.cell-detail {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
 .history { display: grid; gap: 20px; }
 .history.hidden { display: none; }
 .ranking-view { display: grid; gap: 20px; }

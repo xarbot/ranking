@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260527-2">
-    <script src="i18n.js?v=20260527-3" defer></script>
-    <script src="app.js?v=20260525-6" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260527-3">
+    <script src="i18n.js?v=20260527-4" defer></script>
+    <script src="app.js?v=20260527-7" defer></script>
   </head>
   <body>
     <header class="hero">
@@ -58,6 +58,12 @@
           <button class="secondary" id="clear-filters" type="button">Limpiar filtros</button>
         </div>
         <div class="filter-grid ranking-filters">
+          <label>Ámbito
+            <select id="area-filter"><option value="">Todos los ámbitos</option></select>
+          </label>
+          <label>Grupo
+            <select id="group-filter"><option value="">Todos los grupos</option></select>
+          </label>
           <label>Prueba
             <select id="event-filter"><option value="">Todas las pruebas</option></select>
           </label>
@@ -113,6 +119,6 @@
         <div class="history-categories" id="history-categories"></div>
       </section>
     </main>
-    <footer>v. 0.8</footer>
+    <footer>v. 0.9</footer>
   </body>
 </html>

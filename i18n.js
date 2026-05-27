@@ -45,6 +45,8 @@
       "Mostrar 20 resultados mas": "Mostra 20 resultats més",
       "No hay marcas registradas para los filtros indicados.": "No hi ha marques registrades per als filtres indicats.",
       "Limpiar filtros": "Neteja els filtres",
+      "Todos los ámbitos": "Tots els àmbits",
+      "Todos los grupos": "Tots els grups",
       "Todas las pruebas": "Totes les proves",
       "Todas las categorias": "Totes les categories",
       "Buscar historial": "Cerca historial",

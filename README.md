@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.8`
-- Version del repositorio: `0.8`
+- Version en produccion: `0.9`
+- Version del repositorio: `0.9`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -55,8 +55,10 @@ tecnica. En pista cubierta y aire libre se puede indicar ademas el nombre de la 
 
 Las clasificaciones separan sexo: `Sub8 - Masculino`, `Sub8 - Femenino`, etc. Desde los
 35 anos se generan tramos de cinco anos (`Master 35`, `Master 40`, ... `Master 100`),
-tambien separados por sexo. En la consulta publica solo aparecen pruebas y categorias que
-tienen marcas registradas.
+tambien separados por sexo. En la consulta publica solo aparecen ambitos, grupos, pruebas y
+categorias que tienen marcas registradas; las pruebas se filtran de forma jerarquica por
+ambito y grupo. Las ultimas marcas muestran, cuando procede, caracteristica tecnica y nombre
+de pista bajo la prueba y la ciudad.
 
 ## Ciudades
 
