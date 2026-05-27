@@ -1,13 +1,4 @@
-CREATE TEMPORARY TABLE catalogo_pruebas_004 (
-  nombre VARCHAR(120) NOT NULL,
-  ambito ENUM('pista_cubierta', 'aire_libre', 'ruta') NOT NULL,
-  grupo VARCHAR(40) NOT NULL,
-  sentido_resultado ENUM('menor', 'mayor') NOT NULL,
-  informacion_adicional BOOLEAN NOT NULL,
-  PRIMARY KEY (ambito, grupo, nombre)
-) ENGINE=InnoDB;
-
-INSERT INTO catalogo_pruebas_004 (nombre, ambito, grupo, sentido_resultado, informacion_adicional) VALUES
+INSERT INTO pruebas (nombre, ambito, grupo, sentido_resultado, informacion_adicional) VALUES
 ('60', 'pista_cubierta', 'Curses', 'menor', FALSE),
 ('80', 'pista_cubierta', 'Curses', 'menor', FALSE),
 ('100', 'pista_cubierta', 'Curses', 'menor', FALSE),
@@ -117,28 +108,58 @@ INSERT INTO catalogo_pruebas_004 (nombre, ambito, grupo, sentido_resultado, info
 ('5km', 'ruta', 'Marxa', 'menor', FALSE),
 ('10km', 'ruta', 'Marxa', 'menor', FALSE),
 ('Mitja marató', 'ruta', 'Marxa', 'menor', FALSE),
-('Marató', 'ruta', 'Marxa', 'menor', FALSE);
+('Marató', 'ruta', 'Marxa', 'menor', FALSE)
 
-INSERT IGNORE INTO pruebas (nombre, ambito, grupo, sentido_resultado, informacion_adicional)
-SELECT nombre, ambito, grupo, sentido_resultado, informacion_adicional FROM catalogo_pruebas_004;
-
-UPDATE pruebas p
-JOIN catalogo_pruebas_004 c ON c.nombre = p.nombre AND c.ambito = p.ambito AND c.grupo = p.grupo
-SET p.sentido_resultado = c.sentido_resultado,
-    p.informacion_adicional = c.informacion_adicional;
+ON DUPLICATE KEY UPDATE
+  sentido_resultado = VALUES(sentido_resultado),
+  informacion_adicional = VALUES(informacion_adicional);
 
 UPDATE marcas m
 JOIN pruebas anterior ON anterior.id = m.prueba_id
-LEFT JOIN catalogo_pruebas_004 c
-  ON c.nombre = anterior.nombre AND c.ambito = anterior.ambito AND c.grupo = anterior.grupo
 JOIN pruebas destino
   ON destino.nombre = '100' AND destino.ambito = 'aire_libre' AND destino.grupo = 'Curses'
 SET m.prueba_id = destino.id
-WHERE c.nombre IS NULL;
+WHERE NOT (
+  (
+    anterior.ambito IN ('pista_cubierta', 'aire_libre')
+    AND (
+      (anterior.grupo = 'Curses' AND anterior.nombre IN ('60', '80', '100', '120', '150', '200', '300', '400', '600', '800', '1000', '1500', 'Milla', '2000', '3000', '5000', '10000'))
+      OR (anterior.grupo = 'Tanques' AND anterior.nombre IN ('60 mt', '80 mt', '100 mt', '110 mt', '220 mt', '300 mt', '400 mt'))
+      OR (anterior.grupo = 'Relleus' AND anterior.nombre IN ('4x60', '4x80', '4x100', '4x200', '4x300', '4x400', '3x600'))
+      OR (anterior.grupo = 'Obstacles' AND anterior.nombre IN ('1000 sense ria', '1500', '2000', '3000'))
+      OR (anterior.grupo = 'Salts' AND anterior.nombre IN ('Llargada', 'Triple', 'Alçada', 'Perxa'))
+      OR (anterior.grupo = 'Llançaments' AND anterior.nombre IN ('Pes', 'Disc', 'Javelina', 'Martell', 'Martell pesat'))
+      OR (anterior.grupo = 'Marxa' AND anterior.nombre IN ('1000', '2000', '3000', '5000', '10000'))
+    )
+  )
+  OR (
+    anterior.ambito = 'ruta'
+    AND (
+      (anterior.grupo = 'Curses' AND anterior.nombre IN ('Milla', '5km', '10km', 'Mitja marató', 'Marató'))
+      OR (anterior.grupo = 'Marxa' AND anterior.nombre IN ('1km', '2km', '3km', '5km', '10km', 'Mitja marató', 'Marató'))
+    )
+  )
+);
 
-DELETE p FROM pruebas p
-LEFT JOIN catalogo_pruebas_004 c
-  ON c.nombre = p.nombre AND c.ambito = p.ambito AND c.grupo = p.grupo
-WHERE c.nombre IS NULL;
-
-DROP TEMPORARY TABLE catalogo_pruebas_004;
+DELETE FROM pruebas
+WHERE NOT (
+  (
+    ambito IN ('pista_cubierta', 'aire_libre')
+    AND (
+      (grupo = 'Curses' AND nombre IN ('60', '80', '100', '120', '150', '200', '300', '400', '600', '800', '1000', '1500', 'Milla', '2000', '3000', '5000', '10000'))
+      OR (grupo = 'Tanques' AND nombre IN ('60 mt', '80 mt', '100 mt', '110 mt', '220 mt', '300 mt', '400 mt'))
+      OR (grupo = 'Relleus' AND nombre IN ('4x60', '4x80', '4x100', '4x200', '4x300', '4x400', '3x600'))
+      OR (grupo = 'Obstacles' AND nombre IN ('1000 sense ria', '1500', '2000', '3000'))
+      OR (grupo = 'Salts' AND nombre IN ('Llargada', 'Triple', 'Alçada', 'Perxa'))
+      OR (grupo = 'Llançaments' AND nombre IN ('Pes', 'Disc', 'Javelina', 'Martell', 'Martell pesat'))
+      OR (grupo = 'Marxa' AND nombre IN ('1000', '2000', '3000', '5000', '10000'))
+    )
+  )
+  OR (
+    ambito = 'ruta'
+    AND (
+      (grupo = 'Curses' AND nombre IN ('Milla', '5km', '10km', 'Mitja marató', 'Marató'))
+      OR (grupo = 'Marxa' AND nombre IN ('1km', '2km', '3km', '5km', '10km', 'Mitja marató', 'Marató'))
+    )
+  )
+);
