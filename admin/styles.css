@@ -257,10 +257,15 @@ button { font: inherit; }
 .status { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: var(--primary-dark); margin: 0 0 18px; padding: 11px 13px; }
 .status.failure { background: #fbeaea; border-color: #f2c9c9; color: var(--danger); }
 .import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.bulk-import { border-top: 1px solid var(--line); display: grid; gap: 12px; margin-top: 24px; padding-top: 20px; }
+.import-modes { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bulk-import { border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 12px; padding: 18px; }
 .bulk-import h3 { color: var(--primary-dark); font-size: 17px; margin: 0; }
 .bulk-import .add-athlete { justify-self: start; }
 .bulk-import .status { margin: 0; }
+.missing-athletes { border-top: 1px solid var(--line); display: grid; gap: 12px; padding-top: 14px; }
+.missing-athletes h4 { color: var(--primary-dark); font-size: 16px; margin: 0; }
+.missing-athlete-row { align-items: end; display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 10px; }
+.missing-athlete-row label { min-width: 0; }
 .catalog-helper { margin-top: 0; }
 .bulk-helper { margin: 0; }
 .file-button { align-items: center; display: inline-flex; }
@@ -330,6 +335,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .stats { width: max-content; }
   .user-session { justify-content: space-between; }
   .entry-card { max-width: 520px; }
+  .import-modes { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
@@ -339,5 +345,6 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .tab { white-space: nowrap; }
   .card { padding: 17px; }
   .fields.two { grid-template-columns: 1fr; }
+  .missing-athlete-row { grid-template-columns: 1fr; }
   .row-actions { width: auto; }
 }

@@ -8,8 +8,8 @@ castellano y catalan; los literales se pueden anadir, editar o retirar desde **T
 
 ## Version
 
-- Version en produccion: `0.4`
-- Version del repositorio: `0.4`
+- Version en produccion: `0.5`
+- Version del repositorio: `0.5`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -74,19 +74,20 @@ La plantilla de atletas descargable incluye `Nombre`, `Apellidos`, `Fecha de nac
 apellidos se almacenan capitalizados; al cargar la aplicacion se normalizan igualmente los
 atletas que ya existian.
 
-Antes de importar resultados se selecciona el atleta al que corresponden todas las marcas,
-con acceso directo a su alta si aun no existe. La descarga de resultados es una plantilla
-La descarga permite seleccionar dos plantillas. `plantilla-resultados.xlsx` esta destinada a
-Microsoft Office e incorpora desplegables dependientes para `Ambito`, `Grupo`, `Prueba` y
-`Ciudad`. `plantilla-resultados-libreoffice.ods` esta destinada a LibreOffice/OpenOffice e
-incluye macros Basic de busqueda: con una celda de la fila activa en `Resultados`, se ejecuta
-`BuscarPrueba` para rellenar `Ambito`, `Grupo` y `Prueba`, o `BuscarCiudad` para rellenar
-`Ciudad`. Es necesario habilitar macros al abrir el archivo ODS. Las pestanas `Pruebas` y
-`Ciudades` tambien permiten filtrar y copiar valores. La persona que la rellena
-la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como CSV. El
-CSV no incluye el atleta y contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica
-tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`. La importacion comprueba prueba, ciudad y
-campos obligatorios antes de grabar ninguna marca.
+La carga masiva de resultados dispone de un flujo para un unico atleta seleccionado en la web,
+con acceso directo a su alta si aun no existe, y de otro flujo multiatleta cuyo fichero
+incorpora `Atleta` como primera columna, con el valor
+`Nombre Apellidos`. Este segundo flujo revisa primero los atletas existentes y permite dar de
+alta los que faltan indicando nombre, apellidos, fecha de nacimiento y sexo; si no se completa
+un alta, se omiten sus marcas.
+
+Cada flujo permite descargar una plantilla Microsoft Office (`.xlsx`) o una plantilla
+LibreOffice/OpenOffice (`.ods`). Ambas usan desplegables estandar para introducir valores y
+hojas auxiliares `Pruebas` y `Ciudades` para filtrar y copiar opciones. La persona que la
+rellena la devuelve en formato Excel; antes de importarla se guarda la hoja `Resultados` como
+CSV. El CSV individual contiene `Ambito`, `Grupo`, `Prueba`, `Caracteristica tecnica`, `Marca`,
+`Fecha`, `Ciudad` y `Pista`; el CSV multiatleta antepone `Atleta`. La importacion comprueba
+prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
 
 Las plantillas se regeneran tras modificar el catalogo o las ciudades mediante
 `php scripts/generate_results_template.php` y
