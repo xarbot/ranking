@@ -6,7 +6,7 @@
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
     <link rel="stylesheet" href="styles.css?v=20260528-1">
     <script src="i18n.js?v=20260527-12" defer></script>
-    <script src="app.js?v=20260528-1" defer></script>
+    <script src="app.js?v=20260528-2" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -146,8 +146,8 @@
           </label>
           <form id="replace-marks-form" class="inline-form replace-form">
             <label>Campo<select id="replace-field"><option value="city">Ciudad</option><option value="trackName">Pista</option></select></label>
-            <label>Buscar<input id="replace-search" required></label>
-            <label>Reemplazar por<input id="replace-value"></label>
+            <label>Buscar<input id="replace-search" list="city-options" required></label>
+            <label>Reemplazar por<input id="replace-value" list="city-options"></label>
             <button class="secondary" type="submit">Reemplazar</button>
           </form>
           <p id="replace-marks-status" class="status hidden" role="status"></p>
@@ -260,6 +260,6 @@
         </article>
       </section>
     </main>
-    <footer id="app-footer" class="hidden">v. 1.0</footer>
+    <footer id="app-footer" class="hidden">v. 1.1</footer>
   </body>
 </html>
