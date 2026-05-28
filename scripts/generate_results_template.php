@@ -10,6 +10,8 @@ $root = dirname(__DIR__);
 $cityFile = $root . '/database/ciudades_es.csv';
 $output = $root . '/assets/plantilla-resultados.xlsx';
 $multiOutput = $root . '/assets/plantilla-resultados-atletas.xlsx';
+$microsoftOutput = $root . '/assets/plantilla-resultados-microsoft.xlsx';
+$microsoftMultiOutput = $root . '/assets/plantilla-resultados-atletas-microsoft.xlsx';
 $trackCatalogue = [
     'Curses' => ['60', '80', '100', '120', '150', '200', '300', '400', '600', '800', '1000', '1500', 'Milla', '2000', '3000', '5000', '10000'],
     'Tanques' => ['60 mt', '80 mt', '100 mt', '110 mt', '220 mt', '300 mt', '400 mt'],
@@ -66,13 +68,14 @@ function sheetRow(int $number, array $values, int $style = 0): string
     return '<row r="' . $number . '">' . $cells . '</row>';
 }
 
-function worksheet(string $rows, string $columns, string $validations = '', string $lastColumn = 'H'): string
+function worksheet(string $rows, string $columns, string $validations = '', string $lastColumn = 'H', bool $excelStrict = false): string
 {
+    $protection = $excelStrict ? '' : '<sheetProtection sheet="0"/>';
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
         . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
         . '<cols>' . $columns . '</cols><sheetData>' . $rows . '</sheetData>'
-        . '<autoFilter ref="A1:' . $lastColumn . '501"/>'
+        . $protection . '<autoFilter ref="A1:' . $lastColumn . '501"/>'
         . $validations . '</worksheet>';
 }
 
@@ -172,12 +175,17 @@ function validation(string $kind, string $reference, string $formula, string $pr
         . xml($formula) . '</formula1></dataValidation>';
 }
 
-function buildResultsSheet(bool $includeAthlete = false): string
+function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false): string
 {
     $offset = $includeAthlete ? 1 : 0;
     $scope = column(1 + $offset);
     $event = column(2 + $offset);
     $city = column(6 + $offset);
+    $items = [
+        validation('Ámbito / Grupo', $scope . '2:' . $scope . '501', 'Ambitos_Grupos', 'Escribe o escoge el ámbito y grupo.', 'Escoge un ámbito y grupo de la lista.'),
+        validation('Prueba', $event . '2:' . $event . '501', 'INDIRECT("Proves_"&SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(' . $scope . '2," ","_"),"/","_"),"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
+        validation('Ciudad', $city . '2:' . $city . '501', 'Ciudades', 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
+    ];
     $headers = $includeAthlete ? ['Atleta', ...HEADERS] : HEADERS;
     $widths = $includeAthlete ? [34, 34, 24, 35, 14, 16, 38, 34] : [34, 24, 35, 14, 16, 38, 34];
     $columns = '';
@@ -185,7 +193,7 @@ function buildResultsSheet(bool $includeAthlete = false): string
         $number = $position + 1;
         $columns .= '<col min="' . $number . '" max="' . $number . '" width="' . $width . '" customWidth="1"/>';
     }
-    return worksheet(sheetRow(1, $headers, 1), $columns, '', $includeAthlete ? 'H' : 'G');
+    return worksheet(sheetRow(1, $headers, 1), $columns, '<dataValidations count="3">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'H' : 'G', $excelStrict);
 }
 
 function styles(): string
@@ -257,7 +265,11 @@ try {
     writeZip($output, $files);
     $files['xl/worksheets/sheet1.xml'] = buildResultsSheet(true);
     writeZip($multiOutput, $files);
-    echo sprintf("Generades %s i %s amb %d ciutats i %d files de resultats.\n", $output, $multiOutput, count($cities), ENTRY_ROWS);
+    $files['xl/worksheets/sheet1.xml'] = buildResultsSheet(false, true);
+    writeZip($microsoftOutput, $files);
+    $files['xl/worksheets/sheet1.xml'] = buildResultsSheet(true, true);
+    writeZip($microsoftMultiOutput, $files);
+    echo sprintf("Generades %s, %s, %s i %s amb %d ciutats i %d files de resultats.\n", $output, $multiOutput, $microsoftOutput, $microsoftMultiOutput, count($cities), ENTRY_ROWS);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'No se ha podido generar la plantilla: ' . $exception->getMessage() . PHP_EOL);
     exit(1);
