@@ -72,7 +72,7 @@ function worksheet(string $rows, string $columns, string $validations = '', stri
         . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
         . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
         . '<cols>' . $columns . '</cols><sheetData>' . $rows . '</sheetData>'
-        . '<autoFilter ref="A1:' . $lastColumn . '501"/><sheetProtection sheet="0"/>'
+        . '<autoFilter ref="A1:' . $lastColumn . '501"/>'
         . $validations . '</worksheet>';
 }
 
@@ -178,11 +178,6 @@ function buildResultsSheet(bool $includeAthlete = false): string
     $scope = column(1 + $offset);
     $event = column(2 + $offset);
     $city = column(6 + $offset);
-    $items = [
-        validation('Ámbito / Grupo', $scope . '2:' . $scope . '501', 'Ambitos_Grupos', 'Escribe o escoge el ámbito y grupo.', 'Escoge un ámbito y grupo de la lista.'),
-        validation('Prueba', $event . '2:' . $event . '501', 'INDIRECT("Proves_"&SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(' . $scope . '2," ","_"),"/","_"),"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
-        validation('Ciudad', $city . '2:' . $city . '501', 'Ciudades', 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
-    ];
     $headers = $includeAthlete ? ['Atleta', ...HEADERS] : HEADERS;
     $widths = $includeAthlete ? [34, 34, 24, 35, 14, 16, 38, 34] : [34, 24, 35, 14, 16, 38, 34];
     $columns = '';
@@ -190,7 +185,7 @@ function buildResultsSheet(bool $includeAthlete = false): string
         $number = $position + 1;
         $columns .= '<col min="' . $number . '" max="' . $number . '" width="' . $width . '" customWidth="1"/>';
     }
-    return worksheet(sheetRow(1, $headers, 1), $columns, '<dataValidations count="3">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'H' : 'G');
+    return worksheet(sheetRow(1, $headers, 1), $columns, '', $includeAthlete ? 'H' : 'G');
 }
 
 function styles(): string

@@ -10,7 +10,7 @@
   function eventLabel(event) { return t(areaLabel(event.area)) + " / " + groupLabel(event.eventGroup) + " / " + t(event.name || event.event || ""); }
   function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
-  function raceDistance(event) { var name = normalized(event.name || event.event).replace(",", "."), match; if (normalized(event.eventGroup) !== "curses") return null; if (name === "milla") return 1609; if (name.indexOf("mitja") === 0) return 21097; if (name === "marato") return 42195; match = /^(\d+(?:\.\d+)?)\s*(km)?/.exec(name); return match ? Number(match[1]) * (match[2] ? 1000 : 1) : null; }
+  function raceDistance(event) { var name = normalized(event.name || event.event).replace(",", "."), match, group = normalized(event.eventGroup); if (group !== "curses" && group !== "tanques") return null; if (name === "milla") return 1609; if (name.indexOf("mitja") === 0) return 21097; if (name === "marato") return 42195; match = /^(\d+(?:\.\d+)?)\s*(km)?/.exec(name); return match ? Number(match[1]) * (match[2] ? 1000 : 1) : null; }
   function compareEvents(first, second) { var firstDistance = raceDistance(first), secondDistance = raceDistance(second); if (firstDistance !== null && secondDistance !== null) return firstDistance - secondDistance; return t(first.name || first.event).localeCompare(t(second.name || second.event)); }
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
@@ -51,6 +51,25 @@
     byId("public-error").textContent = t(message || "");
     byId("public-error").classList.toggle("hidden", !message);
   }
+  function setUrl(params, replace) {
+    var query = new URLSearchParams();
+    Object.keys(params).forEach(function (key) {
+      if (params[key]) query.set(key, params[key]);
+    });
+    var next = window.location.pathname + (query.toString() ? "?" + query.toString() : "");
+    if (next !== window.location.pathname + window.location.search) {
+      window.history[replace ? "replaceState" : "pushState"]({}, "", next);
+    }
+  }
+  function currentFilterParams() {
+    return {
+      area: byId("area-filter").value,
+      group: byId("group-filter").value,
+      event: byId("event-filter").value,
+      category: byId("category-filter").value
+    };
+  }
+  function clearUrl(replace) { setUrl({}, replace); }
 
   function renderSearch() {
     byId("public-athletes").innerHTML = state.athletes.map(function (athlete) {
@@ -107,13 +126,14 @@
     return group || compareEvents(first.event, second.event) ||
       categoryRank(first.category) - categoryRank(second.category) || String(first.category || "").localeCompare(String(second.category || ""));
   }
-  function rankingTable(grouped, includeHeading) {
+  function rankingTable(grouped, includeHeading, options) {
+    var opts = options || {};
     var key = rankingKey(grouped);
     var visible = state.rankingVisible[key] || 20;
     var rows = grouped.marks.slice(0, visible).map(function (mark, index) {
       return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
-        mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
-        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td><strong>' + escapeHtml(mark.result) +
+        mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td>' + (opts.showEvent === false ? "" : "<td>" + eventCell(mark) + "</td>") +
+        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryLabel(mark.category)) + "</td>") + '<td><strong>' + escapeHtml(mark.result) +
         '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td></tr>';
     }).join("");
     var heading = includeHeading && grouped.category ? '<p class="ranking-category">' + escapeHtml(categoryLabel(grouped.category)) + '</p>' : "";
@@ -121,7 +141,7 @@
       ? '<button class="ranking-more" type="button" data-more-event="' + key + '" aria-label="' + escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
       : "";
     return '<section class="ranking-result">' + heading + '<div class="table-wrap"><table><thead><tr><th>#</th><th>' + t("Atleta") +
-      '</th><th>' + t("Prueba") + '</th><th>' + t("Categoria") + '</th><th>' + t("Marca") +
+      '</th>' + (opts.showEvent === false ? "" : "<th>" + t("Prueba") + "</th>") + (opts.showCategory === false ? "" : "<th>" + t("Categoria") + "</th>") + '<th>' + t("Marca") +
       '</th><th>' + t("Fecha") + '</th><th>' + t("Ciudad") + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + more + '</section>';
   }
   function renderRanking() {
@@ -138,7 +158,7 @@
     var groups = state.ranking.groups.slice().sort(compareRankingGroups);
     byId("ranking-empty").classList.toggle("hidden", groups.length > 0);
     if (eventId) {
-      byId("ranking-groups").innerHTML = '<article class="card ranking-group">' + groups.map(function (grouped) { return rankingTable(grouped, false); }).join("") + '</article>';
+      byId("ranking-groups").innerHTML = '<article class="card ranking-group">' + groups.map(function (grouped) { return rankingTable(grouped, !category, { showEvent: false, showCategory: false }); }).join("") + '</article>';
       return;
     }
     var showCategory = !category;
@@ -154,11 +174,11 @@
           var eventGroups = cardGroups.filter(function (grouped) { return String(grouped.event.id) === currentId; });
           var currentEvent = eventGroups[0].event;
           var eventTitle = area ? t(currentEvent.name) : t(areaLabel(currentEvent.area)) + " / " + t(currentEvent.name);
-          return '<article class="card ranking-event-card"><h4>' + escapeHtml(eventTitle) + '</h4>' + eventGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("") + '</article>';
+          return '<article class="card ranking-event-card"><h4>' + escapeHtml(eventTitle) + '</h4>' + eventGroups.map(function (grouped) { return rankingTable(grouped, showCategory, { showEvent: false, showCategory: false }); }).join("") + '</article>';
         }).join("");
         return '<section class="ranking-cluster ranking-cluster--' + tone + '"><h3>' + escapeHtml(cardTitle) + '</h3><div class="ranking-event-cards">' + eventCards + '</div></section>';
       }
-      var contents = cardGroups.map(function (grouped) { return rankingTable(grouped, showCategory); }).join("");
+      var contents = cardGroups.map(function (grouped) { return rankingTable(grouped, showCategory, { showEvent: false, showCategory: false }); }).join("");
       return '<article class="card ranking-group"><h3>' + escapeHtml(cardTitle) + '</h3>' + contents + '</article>';
     }).join("");
   }
@@ -225,12 +245,14 @@
       };
       showError("");
       render();
+      restoreFromUrl();
     } catch (error) {
       showError(error.message);
     }
   }
 
-  async function loadRanking() {
+  async function loadRanking(updateUrl) {
+    if (updateUrl !== false) updateUrl = true;
     var area = byId("area-filter").value;
     var group = byId("group-filter").value;
     var eventId = byId("event-filter").value;
@@ -242,6 +264,7 @@
       state.ranking = null;
       state.rankingVisible = {};
       renderHistory();
+      if (updateUrl) clearUrl(false);
       return;
     }
     try {
@@ -254,12 +277,14 @@
       showError("");
       renderRanking();
       renderHistory();
+      if (updateUrl) setUrl(currentFilterParams(), false);
     } catch (error) {
       showError(error.message);
     }
   }
 
-  async function loadHistory(athleteId) {
+  async function loadHistory(athleteId, updateUrl) {
+    if (updateUrl !== false) updateUrl = true;
     try {
       var response = await fetch("/api/public/athletes/" + encodeURIComponent(athleteId) + "/history");
       var data = await response.json().catch(function () { return {}; });
@@ -268,8 +293,29 @@
       byId("athlete-search").value = data.athlete.name;
       showError("");
       renderHistory();
+      if (updateUrl) setUrl({ athlete: athleteId }, false);
     } catch (error) {
       showError(error.message);
+    }
+  }
+  function restoreFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var athlete = params.get("athlete");
+    if (athlete) {
+      loadHistory(athlete, false);
+      return;
+    }
+    var eventId = params.get("event") || "";
+    var event = eventId ? state.events.find(function (item) { return String(item.id) === eventId; }) : null;
+    byId("area-filter").value = params.get("area") || (event ? event.area : "");
+    renderFilters();
+    byId("group-filter").value = params.get("group") || (event ? event.eventGroup : "");
+    renderFilters();
+    byId("event-filter").value = eventId;
+    byId("category-filter").value = params.get("category") || "";
+    renderFilters();
+    if (byId("area-filter").value || byId("group-filter").value || byId("event-filter").value || byId("category-filter").value) {
+      loadRanking(false);
     }
   }
   function selectSearchedAthlete() {
@@ -305,6 +351,7 @@
     renderFilters();
     renderMarks();
     renderHistory();
+    clearUrl(false);
   });
   byId("marks-body").addEventListener("click", function (event) {
     var button = event.target.closest("[data-athlete-id]");
@@ -328,6 +375,20 @@
     byId("athlete-search").value = "";
     showError("");
     renderHistory();
+    if (state.ranking) setUrl(currentFilterParams(), false);
+    else clearUrl(false);
+  });
+  window.addEventListener("popstate", function () {
+    state.history = null;
+    state.ranking = null;
+    state.rankingVisible = {};
+    byId("athlete-search").value = "";
+    byId("area-filter").value = "";
+    byId("group-filter").value = "";
+    byId("event-filter").value = "";
+    byId("category-filter").value = "";
+    render();
+    restoreFromUrl();
   });
   document.addEventListener("rankinglanguagechange", function () {
     renderSearch();

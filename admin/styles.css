@@ -219,6 +219,9 @@ input, select {
   height: 42px;
   padding: 0 12px;
 }
+.editing-row input,
+.editing-row select { margin-bottom: 7px; }
+.replace-form { margin: 4px 0 0; }
 input:focus, select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(48, 99, 52, .16);
@@ -341,11 +344,25 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 
 @media (max-width: 600px) {
   .hero, main { padding-left: 16px; padding-right: 16px; }
-  .stats div { min-width: 82px; padding: 12px; }
+  .brand { gap: 12px; margin-bottom: 16px; }
+  .brand span { font-size: 22px; }
+  h1 { font-size: 28px; }
+  .stats { width: 100%; }
+  .stats div { flex: 1; min-width: 0; padding: 12px 8px; }
+  .user-session, .language-picker { align-items: stretch; flex-direction: column; width: 100%; }
+  .user-session .secondary, .public-link { text-align: center; width: 100%; }
   .tabs { overflow-x: auto; }
   .tab { white-space: nowrap; }
   .card { padding: 17px; }
   .fields.two { grid-template-columns: 1fr; }
   .missing-athlete-row { grid-template-columns: 1fr; }
   .row-actions { width: auto; }
+  .inline-form { display: grid; grid-template-columns: 1fr; }
+  .inline-form label, .inline-form .checkbox-field, .inline-form button { min-width: 0; width: 100%; }
+  .table-wrap { overflow-x: visible; }
+  table, thead, tbody, tr, th, td { display: block; width: 100%; }
+  thead { display: none; }
+  tr { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; padding: 10px; }
+  td { border-bottom: 0; padding: 6px 0; }
+  .row-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
 }

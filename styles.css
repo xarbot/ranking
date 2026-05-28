@@ -187,6 +187,8 @@ label {
   gap: 6px;
 }
 input, select {
+  box-sizing: border-box;
+  width: 100%;
   background: var(--paper);
   border: 1px solid #ccd5d1;
   border-radius: 8px;
@@ -304,7 +306,13 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 
 @media (max-width: 600px) {
   .hero, main { padding-left: 16px; padding-right: 16px; }
-  .stats div { min-width: 82px; padding: 12px; }
+  .brand { gap: 12px; margin-bottom: 16px; }
+  .brand span { font-size: 22px; }
+  h1 { font-size: 28px; }
+  .stats { width: 100%; }
+  .stats div { flex: 1; min-width: 0; padding: 12px 8px; }
+  .hero-actions, .athlete-search-form { align-items: stretch; flex-direction: column; gap: 10px; }
+  .hero-actions .admin-link { text-align: center; }
   .tabs { overflow-x: auto; }
   .tab { white-space: nowrap; }
   .card { padding: 17px; }
@@ -448,3 +456,13 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 }
 @media (max-width: 600px) {
   .filter-grid { grid-template-columns: 1fr; }
+  .table-wrap { overflow-x: visible; }
+  table, thead, tbody, tr, th, td { display: block; width: 100%; }
+  thead { display: none; }
+  tr { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 12px; padding: 10px; }
+  td { border-bottom: 0; padding: 6px 0; }
+  .ranking-result th:first-child,
+  .ranking-result td:first-child,
+  .ranking-result th:nth-child(2),
+  .ranking-result td:nth-child(2) { min-width: 0; white-space: normal; width: 100%; }
+}
