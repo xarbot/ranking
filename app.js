@@ -206,8 +206,13 @@
     byId("history-section").classList.toggle("hidden", !history);
     if (!history) return;
     byId("history-athlete-name").textContent = history.athlete.name;
-    var areas = unique(history.marks.map(function (mark) { return mark.area; }).filter(Boolean)).sort(function (first, second) {
-      return areaRank(first) - areaRank(second) || areaLabel(first).localeCompare(areaLabel(second));
+    var seenAreas = unique(history.marks.map(function (mark) { return mark.area; }).filter(Boolean));
+    var areas = ["pista_cubierta", "aire_libre", "ruta"].filter(function (area) {
+      return seenAreas.indexOf(area) !== -1;
+    }).concat(seenAreas.filter(function (area) {
+      return areaRank(area) === 99;
+    }).sort(function (first, second) {
+      return areaLabel(first).localeCompare(areaLabel(second));
     });
     if (areas.indexOf(state.historyArea) === -1) state.historyArea = areas[0] || "";
     var tabs = areas.length ? '<div class="history-tabs" role="tablist" aria-label="' + escapeHtml(t("Ámbito")) + '">' + areas.map(function (area) {
