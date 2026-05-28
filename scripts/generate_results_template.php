@@ -79,6 +79,43 @@ function worksheet(string $rows, string $columns, string $validations = '', stri
         . $validations . '</worksheet>';
 }
 
+function columnIndex(string $letters): int
+{
+    $index = 0;
+    foreach (str_split($letters) as $letter) {
+        $index = ($index * 26) + (ord($letter) - 64);
+    }
+    return $index;
+}
+
+function sheetDimension(string $sheet): string
+{
+    preg_match_all('/<c r="([A-Z]+)(\d+)"/', $sheet, $matches, PREG_SET_ORDER);
+    $maxColumn = 1;
+    $maxRow = 1;
+    foreach ($matches as $match) {
+        $maxColumn = max($maxColumn, columnIndex($match[1]));
+        $maxRow = max($maxRow, (int) $match[2]);
+    }
+    return 'A1:' . column($maxColumn) . $maxRow;
+}
+
+function excelStrictSheet(string $sheet, bool $removeAutoFilter = false): string
+{
+    $sheet = preg_replace('/<sheetProtection[^>]*\/>/', '', $sheet) ?? $sheet;
+    if ($removeAutoFilter) {
+        $sheet = preg_replace('/<autoFilter[^>]*\/>/', '', $sheet) ?? $sheet;
+    }
+    if (!str_contains($sheet, '<dimension ')) {
+        $dimension = '<dimension ref="' . sheetDimension($sheet) . '"/>';
+        $sheet = preg_replace('/(<worksheet\b[^>]*>)/', '$1' . $dimension, $sheet, 1) ?? $sheet;
+    }
+    if (!str_contains($sheet, '<sheetFormatPr ')) {
+        $sheet = str_replace('</sheetViews>', '</sheetViews><sheetFormatPr defaultRowHeight="15"/>', $sheet);
+    }
+    return $sheet;
+}
+
 function readCities(string $cityFile): array
 {
     $handle = fopen($cityFile, 'rb');
@@ -265,10 +302,15 @@ try {
     writeZip($output, $files);
     $files['xl/worksheets/sheet1.xml'] = buildResultsSheet(true);
     writeZip($multiOutput, $files);
-    $files['xl/worksheets/sheet1.xml'] = buildResultsSheet(false, true);
-    writeZip($microsoftOutput, $files);
-    $files['xl/worksheets/sheet1.xml'] = buildResultsSheet(true, true);
-    writeZip($microsoftMultiOutput, $files);
+
+    $microsoftFiles = $files;
+    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(false, true));
+    $microsoftFiles['xl/worksheets/sheet2.xml'] = excelStrictSheet($listSheet, true);
+    $microsoftFiles['xl/worksheets/sheet3.xml'] = excelStrictSheet($citySearchSheet);
+    $microsoftFiles['xl/worksheets/sheet4.xml'] = excelStrictSheet($eventSearchSheet, true);
+    writeZip($microsoftOutput, $microsoftFiles);
+    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(true, true));
+    writeZip($microsoftMultiOutput, $microsoftFiles);
     echo sprintf("Generades %s, %s, %s i %s amb %d ciutats i %d files de resultats.\n", $output, $multiOutput, $microsoftOutput, $microsoftMultiOutput, count($cities), ENTRY_ROWS);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'No se ha podido generar la plantilla: ' . $exception->getMessage() . PHP_EOL);
