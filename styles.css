@@ -438,6 +438,36 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   justify-content: space-between;
 }
 .history-categories { display: grid; gap: 20px; }
+.history-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+.history-tab {
+  background: #e8f0e7;
+  border: 1px solid #cfddce;
+  border-radius: 8px;
+  color: #506b52;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-weight: 700;
+  min-height: 42px;
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+.history-tab:hover {
+  background: #f5faf4;
+  border-color: #b9d0ba;
+  color: var(--primary);
+}
+.history-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
 .category-history .eyebrow { color: var(--muted); }
 .category-history h3 {
   color: var(--primary-dark);
@@ -494,6 +524,18 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 }
 @media (max-width: 600px) {
   .filter-grid { grid-template-columns: 1fr; }
+  .athlete-history-header { align-items: stretch; flex-direction: column; }
+  .athlete-history-header .secondary { width: 100%; }
+  .history-tabs {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .history-tab {
+    min-height: 40px;
+    padding: 9px 14px;
+  }
   .table-wrap { overflow-x: visible; }
   table, thead, tbody, tr, th, td { display: block; width: 100%; }
   thead { display: none; }

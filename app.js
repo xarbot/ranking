@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {} };
+  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "" };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -132,6 +132,11 @@
 
   function rankingKey(grouped) { return String(grouped.event.id) + "|" + (grouped.category || "all"); }
   function historyKey(category, eventGroup) { return category + "|" + (eventGroup.event.eventId || [eventGroup.event.area, eventGroup.event.eventGroup, eventGroup.event.event].join("|")); }
+  function areaRank(area) {
+    var order = ["pista_cubierta", "aire_libre", "ruta"];
+    var position = order.indexOf(area);
+    return position === -1 ? 99 : position;
+  }
   function compareRankingGroups(first, second) {
     var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
     return group || compareEvents(first.event, second.event) ||
@@ -201,8 +206,17 @@
     byId("history-section").classList.toggle("hidden", !history);
     if (!history) return;
     byId("history-athlete-name").textContent = history.athlete.name;
+    var areas = unique(history.marks.map(function (mark) { return mark.area; }).filter(Boolean)).sort(function (first, second) {
+      return areaRank(first) - areaRank(second) || areaLabel(first).localeCompare(areaLabel(second));
+    });
+    if (areas.indexOf(state.historyArea) === -1) state.historyArea = areas[0] || "";
+    var tabs = areas.length ? '<div class="history-tabs" role="tablist" aria-label="' + escapeHtml(t("Ámbito")) + '">' + areas.map(function (area) {
+      var active = area === state.historyArea;
+      return '<button class="history-tab' + (active ? " active" : "") + '" type="button" role="tab" aria-selected="' + (active ? "true" : "false") +
+        '" data-history-area="' + escapeHtml(area) + '">' + escapeHtml(t(areaLabel(area))) + '</button>';
+    }).join("") + '</div>' : "";
     var grouped = Object.create(null);
-    history.marks.forEach(function (mark) {
+    history.marks.filter(function (mark) { return !state.historyArea || mark.area === state.historyArea; }).forEach(function (mark) {
       if (!grouped[mark.category]) grouped[mark.category] = Object.create(null);
       var key = mark.eventId || [mark.area, mark.eventGroup, mark.event].join("|");
       if (!grouped[mark.category][key]) grouped[mark.category][key] = { event: mark, marks: [] };
@@ -211,7 +225,7 @@
     var categories = Object.keys(grouped).sort(function (first, second) {
       return categoryRank(first) - categoryRank(second) || first.localeCompare(second);
     });
-    byId("history-categories").innerHTML = categories.map(function (category) {
+    byId("history-categories").innerHTML = tabs + categories.map(function (category) {
       var events = Object.keys(grouped[category]).map(function (key) { return grouped[category][key]; }).sort(function (first, second) {
         var rank = eventRank(first.event.eventId) - eventRank(second.event.eventId);
         var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
@@ -315,6 +329,7 @@
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
       state.history = data;
       state.historyVisible = {};
+      state.historyArea = "";
       byId("athlete-search").value = data.athlete.name;
       showError("");
       renderHistory();
@@ -430,6 +445,11 @@
     if (more) {
       var key = more.dataset.moreHistory;
       state.historyVisible[key] = (state.historyVisible[key] || 1) + 20;
+      renderHistory();
+    }
+    var tab = event.target.closest("[data-history-area]");
+    if (tab) {
+      state.historyArea = tab.dataset.historyArea;
       renderHistory();
     }
     var less = event.target.closest("[data-less-history]");
