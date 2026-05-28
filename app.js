@@ -12,6 +12,16 @@
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
   function raceDistance(event) { var name = normalized(event.name || event.event).replace(",", "."), match, group = normalized(event.eventGroup); if (group !== "curses" && group !== "tanques") return null; if (name === "milla") return 1609; if (name.indexOf("mitja") === 0) return 21097; if (name === "marato") return 42195; match = /^(\d+(?:\.\d+)?)\s*(km)?/.exec(name); return match ? Number(match[1]) * (match[2] ? 1000 : 1) : null; }
   function compareEvents(first, second) { var firstDistance = raceDistance(first), secondDistance = raceDistance(second); if (firstDistance !== null && secondDistance !== null) return firstDistance - secondDistance; return t(first.name || first.event).localeCompare(t(second.name || second.event)); }
+  function eventRank(id) {
+    var ordered = state.events.slice().sort(function (first, second) {
+      var areaOrder = ["pista_cubierta", "aire_libre", "ruta"];
+      var area = areaOrder.indexOf(first.area) - areaOrder.indexOf(second.area);
+      var group = groupLabel(first.eventGroup).localeCompare(groupLabel(second.eventGroup));
+      return area || group || compareEvents(first, second);
+    });
+    for (var index = 0; index < ordered.length; index += 1) if (String(ordered[index].id) === String(id)) return index;
+    return 9999;
+  }
   function escapeHtml(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (char) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
@@ -193,7 +203,7 @@
     var grouped = Object.create(null);
     history.marks.forEach(function (mark) {
       if (!grouped[mark.category]) grouped[mark.category] = Object.create(null);
-      var key = [mark.area, mark.eventGroup, mark.event].join("|");
+      var key = mark.eventId || [mark.area, mark.eventGroup, mark.event].join("|");
       if (!grouped[mark.category][key]) grouped[mark.category][key] = { event: mark, marks: [] };
       grouped[mark.category][key].marks.push(mark);
     });
@@ -202,8 +212,9 @@
     });
     byId("history-categories").innerHTML = categories.map(function (category) {
       var events = Object.keys(grouped[category]).map(function (key) { return grouped[category][key]; }).sort(function (first, second) {
+        var rank = eventRank(first.event.eventId) - eventRank(second.event.eventId);
         var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
-        return group || compareEvents(first.event, second.event);
+        return rank || group || compareEvents(first.event, second.event);
       });
       return "<article class=\"card category-history\"><p class=\"eyebrow\">" + t("Categoria") + "</p><h3>" +
         escapeHtml(categoryLabel(category)) + "</h3>" + events.map(function (eventGroup) {
