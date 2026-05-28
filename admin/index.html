@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260528-7">
-    <script src="i18n.js?v=20260527-12" defer></script>
-    <script src="app.js?v=20260528-13" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260528-8">
+    <script src="i18n.js?v=20260528-13" defer></script>
+    <script src="app.js?v=20260528-14" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -64,6 +64,7 @@
 
     <main id="app-shell" class="hidden">
       <nav class="tabs" aria-label="Secciones">
+        <button class="tab" data-panel="control">Panel de Control</button>
         <button class="tab active" data-panel="marcas">Marcas</button>
         <button class="tab" data-panel="carga-resultados">Carga masiva de resultados</button>
         <button class="tab" data-panel="consulta-marcas">Marcas registradas</button>
@@ -74,6 +75,19 @@
         <button class="tab" data-panel="usuarios">Usuarios</button>
       </nav>
       <p id="app-error" class="status failure hidden" role="alert"></p>
+
+      <section id="panel-control" class="panel">
+        <article class="card management control-management">
+          <div class="card-title"><h2>Panel de Control</h2></div>
+          <form id="password-form" class="inline-form">
+            <label>Contrasena actual<input id="password-current" type="password" required autocomplete="current-password"></label>
+            <label>Nueva contrasena<input id="password-new" type="password" minlength="8" required autocomplete="new-password"></label>
+            <button class="primary" type="submit">Cambiar contrasena</button>
+          </form>
+          <p id="password-status" class="status hidden" role="status"></p>
+          <p id="password-error" class="error" role="alert"></p>
+        </article>
+      </section>
 
       <section id="panel-marcas" class="panel active">
         <div class="split">
@@ -201,22 +215,22 @@
         <article class="card management">
           <div class="card-title">
             <h2>Atletas</h2>
-            <div class="import-actions">
+            <div class="import-actions admin-only">
               <button class="secondary" id="download-athletes-list" type="button">Descargar listado</button>
               <button class="secondary" id="download-athlete-template" type="button">Descargar plantilla</button>
               <label class="file-button secondary" for="import-athletes-file">Importar CSV</label>
               <input class="hidden" id="import-athletes-file" type="file" accept=".csv,text/csv">
             </div>
           </div>
-          <p class="helper">Columnas de importación: Nombre, Apellidos, Fecha de nacimiento (AAAA-MM-DD) y Sexo (masculino/femenino).</p>
+          <p class="helper admin-only">Columnas de importación: Nombre, Apellidos, Fecha de nacimiento (AAAA-MM-DD) y Sexo (masculino/femenino).</p>
           <p id="athlete-import-status" class="status hidden" role="status"></p>
-          <form id="move-marks-form" class="inline-form move-marks-form">
+          <form id="move-marks-form" class="inline-form move-marks-form admin-only">
             <label>Atleta origen<input id="move-source-athlete" list="athlete-options" required placeholder="Buscar atleta..."></label>
             <label>Atleta destino<input id="move-target-athlete" list="athlete-options" required placeholder="Buscar atleta..."></label>
             <button class="secondary" type="submit">Mover marcas</button>
           </form>
           <p id="move-marks-status" class="status hidden" role="status"></p>
-          <form id="athlete-form" class="inline-form">
+          <form id="athlete-form" class="inline-form admin-only">
             <input type="hidden" id="athlete-id">
             <label>Nombre<input id="athlete-name" required></label>
             <label>Apellidos<input id="athlete-surname" required></label>
