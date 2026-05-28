@@ -226,11 +226,15 @@
             return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong></td><td>" + formatDate(mark.date) +
               "</td><td>" + cityCell(mark) + "</td></tr>";
           }).join("");
-          var more = visible < sortedMarks.length
-            ? '<button class="ranking-more" type="button" data-more-history="' + escapeHtml(key) + '" aria-label="' + escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
+          var less = visible > 1
+            ? '<button class="history-toggle" type="button" data-less-history="' + escapeHtml(key) + '" aria-label="' + escapeHtml(t("Mostrar menos resultados")) + '">-</button>'
             : "";
+          var more = visible < sortedMarks.length
+            ? '<button class="history-toggle" type="button" data-more-history="' + escapeHtml(key) + '" aria-label="' + escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
+            : "";
+          var controls = more || less ? '<div class="history-controls">' + less + more + '</div>' : "";
           return "<section class=\"event-history\"><h4>" + escapeHtml(eventLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
-            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" + more + "</section>";
+            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" + controls + "</section>";
         }).join("") + "</article>";
     }).join("");
     byId("history-empty").classList.toggle("hidden", history.marks.length > 0);
@@ -425,6 +429,11 @@
     if (more) {
       var key = more.dataset.moreHistory;
       state.historyVisible[key] = (state.historyVisible[key] || 1) + 20;
+      renderHistory();
+    }
+    var less = event.target.closest("[data-less-history]");
+    if (less) {
+      state.historyVisible[less.dataset.lessHistory] = 1;
       renderHistory();
     }
   });
