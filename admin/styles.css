@@ -253,7 +253,7 @@ button { font: inherit; }
 .secondary:hover { background: #f6f8f7; }
 .actions { display: flex; gap: 9px; margin-top: 3px; }
 .actions .primary { flex: 1; }
-.hidden { display: none; }
+.hidden { display: none !important; }
 .error { color: var(--danger); font-size: 13px; font-weight: 600; margin: 0; min-height: 0; }
 .error:not(:empty) { margin-bottom: 2px; }
 .helper { color: var(--muted); font-size: 13px; margin: -12px 0 18px; }
@@ -272,10 +272,11 @@ button { font: inherit; }
 .bulk-import h3 { color: var(--primary-dark); font-size: 17px; margin: 0; }
 .bulk-import .add-athlete { justify-self: start; }
 .bulk-import .status { margin: 0; }
-.missing-athletes { border-top: 1px solid var(--line); display: grid; gap: 12px; padding-top: 14px; }
-.missing-athletes h4 { color: var(--primary-dark); font-size: 16px; margin: 0; }
-.missing-athlete-row { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.35fr) minmax(170px, 1.25fr) minmax(120px, .95fr); margin-top: 10px; }
-.missing-athlete-row label { min-width: 0; }
+.missing-athletes, .import-review { border-top: 1px solid var(--line); display: grid; gap: 12px; padding-top: 14px; }
+.missing-athletes h4, .import-review h4 { color: var(--primary-dark); font-size: 16px; margin: 0; }
+.missing-athlete-row, .import-review-row { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.35fr) minmax(170px, 1.25fr) minmax(120px, .95fr); margin-top: 10px; }
+.import-review-row { grid-template-columns: 70px minmax(190px, 1fr) minmax(160px, .9fr); }
+.missing-athlete-row label, .import-review-row label { min-width: 0; }
 .catalog-helper { margin-top: 0; }
 .bulk-helper { margin: 0; }
 .file-button { align-items: center; display: inline-flex; }
@@ -361,7 +362,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .tab { white-space: nowrap; }
   .card { padding: 17px; }
   .fields.two { grid-template-columns: 1fr; }
-  .missing-athlete-row { grid-template-columns: 1fr; }
+  .missing-athlete-row, .import-review-row { grid-template-columns: 1fr; }
   .row-actions { width: auto; }
   .inline-form { display: grid; grid-template-columns: 1fr; }
   .inline-form label, .inline-form .checkbox-field, .inline-form button { min-width: 0; width: 100%; }
