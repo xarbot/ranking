@@ -193,24 +193,25 @@
     var grouped = Object.create(null);
     history.marks.forEach(function (mark) {
       if (!grouped[mark.category]) grouped[mark.category] = Object.create(null);
-      var event = eventLabel(mark);
-      if (!grouped[mark.category][event]) grouped[mark.category][event] = [];
-      grouped[mark.category][event].push(mark);
+      var key = [mark.area, mark.eventGroup, mark.event].join("|");
+      if (!grouped[mark.category][key]) grouped[mark.category][key] = { event: mark, marks: [] };
+      grouped[mark.category][key].marks.push(mark);
     });
     var categories = Object.keys(grouped).sort(function (first, second) {
       return categoryRank(first) - categoryRank(second) || first.localeCompare(second);
     });
     byId("history-categories").innerHTML = categories.map(function (category) {
-      var events = Object.keys(grouped[category]).sort(function (first, second) {
-        return t(first).localeCompare(t(second));
+      var events = Object.keys(grouped[category]).map(function (key) { return grouped[category][key]; }).sort(function (first, second) {
+        var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
+        return group || compareEvents(first.event, second.event);
       });
       return "<article class=\"card category-history\"><p class=\"eyebrow\">" + t("Categoria") + "</p><h3>" +
-        escapeHtml(categoryLabel(category)) + "</h3>" + events.map(function (event) {
-          var rows = grouped[category][event].slice().sort(compareHistory).map(function (mark) {
+        escapeHtml(categoryLabel(category)) + "</h3>" + events.map(function (eventGroup) {
+          var rows = eventGroup.marks.slice().sort(compareHistory).map(function (mark) {
             return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong></td><td>" + formatDate(mark.date) +
               "</td><td>" + cityCell(mark) + "</td></tr>";
           }).join("");
-          return "<section class=\"event-history\"><h4>" + escapeHtml(event) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
+          return "<section class=\"event-history\"><h4>" + escapeHtml(eventLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
             t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div></section>";
         }).join("") + "</article>";
     }).join("");
