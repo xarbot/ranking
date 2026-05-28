@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260528-6">
+    <link rel="stylesheet" href="styles.css?v=20260528-7">
     <script src="i18n.js?v=20260527-12" defer></script>
-    <script src="app.js?v=20260528-12" defer></script>
+    <script src="app.js?v=20260528-13" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -294,8 +294,15 @@
           <p class="helper">Al editar, deja la contrasena vacia para conservar la actual.</p>
           <div id="user-permissions" class="permissions-editor hidden">
             <h3>Permisos por atleta</h3>
-            <div class="table-wrap">
-              <table><thead><tr><th>Atleta</th><th>Añadir marcas</th><th>Editar marcas</th></tr></thead><tbody id="user-permissions-body"></tbody></table>
+            <div class="permission-fields">
+              <label>Añadir marcas
+                <input id="user-permission-create-input" list="athlete-options" placeholder="Buscar atleta...">
+              </label>
+              <div class="permission-chips" id="user-permission-create-list"></div>
+              <label>Editar marcas
+                <input id="user-permission-edit-input" list="athlete-options" placeholder="Buscar atleta...">
+              </label>
+              <div class="permission-chips" id="user-permission-edit-list"></div>
             </div>
           </div>
           <p id="user-error" class="error" role="alert"></p>

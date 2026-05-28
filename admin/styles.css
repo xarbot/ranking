@@ -349,13 +349,51 @@ td strong { color: var(--primary-dark); }
   font-size: 16px;
   margin: 0 0 10px;
 }
-.permissions-editor td:not(:first-child),
-.permissions-editor th:not(:first-child) { text-align: center; width: 150px; }
-.permissions-editor input[type="checkbox"] {
-  height: 18px;
-  margin: 0 auto;
+.permission-fields {
+  display: grid;
+  gap: 12px;
+}
+.permission-chips {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+.permission-chip {
+  align-items: center;
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--primary-dark);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 7px;
+  max-width: 100%;
+  padding: 5px 8px 5px 11px;
+}
+.permission-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.permission-chip button {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--danger);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 800;
+  height: 22px;
+  justify-content: center;
+  line-height: 1;
   padding: 0;
-  width: 18px;
+  width: 22px;
 }
 .management .table-wrap { margin-top: 20px; }
 footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align: center; }

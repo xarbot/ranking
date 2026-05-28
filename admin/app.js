@@ -64,9 +64,18 @@
   function renderUserPermissions(user) {
     var permissions = permissionMap(user);
     byId("user-permissions").classList.toggle("hidden", byId("user-role").value !== "normal");
-    byId("user-permissions-body").innerHTML = state.athletes.map(function (a) {
-      var p = permissions[String(a.id)] || {};
-      return "<tr><td><strong>" + escapeHtml(athleteLabel(a)) + "</strong></td><td><input type=\"checkbox\" data-user-permission-create=\"" + a.id + "\"" + (p.canCreate ? " checked" : "") + "></td><td><input type=\"checkbox\" data-user-permission-edit=\"" + a.id + "\"" + (p.canEdit ? " checked" : "") + "></td></tr>";
+    renderPermissionList("create", state.athletes.filter(function (a) { return permissions[String(a.id)] && permissions[String(a.id)].canCreate; }).map(function (a) { return a.id; }));
+    renderPermissionList("edit", state.athletes.filter(function (a) { return permissions[String(a.id)] && permissions[String(a.id)].canEdit; }).map(function (a) { return a.id; }));
+  }
+  function permissionListId(kind) { return "user-permission-" + kind + "-list"; }
+  function permissionInputId(kind) { return "user-permission-" + kind + "-input"; }
+  function selectedPermissionIds(kind) { return Array.prototype.map.call(byId(permissionListId(kind)).querySelectorAll("[data-permission-athlete]"), function (chip) { return String(chip.dataset.permissionAthlete); }); }
+  function renderPermissionList(kind, ids) {
+    var unique = [];
+    ids.forEach(function (id) { if (unique.indexOf(String(id)) === -1 && byValue(state.athletes, id)) unique.push(String(id)); });
+    byId(permissionListId(kind)).innerHTML = unique.map(function (id) {
+      var athlete = byValue(state.athletes, id);
+      return "<span class=\"permission-chip\" data-permission-athlete=\"" + athlete.id + "\"><span>" + escapeHtml(athleteLabel(athlete)) + "</span><button type=\"button\" aria-label=\"" + escapeHtml(t("Eliminar")) + "\" data-remove-permission=\"" + kind + "\" data-athlete-id=\"" + athlete.id + "\">&times;</button></span>";
     }).join("");
   }
   function renderUsers() { byId("users-body").innerHTML = state.users.map(function (u) { return "<tr><td>" + escapeHtml(u.name) + "</td><td>" + escapeHtml(u.username) + "</td><td>" + t(u.role === "admin" ? "Administrador" : "Usuario normal") + "</td><td>" + t(u.active ? "Activo" : "Inactivo") + "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-user=\"" + u.id + "\">" + t("Editar") + "</button><button class=\"row-button danger\" data-delete-user=\"" + u.id + "\">" + t("Eliminar") + "</button></td></tr>"; }).join(""); byId("users-empty").classList.toggle("hidden", state.users.length > 0); renderUserPermissions(byValue(state.users, byId("user-id").value)); }
@@ -82,7 +91,10 @@
   async function saveEvent(e) { e.preventDefault(); var id = byId("event-id").value, payload = { area: byId("event-area").value, eventGroup: byId("event-group").value, name: byId("event-name").value, resultDirection: byId("event-direction").value, requiresTechnicalInfo: byId("event-technical").checked }; try { await request("/events" + (id ? "/" + id : ""), { method: id ? "PUT" : "POST", body: JSON.stringify(payload) }); reset("event"); await refresh(); } catch (error) { setError("event", error.message); } }
   async function saveMark(e) { e.preventDefault(); var athlete = selectedAthlete(), city = selectedCity(byId("mark-city").value), item = currentEvent(); if (!athlete || !city || !item) { setError("mark", "Selecciona un atleta, una prueba y una ciudad existentes."); return; } try { var id = byId("mark-id").value; await request("/marks" + (id ? "/" + id : ""), { method: id ? "PUT" : "POST", body: JSON.stringify({ athleteId: athlete.id, eventId: item.id, cityId: city.id, date: byId("mark-date").value, result: byId("mark-result").value, trackName: byId("mark-track-name").value, technicalInfo: byId("mark-technical-info").value }) }); reset("mark"); await refresh(); } catch (error) { setError("mark", error.message); } }
   async function saveTranslation(e) { e.preventDefault(); var id = byId("translation-id").value; try { await request("/translations" + (id ? "/" + id : ""), { method: id ? "PUT" : "POST", body: JSON.stringify({ literal: byId("translation-literal").value, es: byId("translation-es").value, ca: byId("translation-ca").value }) }); reset("translation"); await refresh(); } catch (error) { setError("translation", error.message); } }
-  function userPermissionsPayload() { return state.athletes.map(function (a) { return { athleteId: a.id, canCreate: document.querySelector("[data-user-permission-create=\"" + a.id + "\"]").checked, canEdit: document.querySelector("[data-user-permission-edit=\"" + a.id + "\"]").checked }; }).filter(function (p) { return p.canCreate || p.canEdit; }); }
+  function userPermissionsPayload() {
+    var createIds = selectedPermissionIds("create"), editIds = selectedPermissionIds("edit"), ids = createIds.concat(editIds).filter(function (id, index, all) { return all.indexOf(id) === index; });
+    return ids.map(function (id) { return { athleteId: id, canCreate: createIds.indexOf(id) !== -1, canEdit: editIds.indexOf(id) !== -1 }; });
+  }
   async function saveUser(e) { e.preventDefault(); var id = byId("user-id").value, payload = { name: byId("user-name").value, username: byId("user-username").value, role: byId("user-role").value, active: byId("user-active").checked, permissions: userPermissionsPayload() }; if (!id || byId("user-password").value) payload.password = byId("user-password").value; try { await request("/users" + (id ? "/" + id : ""), { method: id ? "PUT" : "POST", body: JSON.stringify(payload) }); reset("user"); await refresh(); } catch (error) { setError("user", error.message); } }
   async function remove(resource, id, prefix) { try { await request("/" + resource + "/" + id, { method: "DELETE" }); reset(prefix); await refresh(); } catch (error) { setError(prefix, error.message); } }
   async function saveInlineAthlete(id) { try { await request("/athletes/" + id, { method: "PUT", body: JSON.stringify({ name: document.querySelector("[data-athlete-name=\"" + id + "\"]").value, surname: document.querySelector("[data-athlete-surname=\"" + id + "\"]").value, birthdate: document.querySelector("[data-athlete-birthdate=\"" + id + "\"]").value, sex: document.querySelector("[data-athlete-sex=\"" + id + "\"]").value }) }); editingAthleteId = null; await refresh(); } catch (error) { setError("athlete", error.message); } }
@@ -92,6 +104,22 @@
   function editTranslation(literal) { var x=translationRows().find(function (row) { return row.literal === literal; }); if (!x) return; byId("translation-id").value=x.id || "";byId("translation-literal").value=x.literal;byId("translation-es").value=x.es;byId("translation-ca").value=x.ca;byId("cancel-translation").classList.remove("hidden");switchPanel("traducciones"); }
   function editMark(id) { editingMarkId = id; renderMarks(); switchPanel("consulta-marcas"); }
   function editUser(id) { var x=byValue(state.users,id);byId("user-id").value=x.id;byId("user-name").value=x.name;byId("user-username").value=x.username;byId("user-password").value="";byId("user-password").required=false;byId("user-role").value=x.role || "normal";byId("user-active").checked=x.active;renderUserPermissions(x);byId("cancel-user").classList.remove("hidden");switchPanel("usuarios"); }
+  function permissionAthleteFromInput(kind) {
+    var value = normalized(byId(permissionInputId(kind)).value), matches;
+    if (!value) return null;
+    matches = state.athletes.filter(function (a) { return normalized(athleteLabel(a)) === value; });
+    if (matches.length !== 1) matches = state.athletes.filter(function (a) { return normalized(athleteLabel(a)).indexOf(value) !== -1; });
+    return matches.length === 1 ? matches[0] : null;
+  }
+  function addPermissionAthlete(kind) {
+    var athlete = permissionAthleteFromInput(kind), ids;
+    if (!athlete) return;
+    ids = selectedPermissionIds(kind);
+    if (ids.indexOf(String(athlete.id)) === -1) ids.push(String(athlete.id));
+    renderPermissionList(kind, ids);
+    byId(permissionInputId(kind)).value = "";
+  }
+  function removePermissionAthlete(kind, id) { renderPermissionList(kind, selectedPermissionIds(kind).filter(function (x) { return String(x) !== String(id); })); }
 
   function parseCsv(text) {
     var clean = text.replace(/^\uFEFF/, "");
@@ -169,6 +197,7 @@
   ["athlete","event","mark","translation","user"].forEach(function(x){byId("cancel-"+x).addEventListener("click",function(){reset(x);});});
   byId("mark-area").addEventListener("change",function(){renderEventSelect();});byId("mark-event").addEventListener("change",updateMarkFields);byId("mark-athlete").addEventListener("input",updateCategory);byId("mark-date").addEventListener("input",updateCategory);byId("marks-athlete-filter").addEventListener("input",renderMarks);
   byId("user-role").addEventListener("change",function(){renderUserPermissions(byValue(state.users, byId("user-id").value));});
+  ["create","edit"].forEach(function(kind){byId(permissionInputId(kind)).addEventListener("change",function(){addPermissionAthlete(kind);});byId(permissionInputId(kind)).addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();addPermissionAthlete(kind);}});});
   byId("add-import-athlete").addEventListener("click",function(){ var parts=byId("mark-import-athlete").value.trim().split(/\s+/); reset("athlete"); if(parts.length){byId("athlete-name").value=parts.shift();byId("athlete-surname").value=parts.join(" ");} switchPanel("atletas"); });
   byId("download-athlete-template").addEventListener("click",function(){download("plantilla-atletas.csv","Nombre;Apellidos;Fecha de nacimiento;Sexo\nAnna;Garcia Lopez;2010-05-18;femenino\n");});
   byId("download-athletes-list").addEventListener("click",downloadAthletesList);
@@ -180,7 +209,7 @@
   byId("multi-mark-import-review-form").addEventListener("submit",function(e){continueMultiMarksImport(e).catch(function(error){status("multi-mark-import-status",error.message,true);});});
   byId("missing-athletes-form").addEventListener("submit",function(e){finishMultiMarksImport(e).catch(function(error){status("multi-mark-import-status",error.message,true);});});
   byId("import-athletes-file").addEventListener("change",function(){readFile(this,importAthletes);});byId("import-cities-file").addEventListener("change",function(){readFile(this,importCities);});byId("import-marks-file").addEventListener("change",function(){readFile(this,importMarks);});byId("import-multi-marks-file").addEventListener("change",function(){readFile(this,beginMultiMarksImport);});
-  document.body.addEventListener("click",function(e){var d=e.target.dataset;if(d.editAthlete)editAthlete(d.editAthlete);if(d.saveAthlete)saveInlineAthlete(d.saveAthlete);if(d.cancelInlineAthlete){editingAthleteId=null;renderAthletes();}if(d.editEvent)editEvent(d.editEvent);if(d.editTranslationLiteral)editTranslation(decodeURIComponent(d.editTranslationLiteral));if(d.editMark)editMark(d.editMark);if(d.saveMark)saveInlineMark(d.saveMark);if(d.cancelInlineMark){editingMarkId=null;renderMarks();}if(d.editUser)editUser(d.editUser);if(d.deleteAthlete)remove("athletes",d.deleteAthlete,"athlete");if(d.deleteEvent)remove("events",d.deleteEvent,"event");if(d.deleteTranslation)remove("translations",d.deleteTranslation,"translation");if(d.deleteMark)remove("marks",d.deleteMark,"mark");if(d.deleteUser)remove("users",d.deleteUser,"user");});
+  document.body.addEventListener("click",function(e){var d=e.target.dataset;if(d.removePermission){removePermissionAthlete(d.removePermission,d.athleteId);return;}if(d.editAthlete)editAthlete(d.editAthlete);if(d.saveAthlete)saveInlineAthlete(d.saveAthlete);if(d.cancelInlineAthlete){editingAthleteId=null;renderAthletes();}if(d.editEvent)editEvent(d.editEvent);if(d.editTranslationLiteral)editTranslation(decodeURIComponent(d.editTranslationLiteral));if(d.editMark)editMark(d.editMark);if(d.saveMark)saveInlineMark(d.saveMark);if(d.cancelInlineMark){editingMarkId=null;renderMarks();}if(d.editUser)editUser(d.editUser);if(d.deleteAthlete)remove("athletes",d.deleteAthlete,"athlete");if(d.deleteEvent)remove("events",d.deleteEvent,"event");if(d.deleteTranslation)remove("translations",d.deleteTranslation,"translation");if(d.deleteMark)remove("marks",d.deleteMark,"mark");if(d.deleteUser)remove("users",d.deleteUser,"user");});
   document.addEventListener("rankinglanguagechange",render);
   initialize();
 }());
