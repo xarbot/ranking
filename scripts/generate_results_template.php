@@ -212,7 +212,7 @@ function validation(string $kind, string $reference, string $formula, string $pr
         . xml($formula) . '</formula1></dataValidation>';
 }
 
-function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false): string
+function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false, string $cityFormula = 'Ciudades'): string
 {
     $offset = $includeAthlete ? 1 : 0;
     $scope = column(1 + $offset);
@@ -221,7 +221,7 @@ function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = fal
     $items = [
         validation('Ámbito / Grupo', $scope . '2:' . $scope . '501', 'Ambitos_Grupos', 'Escribe o escoge el ámbito y grupo.', 'Escoge un ámbito y grupo de la lista.'),
         validation('Prueba', $event . '2:' . $event . '501', 'INDIRECT("Proves_"&SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(' . $scope . '2," ","_"),"/","_"),"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
-        validation('Ciudad', $city . '2:' . $city . '501', 'Ciudades', 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
+        validation('Ciudad', $city . '2:' . $city . '501', $cityFormula, 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
     ];
     $headers = $includeAthlete ? ['Atleta', ...HEADERS] : HEADERS;
     $widths = $includeAthlete ? [34, 34, 24, 35, 14, 16, 38, 34] : [34, 24, 35, 14, 16, 38, 34];
@@ -309,12 +309,13 @@ try {
         "'Ciudades'!\$A\$2:\$A\$" . (count($cities) + 1),
         $workbook
     );
-    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(false, true));
+    $microsoftCityFormula = 'Ciudades!$A$2:$A$' . (count($cities) + 1);
+    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(false, true, $microsoftCityFormula));
     $microsoftFiles['xl/worksheets/sheet2.xml'] = excelStrictSheet($listSheet, true);
     $microsoftFiles['xl/worksheets/sheet3.xml'] = excelStrictSheet($citySearchSheet);
     $microsoftFiles['xl/worksheets/sheet4.xml'] = excelStrictSheet($eventSearchSheet, true);
     writeZip($microsoftOutput, $microsoftFiles);
-    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(true, true));
+    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(true, true, $microsoftCityFormula));
     writeZip($microsoftMultiOutput, $microsoftFiles);
     echo sprintf("Generades %s, %s, %s i %s amb %d ciutats i %d files de resultats.\n", $output, $multiOutput, $microsoftOutput, $microsoftMultiOutput, count($cities), ENTRY_ROWS);
 } catch (Throwable $exception) {

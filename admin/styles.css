@@ -259,7 +259,7 @@ button { font: inherit; }
 .helper { color: var(--muted); font-size: 13px; margin: -12px 0 18px; }
 .status { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: var(--primary-dark); margin: 0 0 18px; padding: 11px 13px; }
 .status.failure { background: #fbeaea; border-color: #f2c9c9; color: var(--danger); }
-.import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.import-actions { align-items: end; display: flex; flex-wrap: wrap; gap: 8px; }
 .template-download {
   align-items: end;
   display: grid;

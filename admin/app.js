@@ -107,7 +107,7 @@
   function updateTemplateDownload(selectId, linkId, multi) {
     var format = byId(selectId).value, prefix = multi ? "plantilla-resultados-atletas" : "plantilla-resultados";
     var suffix = format === "microsoft" ? "microsoft" : "libreoffice";
-    byId(linkId).href = "../assets/" + prefix + (format === "microsoft" ? "-microsoft" : "") + ".xlsx?v=20260528-" + (format === "microsoft" ? "ms4" : "lo");
+    byId(linkId).href = "../assets/" + prefix + (format === "microsoft" ? "-microsoft" : "") + ".xlsx?v=20260528-" + (format === "microsoft" ? "ms5" : "lo");
     byId(linkId).download = prefix + "-" + suffix + ".xlsx";
   }
   function downloadAthletesList() { var rows = ["Id;Nombre;Apellidos;Fecha de nacimiento;Sexo"].concat(state.athletes.map(function(a){return [a.id,a.name,a.surname,a.birthdate,a.sex].map(csvEscape).join(";");})); download("llistat-atletes.csv", rows.join("\n") + "\n"); }
