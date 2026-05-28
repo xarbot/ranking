@@ -338,6 +338,25 @@ td strong { color: var(--primary-dark); }
   padding: 4px 10px;
 }
 .state.inactive { background: var(--paper); color: var(--muted); }
+.permissions-editor {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 0 0 18px;
+  padding: 14px;
+}
+.permissions-editor h3 {
+  color: var(--primary-dark);
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+.permissions-editor td:not(:first-child),
+.permissions-editor th:not(:first-child) { text-align: center; width: 150px; }
+.permissions-editor input[type="checkbox"] {
+  height: 18px;
+  margin: 0 auto;
+  padding: 0;
+  width: 18px;
+}
 .management .table-wrap { margin-top: 20px; }
 footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align: center; }
 

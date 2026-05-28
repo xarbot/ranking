@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   usuario VARCHAR(100) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   activo BOOLEAN NOT NULL DEFAULT TRUE,
+  rol ENUM('admin', 'normal') NOT NULL DEFAULT 'admin',
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -67,15 +68,34 @@ CREATE TABLE IF NOT EXISTS marcas (
   resultado VARCHAR(40) NOT NULL,
   caracteristica_tecnica VARCHAR(255) NULL,
   categoria VARCHAR(40) NOT NULL,
+  creado_por BIGINT UNSIGNED NULL,
+  actualizado_por BIGINT UNSIGNED NULL,
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_marcas_atleta_fecha (atleta_id, fecha),
   KEY idx_marcas_prueba_categoria (prueba_id, categoria),
+  KEY idx_marcas_creado_por (creado_por),
+  KEY idx_marcas_actualizado_por (actualizado_por),
   CONSTRAINT fk_marcas_atleta FOREIGN KEY (atleta_id) REFERENCES atletas (id),
   CONSTRAINT fk_marcas_prueba FOREIGN KEY (prueba_id) REFERENCES pruebas (id),
   CONSTRAINT fk_marcas_pista FOREIGN KEY (pista_id) REFERENCES pistas (id),
-  CONSTRAINT fk_marcas_ciudad FOREIGN KEY (ciudad_id) REFERENCES ciudades (id)
+  CONSTRAINT fk_marcas_ciudad FOREIGN KEY (ciudad_id) REFERENCES ciudades (id),
+  CONSTRAINT fk_marcas_creado_por FOREIGN KEY (creado_por) REFERENCES usuarios (id) ON DELETE SET NULL,
+  CONSTRAINT fk_marcas_actualizado_por FOREIGN KEY (actualizado_por) REFERENCES usuarios (id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS usuario_atleta_permisos (
+  usuario_id BIGINT UNSIGNED NOT NULL,
+  atleta_id BIGINT UNSIGNED NOT NULL,
+  puede_crear BOOLEAN NOT NULL DEFAULT FALSE,
+  puede_editar BOOLEAN NOT NULL DEFAULT FALSE,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (usuario_id, atleta_id),
+  KEY idx_usuario_atleta_permisos_atleta (atleta_id),
+  CONSTRAINT fk_usuario_atleta_permisos_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+  CONSTRAINT fk_usuario_atleta_permisos_atleta FOREIGN KEY (atleta_id) REFERENCES atletas (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS traducciones (
@@ -99,4 +119,5 @@ INSERT IGNORE INTO schema_migrations (version)
 VALUES ('001_create_migration_tracking.sql'),
        ('002_add_pruebas_sentido_resultado.sql'),
        ('003_clasificacion_sexo_catalogos_ciudades_traducciones.sql'),
-       ('004_catalogo_pruebas_cerrado.sql');
+       ('004_catalogo_pruebas_cerrado.sql'),
+       ('005_usuarios_roles_permisos_marcas.sql');
