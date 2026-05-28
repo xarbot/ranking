@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null };
+  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {} };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -131,6 +131,7 @@
   }
 
   function rankingKey(grouped) { return String(grouped.event.id) + "|" + (grouped.category || "all"); }
+  function historyKey(category, eventGroup) { return category + "|" + (eventGroup.event.eventId || [eventGroup.event.area, eventGroup.event.eventGroup, eventGroup.event.event].join("|")); }
   function compareRankingGroups(first, second) {
     var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
     return group || compareEvents(first.event, second.event) ||
@@ -218,12 +219,18 @@
       });
       return "<article class=\"card category-history\"><p class=\"eyebrow\">" + t("Categoria") + "</p><h3>" +
         escapeHtml(categoryLabel(category)) + "</h3>" + events.map(function (eventGroup) {
-          var rows = eventGroup.marks.slice().sort(compareHistory).map(function (mark) {
+          var key = historyKey(category, eventGroup);
+          var sortedMarks = eventGroup.marks.slice().sort(compareHistory);
+          var visible = state.historyVisible[key] || 1;
+          var rows = sortedMarks.slice(0, visible).map(function (mark) {
             return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong></td><td>" + formatDate(mark.date) +
               "</td><td>" + cityCell(mark) + "</td></tr>";
           }).join("");
+          var more = visible < sortedMarks.length
+            ? '<button class="ranking-more" type="button" data-more-history="' + escapeHtml(key) + '" aria-label="' + escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
+            : "";
           return "<section class=\"event-history\"><h4>" + escapeHtml(eventLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
-            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div></section>";
+            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" + more + "</section>";
         }).join("") + "</article>";
     }).join("");
     byId("history-empty").classList.toggle("hidden", history.marks.length > 0);
@@ -302,6 +309,7 @@
       var data = await response.json().catch(function () { return {}; });
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
       state.history = data;
+      state.historyVisible = {};
       byId("athlete-search").value = data.athlete.name;
       showError("");
       renderHistory();
@@ -360,6 +368,7 @@
     state.ranking = null;
     state.rankingVisible = {};
     state.history = null;
+    state.historyVisible = {};
     renderFilters();
     renderMarks();
     renderHistory();
@@ -384,6 +393,7 @@
   });
   byId("history-back").addEventListener("click", function () {
     state.history = null;
+    state.historyVisible = {};
     byId("athlete-search").value = "";
     showError("");
     renderHistory();
@@ -392,6 +402,7 @@
   });
   window.addEventListener("popstate", function () {
     state.history = null;
+    state.historyVisible = {};
     state.ranking = null;
     state.rankingVisible = {};
     byId("athlete-search").value = "";
@@ -408,6 +419,14 @@
     renderMarks();
     renderRanking();
     renderHistory();
+  });
+  byId("history-categories").addEventListener("click", function (event) {
+    var more = event.target.closest("[data-more-history]");
+    if (more) {
+      var key = more.dataset.moreHistory;
+      state.historyVisible[key] = (state.historyVisible[key] || 1) + 20;
+      renderHistory();
+    }
   });
 
   loadMarks();
