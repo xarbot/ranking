@@ -104,6 +104,12 @@
   }
   function indexedRows(text) { var rows=parseCsv(text), keys=rows.shift().map(normalized); return rows.map(function(row){ var x={};keys.forEach(function(key,i){x[key]=row[i]||"";});return x;}); }
   function download(name, csv) { var link=document.createElement("a");link.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));link.download=name;link.click();URL.revokeObjectURL(link.href); }
+  function updateTemplateDownload(selectId, linkId, multi) {
+    var format = byId(selectId).value, prefix = multi ? "plantilla-resultados-atletas" : "plantilla-resultados";
+    var suffix = format === "microsoft" ? "microsoft" : "libreoffice";
+    byId(linkId).href = "../assets/" + prefix + (format === "microsoft" ? "-microsoft" : "") + ".xlsx?v=20260528-" + (format === "microsoft" ? "ms4" : "lo");
+    byId(linkId).download = prefix + "-" + suffix + ".xlsx";
+  }
   function downloadAthletesList() { var rows = ["Id;Nombre;Apellidos;Fecha de nacimiento;Sexo"].concat(state.athletes.map(function(a){return [a.id,a.name,a.surname,a.birthdate,a.sex].map(csvEscape).join(";");})); download("llistat-atletes.csv", rows.join("\n") + "\n"); }
   async function importAthletes(text) { var rows=indexedRows(text).map(function(x){return {id:x.id,name:x.nombre,surname:x.apellidos,birthdate:x["fecha de nacimiento"]||x.fecha_nacimiento,sex:normalized(x.sexo)==="femenino"?"femenino":"masculino"};});var out=await request("/athletes/import",{method:"POST",body:JSON.stringify({athletes:rows})});await refresh();status("athlete-import-status",out.imported+" atletas importados, "+(out.updated||0)+" actualizados, "+out.duplicates+" duplicados y "+out.invalid+" no válidos.",out.invalid>0); }
   async function importCities(text) { var rows=indexedRows(text).map(function(x){return {name:x.ciudad||x.nombre,province:x.provincia};});var out=await request("/cities/import",{method:"POST",body:JSON.stringify({cities:rows})});await refresh();status("city-import-status",out.imported+" ciudades importadas.",false); }
@@ -128,6 +134,8 @@
   byId("add-import-athlete").addEventListener("click",function(){ var parts=byId("mark-import-athlete").value.trim().split(/\s+/); reset("athlete"); if(parts.length){byId("athlete-name").value=parts.shift();byId("athlete-surname").value=parts.join(" ");} switchPanel("atletas"); });
   byId("download-athlete-template").addEventListener("click",function(){download("plantilla-atletas.csv","Nombre;Apellidos;Fecha de nacimiento;Sexo\nAnna;Garcia Lopez;2010-05-18;femenino\n");});
   byId("download-athletes-list").addEventListener("click",downloadAthletesList);
+  byId("results-template-format").addEventListener("change",function(){updateTemplateDownload("results-template-format","download-results-template",false);});
+  byId("multi-results-template-format").addEventListener("change",function(){updateTemplateDownload("multi-results-template-format","download-multi-results-template",true);});
   byId("replace-field").addEventListener("change",function(){byId("replace-search").value="";byId("replace-value").value="";updateReplaceFields();});
   byId("replace-marks-form").addEventListener("submit",function(e){e.preventDefault();var payload={field:byId("replace-field").value,search:byId("replace-search").value,replace:byId("replace-value").value};if(payload.field==="city"){var source=selectedCity(payload.search), target=selectedCity(payload.replace);if(!source||!target){status("replace-marks-status","Selecciona la ciudad a reemplazar y la ciudad nueva del listado.",true);return;}payload.searchCityId=source.id;payload.replaceCityId=target.id;}request("/marks/replace",{method:"POST",body:JSON.stringify(payload)}).then(async function(out){await refresh();status("replace-marks-status",out.updated+" marcas actualizadas.",false);}).catch(function(error){status("replace-marks-status",error.message,true);});});
   byId("missing-athletes-form").addEventListener("submit",function(e){finishMultiMarksImport(e).catch(function(error){status("multi-mark-import-status",error.message,true);});});

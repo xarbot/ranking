@@ -304,6 +304,11 @@ try {
     writeZip($multiOutput, $files);
 
     $microsoftFiles = $files;
+    $microsoftFiles['xl/workbook.xml'] = str_replace(
+        "'Listas'!\$A\$2:\$A\$" . (count($cities) + 1),
+        "'Ciudades'!\$A\$2:\$A\$" . (count($cities) + 1),
+        $workbook
+    );
     $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(false, true));
     $microsoftFiles['xl/worksheets/sheet2.xml'] = excelStrictSheet($listSheet, true);
     $microsoftFiles['xl/worksheets/sheet3.xml'] = excelStrictSheet($citySearchSheet);

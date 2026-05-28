@@ -260,6 +260,12 @@ button { font: inherit; }
 .status { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: var(--primary-dark); margin: 0 0 18px; padding: 11px 13px; }
 .status.failure { background: #fbeaea; border-color: #f2c9c9; color: var(--danger); }
 .import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.template-download {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(180px, 1fr) auto;
+}
 .management.imports-management { max-width: 1280px; }
 .import-modes { display: grid; gap: 18px; grid-template-columns: minmax(250px, .8fr) minmax(560px, 1.45fr); }
 .bulk-import { border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 12px; padding: 18px; }
@@ -359,6 +365,8 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .row-actions { width: auto; }
   .inline-form { display: grid; grid-template-columns: 1fr; }
   .inline-form label, .inline-form .checkbox-field, .inline-form button { min-width: 0; width: 100%; }
+  .template-download { grid-template-columns: 1fr; width: 100%; }
+  .template-download .file-button { justify-content: center; width: 100%; }
   .table-wrap { overflow-x: visible; }
   table, thead, tbody, tr, th, td { display: block; width: 100%; }
   thead { display: none; }
