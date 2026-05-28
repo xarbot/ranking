@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260528-8">
-    <script src="i18n.js?v=20260528-13" defer></script>
-    <script src="app.js?v=20260528-15" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260528-9">
+    <script src="i18n.js?v=20260528-14" defer></script>
+    <script src="app.js?v=20260528-16" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -276,9 +276,24 @@
       <section id="panel-ciudades" class="panel">
         <article class="card management">
           <div class="card-title"><h2>Ciudades españolas</h2><div class="import-actions"><label class="file-button secondary" for="import-cities-file">Importar ciudades CSV</label><input class="hidden" id="import-cities-file" type="file" accept=".csv,text/csv"></div></div>
-          <p class="helper">El autocompletado de marcas utiliza este catálogo. Carga el CSV oficial con columnas Ciudad y Provincia.</p>
+          <p class="helper">Busca una ciudad para editarla. Si no existe, completa nombre y provincia para darla de alta.</p>
           <p id="city-import-status" class="status hidden"></p>
-          <div class="table-wrap"><table><thead><tr><th>Ciudad</th><th>Provincia</th></tr></thead><tbody id="cities-body"></tbody></table><p id="cities-empty" class="empty">No hay ciudades cargadas.</p></div>
+          <form id="city-form" class="inline-form">
+            <input type="hidden" id="city-id">
+            <label>Buscar ciudad<input id="city-search" list="city-options" placeholder="Buscar ciudad..."></label>
+            <label>Nombre<input id="city-name" required></label>
+            <label>Provincia<input id="city-province"></label>
+            <button class="primary" type="submit">Guardar</button>
+            <button class="secondary hidden" id="cancel-city" type="button">Cancelar</button>
+            <button class="secondary danger-action hidden" id="delete-city" type="button">Eliminar</button>
+          </form>
+          <p id="city-error" class="error" role="alert"></p>
+          <form id="merge-cities-form" class="inline-form merge-cities-form">
+            <label>Fusionar ciudad origen<input id="merge-source-city" list="city-options" required placeholder="Buscar ciudad..."></label>
+            <label>Con ciudad destino<input id="merge-target-city" list="city-options" required placeholder="Buscar ciudad..."></label>
+            <button class="secondary" type="submit">Fusionar</button>
+          </form>
+          <p id="merge-cities-status" class="status hidden" role="status"></p>
         </article>
       </section>
 

@@ -251,6 +251,7 @@ button { font: inherit; }
 .primary:hover { background: var(--primary-dark); }
 .secondary { background: white; border: 1px solid #cbd4d0; color: var(--ink); }
 .secondary:hover { background: #f6f8f7; }
+.danger-action { border-color: #e2b6b6; color: var(--danger); }
 .actions { display: flex; gap: 9px; margin-top: 3px; }
 .actions .primary { flex: 1; }
 .hidden { display: none !important; }
