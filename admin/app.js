@@ -117,9 +117,13 @@
   function download(name, csv) { var link=document.createElement("a");link.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));link.download=name;link.click();URL.revokeObjectURL(link.href); }
   function updateTemplateDownload(selectId, linkId, multi) {
     var format = byId(selectId).value, prefix = multi ? "plantilla-resultados-atletas" : "plantilla-resultados";
-    var suffix = format === "microsoft" ? "microsoft" : "libreoffice";
-    byId(linkId).href = "../assets/" + prefix + (format === "microsoft" ? "-microsoft" : "") + ".xlsx?v=20260528-" + (format === "microsoft" ? "ms7" : "lo");
+    var suffix = format === "microsoft2021" ? "microsoft-2021" : format === "microsoft" ? "microsoft" : "libreoffice";
+    var extension = format === "microsoft2021" ? ".xlsm" : ".xlsx";
+    var variant = format === "microsoft2021" ? "-microsoft-2021" : format === "microsoft" ? "-microsoft" : "";
+    var version = format === "microsoft2021" ? "xlsm1" : format === "microsoft" ? "ms7" : "lo";
+    byId(linkId).href = "../assets/" + prefix + variant + extension + "?v=20260528-" + version;
     byId(linkId).download = prefix + "-" + suffix + ".xlsx";
+    if (format === "microsoft2021") byId(linkId).download = prefix + "-" + suffix + ".xlsm";
   }
   function downloadAthletesList() { var rows = ["Id;Nombre;Apellidos;Fecha de nacimiento;Sexo"].concat(state.athletes.map(function(a){return [a.id,a.name,a.surname,a.birthdate,a.sex].map(csvEscape).join(";");})); download("llistat-atletes.csv", rows.join("\n") + "\n"); }
   async function importAthletes(text) { var rows=indexedRows(text).map(function(x){return {id:x.id,name:x.nombre,surname:x.apellidos,birthdate:x["fecha de nacimiento"]||x.fecha_nacimiento,sex:normalized(x.sexo)==="femenino"?"femenino":"masculino"};});var out=await request("/athletes/import",{method:"POST",body:JSON.stringify({athletes:rows})});await refresh();status("athlete-import-status",out.imported+" atletas importados, "+(out.updated||0)+" actualizados, "+out.duplicates+" duplicados y "+out.invalid+" no válidos.",out.invalid>0); }
