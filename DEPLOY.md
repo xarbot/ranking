@@ -111,7 +111,9 @@ php scripts/migrate.php
 
 La version que incorpora el ranking por mejores marcas aplica `002_add_pruebas_sentido_resultado.sql`.
 Esta migracion anade el criterio a `pruebas` y clasifica saltos, lanzamientos y pruebas
-Actualmente la aplicacion no utiliza Composer ni cache de servidor, por lo que no hay dependencias o cache que limpiar. Si se incorporan en una version futura, se documentara el comando correspondiente en este procedimiento.
+La portada y `/admin/` deben servirse con cabeceras `Cache-Control: no-cache, no-store, must-revalidate`
+para que el navegador revalide el HTML y recoja los nuevos `?v=` de `app.js` y `styles.css`
+tras cada despliegue.
 
 Las migraciones de `database/migrations/` se aplican por orden de nombre y solo una vez. Si una migracion falla, conserva el backup y resuelve el error antes de publicar la nueva version.
 

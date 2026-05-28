@@ -11,6 +11,32 @@ location = /api {
     return 308 /api/;
 }
 
+location = / {
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+    try_files /index.html =404;
+}
+
+location = /index.html {
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+}
+
+location = /admin/ {
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+    try_files /admin/index.html =404;
+}
+
+location = /admin/index.html {
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+}
+
 location /api/ {
     try_files $uri /api/index.php?$query_string;
 }
