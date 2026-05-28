@@ -44,6 +44,7 @@
       "Ranking por prueba": "Rànquing per prova",
       "Mostrar 20 resultados mas": "Mostra 20 resultats més",
       "Mostrar menos resultados": "Mostra menys resultats",
+      "Mejor marca personal": "Millor marca personal",
       "No hay marcas registradas para los filtros indicados.": "No hi ha marques registrades per als filtres indicats.",
       "Limpiar filtros": "Neteja els filtres",
       "Todos los ámbitos": "Tots els àmbits",

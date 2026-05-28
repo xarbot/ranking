@@ -222,8 +222,9 @@
           var key = historyKey(category, eventGroup);
           var sortedMarks = eventGroup.marks.slice().sort(compareHistory);
           var visible = state.historyVisible[key] || 1;
-          var rows = sortedMarks.slice(0, visible).map(function (mark) {
-            return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong></td><td>" + formatDate(mark.date) +
+          var rows = sortedMarks.slice(0, visible).map(function (mark, index) {
+            var personalBest = index === 0 ? ' <span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' : "";
+            return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong>" + personalBest + "</td><td>" + formatDate(mark.date) +
               "</td><td>" + cityCell(mark) + "</td></tr>";
           }).join("");
           var less = visible > 1
