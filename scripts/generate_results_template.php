@@ -68,6 +68,11 @@ function sheetRow(int $number, array $values, int $style = 0): string
     return '<row r="' . $number . '">' . $cells . '</row>';
 }
 
+function hiddenSeedRow(int $number, string $reference, string $value): string
+{
+    return '<row r="' . $number . '" hidden="1" ht="0" customHeight="1">' . cell($reference, $value) . '</row>';
+}
+
 function worksheet(string $rows, string $columns, string $validations = '', string $lastColumn = 'H', bool $excelStrict = false): string
 {
     $protection = $excelStrict ? '' : '<sheetProtection sheet="0"/>';
@@ -212,7 +217,7 @@ function validation(string $kind, string $reference, string $formula, string $pr
         . xml($formula) . '</formula1></dataValidation>';
 }
 
-function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false, string $cityFormula = 'Ciudades'): string
+function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false, string $cityFormula = 'Ciudades', array $citySeeds = []): string
 {
     $offset = $includeAthlete ? 1 : 0;
     $scope = column(1 + $offset);
@@ -230,7 +235,12 @@ function buildResultsSheet(bool $includeAthlete = false, bool $excelStrict = fal
         $number = $position + 1;
         $columns .= '<col min="' . $number . '" max="' . $number . '" width="' . $width . '" customWidth="1"/>';
     }
-    return worksheet(sheetRow(1, $headers, 1), $columns, '<dataValidations count="3">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'H' : 'G', $excelStrict);
+    $rows = sheetRow(1, $headers, 1);
+    foreach ($citySeeds as $position => $seed) {
+        $row = 502 + $position;
+        $rows .= hiddenSeedRow($row, $city . $row, $seed);
+    }
+    return worksheet($rows, $columns, '<dataValidations count="3">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'H' : 'G', $excelStrict);
 }
 
 function styles(): string
@@ -310,12 +320,12 @@ try {
         $workbook
     );
     $microsoftCityFormula = 'Ciudades!$A$2:$A$' . (count($cities) + 1);
-    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(false, true, $microsoftCityFormula));
+    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(false, true, $microsoftCityFormula, $cities));
     $microsoftFiles['xl/worksheets/sheet2.xml'] = excelStrictSheet($listSheet, true);
     $microsoftFiles['xl/worksheets/sheet3.xml'] = excelStrictSheet($citySearchSheet);
     $microsoftFiles['xl/worksheets/sheet4.xml'] = excelStrictSheet($eventSearchSheet, true);
     writeZip($microsoftOutput, $microsoftFiles);
-    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(true, true, $microsoftCityFormula));
+    $microsoftFiles['xl/worksheets/sheet1.xml'] = excelStrictSheet(buildResultsSheet(true, true, $microsoftCityFormula, $cities));
     writeZip($microsoftMultiOutput, $microsoftFiles);
     echo sprintf("Generades %s, %s, %s i %s amb %d ciutats i %d files de resultats.\n", $output, $multiOutput, $microsoftOutput, $microsoftMultiOutput, count($cities), ENTRY_ROWS);
 } catch (Throwable $exception) {
