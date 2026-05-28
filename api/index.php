@@ -26,7 +26,7 @@ const EVENT_CATALOGUE = [
 ];
 
 final class ApiException extends RuntimeException { public function __construct(string $message, public readonly int $status = 400) { parent::__construct($message); } }
-function respond(array $payload, int $status = 200): never { http_response_code($status); header('Content-Type: application/json; charset=utf-8'); echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR); exit; }
+function respond(array $payload, int $status = 200): never { http_response_code($status); header('Content-Type: application/json; charset=utf-8'); header('Cache-Control: no-store, no-cache, must-revalidate'); header('Pragma: no-cache'); header('Expires: 0'); echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR); exit; }
 function connection(): PDO { return databaseConnection(dirname(__DIR__, 2) . '/.env'); }
 function execute(PDO $db, string $sql, array $parameters = []): PDOStatement { $statement = $db->prepare($sql); $statement->execute($parameters); return $statement; }
 function input(): array { $content = file_get_contents('php://input'); if (!$content) return []; try { $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR); } catch (JsonException) { throw new ApiException('La peticion contiene JSON no valido.'); } if (!is_array($data)) throw new ApiException('La peticion contiene JSON no valido.'); return $data; }

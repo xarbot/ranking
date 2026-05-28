@@ -213,7 +213,7 @@
       return areaRank(area) === 99;
     }).sort(function (first, second) {
       return areaLabel(first).localeCompare(areaLabel(second));
-    });
+    }));
     if (areas.indexOf(state.historyArea) === -1) state.historyArea = areas[0] || "";
     var tabs = areas.length ? '<div class="history-tabs" role="tablist" aria-label="' + escapeHtml(t("Ámbito")) + '">' + areas.map(function (area) {
       var active = area === state.historyArea;
@@ -284,7 +284,9 @@
         counts: data.counts || {},
         ranking: null,
         rankingVisible: {},
-        history: null
+        history: null,
+        historyVisible: {},
+        historyArea: ""
       };
       showError("");
       render();

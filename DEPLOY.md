@@ -111,7 +111,7 @@ php scripts/migrate.php
 
 La version que incorpora el ranking por mejores marcas aplica `002_add_pruebas_sentido_resultado.sql`.
 Esta migracion anade el criterio a `pruebas` y clasifica saltos, lanzamientos y pruebas
-La portada y `/admin/` deben servirse con cabeceras `Cache-Control: no-cache, no-store, must-revalidate`
+La portada y `/admin/` deben servirse con cabeceras `Cache-Control: no-cache, must-revalidate`
 para que el navegador revalide el HTML y recoja los nuevos `?v=` de `app.js` y `styles.css`
 tras cada despliegue.
 
