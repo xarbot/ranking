@@ -841,3 +841,65 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 @media (max-width: 600px) {
   .history-back-button { width: 100%; }
 }
+
+.sr-only {
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+.athlete-search-card {
+  background: var(--paper);
+  border: 1px solid #e1e5e2;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+}
+.athlete-search-form {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  max-width: none;
+}
+.athlete-search-form input {
+  flex: 1;
+  min-width: 0;
+}
+.athlete-search-icon {
+  align-items: center;
+  color: var(--primary-dark);
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+}
+.athlete-search-icon svg {
+  height: 21px;
+  width: 21px;
+}
+.athlete-search-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+.history-tabs {
+  background: var(--paper);
+  border: 1px solid #e1e5e2;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 10px;
+}
+@media (max-width: 600px) {
+  .athlete-search-card { padding: 10px; }
+  .athlete-search-form { flex-direction: row; }
+  .history-tabs {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 10px;
+  }
+}

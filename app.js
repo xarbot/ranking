@@ -295,6 +295,7 @@
     var history = state.history;
     byId("latest-section").classList.toggle("hidden", !!history || !!state.ranking);
     document.querySelector(".filters").classList.toggle("hidden", !!history);
+    byId("filter-tabs").classList.toggle("hidden", !!history);
     byId("ranking-section").classList.toggle("hidden", !!history || !state.ranking);
     byId("history-section").classList.toggle("hidden", !history);
     if (!history) return;

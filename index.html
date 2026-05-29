@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260529-7">
+    <link rel="stylesheet" href="styles.css?v=20260529-8">
     <script src="i18n.js?v=20260529-1" defer></script>
-    <script src="app.js?v=20260529-7" defer></script>
+    <script src="app.js?v=20260529-8" defer></script>
   </head>
   <body>
     <div class="top-actions">
@@ -39,19 +39,12 @@
       </div>
     </header>
     <main>
-      <section class="card athlete-search-card" aria-label="Buscar atleta">
-        <div class="card-title">
-          <div>
-            <p class="eyebrow">Atletas</p>
-            <h2>Buscar historial</h2>
-          </div>
-        </div>
+      <section class="athlete-search-card" aria-label="Buscar atleta">
         <form class="athlete-search-form" id="athlete-search-form">
-          <label>Atleta
-            <input id="athlete-search" list="public-athletes" placeholder="Nombre o apellidos..." autocomplete="off">
-          </label>
+          <span class="athlete-search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"></path><path d="M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"></path></svg></span>
+          <label class="sr-only" for="athlete-search">Atleta</label>
+          <input id="athlete-search" list="public-athletes" placeholder="Nombre o apellidos..." autocomplete="off">
           <datalist id="public-athletes"></datalist>
-          <button class="primary" type="submit">Ver historial</button>
         </form>
       </section>
       <section class="filters" aria-label="Rankings">
