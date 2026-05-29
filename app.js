@@ -90,6 +90,34 @@
   function filterButton(level, value, label, active) {
     return '<button class="filter-tab' + (active ? ' active' : '') + '" type="button" data-filter-level="' + level + '" data-filter-value="' + escapeHtml(value) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + escapeHtml(label) + '</button>';
   }
+  function groupsForArea(area) {
+    return unique(state.events.filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; })).sort(function (first, second) {
+      return groupLabel(first).localeCompare(groupLabel(second));
+    });
+  }
+  function eventsForGroup(area, group) {
+    return state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents);
+  }
+  function firstGroupForArea(area) { return groupsForArea(area)[0] || ""; }
+  function firstEventForGroup(area, group) { var events = eventsForGroup(area, group); return events.length ? String(events[0].id) : ""; }
+  function rankingGroupsForArea(area) {
+    var groups = state.ranking ? state.ranking.groups : [];
+    return unique(groups.filter(function (grouped) { return grouped.event.area === area; }).map(function (grouped) { return grouped.event.eventGroup; })).sort(function (first, second) {
+      return groupLabel(first).localeCompare(groupLabel(second));
+    });
+  }
+  function rankingEventsForGroup(area, group) {
+    var seen = [];
+    var groups = state.ranking ? state.ranking.groups : [];
+    return groups.filter(function (grouped) { return grouped.event.area === area && grouped.event.eventGroup === group; }).map(function (grouped) { return grouped.event; }).filter(function (event) {
+      var id = String(event.id);
+      if (seen.indexOf(id) !== -1) return false;
+      seen.push(id);
+      return true;
+    }).sort(compareEvents);
+  }
+  function firstRankingGroupForArea(area) { return rankingGroupsForArea(area)[0] || firstGroupForArea(area); }
+  function firstRankingEventForGroup(area, group) { var events = rankingEventsForGroup(area, group); return events.length ? String(events[0].id) : firstEventForGroup(area, group); }
   function renderFilterTabs() {
     var area = byId("area-filter").value;
     var group = byId("group-filter").value;
@@ -102,17 +130,17 @@
     }
     if (!area) {
       var areas = unique(rankingGroups.map(function (grouped) { return grouped.event.area; })).sort(function (first, second) { return areaRank(first) - areaRank(second); });
-      rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Ámbito")) + '</span><div class="filter-tab-list">' + areas.map(function (item) {
+      rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + areas.map(function (item) {
         return filterButton("area", item, t(areaLabel(item)), item === area);
       }).join("") + '</div></div>');
-    } else if (!group) {
+    } else if (!eventId) {
       var groups = unique(rankingGroups.map(function (grouped) { return grouped.event.eventGroup; })).sort(function (first, second) { return groupLabel(first).localeCompare(groupLabel(second)); });
-      rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Grupo")) + '</span><div class="filter-tab-list">' + groups.map(function (item) {
+      rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + groups.map(function (item) {
         return filterButton("group", item, groupLabel(item), item === group);
       }).join("") + '</div></div>');
     } else {
-      var events = state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents);
-      rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Prueba")) + '</span><div class="filter-tab-list">' + events.map(function (event) {
+      var events = eventsForGroup(area, group);
+      rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + events.map(function (event) {
         return filterButton("event", event.id, t(event.name), String(event.id) === eventId);
       }).join("") + '</div></div>');
     }
@@ -125,9 +153,9 @@
     var category = byId("category-filter").value;
     var areas = unique(state.events.map(function (event) { return event.area; }));
     if (!areas.includes(area)) area = "";
-    var groups = area ? unique(state.events.filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; })) : [];
+    var groups = area ? groupsForArea(area) : [];
     if (!groups.includes(group)) group = "";
-    var events = group ? state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents) : [];
+    var events = group ? eventsForGroup(area, group) : [];
     if (!events.some(function (event) { return String(event.id) === eventId; })) eventId = "";
     byId("area-filter").innerHTML = '<option value="">' + t("Todos los ámbitos") + '</option>' + areas.map(function (item) {
       return '<option value="' + item + '">' + escapeHtml(t(areaLabel(item))) + '</option>';
@@ -416,12 +444,20 @@
     if (!tab) return;
     if (tab.dataset.filterLevel === "area") {
       byId("area-filter").value = tab.dataset.filterValue;
-      byId("group-filter").value = "";
+      renderFilters();
+      byId("group-filter").value = firstRankingGroupForArea(tab.dataset.filterValue);
       byId("event-filter").value = "";
+      renderFilters();
+      loadRanking();
+      return;
     }
     if (tab.dataset.filterLevel === "group") {
       byId("group-filter").value = tab.dataset.filterValue;
-      byId("event-filter").value = "";
+      renderFilters();
+      byId("event-filter").value = firstRankingEventForGroup(byId("area-filter").value, tab.dataset.filterValue);
+      renderFilters();
+      loadRanking();
+      return;
     }
     if (tab.dataset.filterLevel === "event") byId("event-filter").value = tab.dataset.filterValue;
     renderFilters();
@@ -432,8 +468,8 @@
     selectSearchedAthlete();
   });
   byId("athlete-search").addEventListener("change", selectSearchedAthlete);
-  byId("area-filter").addEventListener("change", function () { byId("group-filter").value = ""; byId("event-filter").value = ""; renderFilters(); loadRanking(); });
-  byId("group-filter").addEventListener("change", function () { byId("event-filter").value = ""; renderFilters(); loadRanking(); });
+  byId("area-filter").addEventListener("change", function () { var area = byId("area-filter").value; renderFilters(); byId("group-filter").value = firstGroupForArea(area); byId("event-filter").value = ""; renderFilters(); loadRanking(); });
+  byId("group-filter").addEventListener("change", function () { var area = byId("area-filter").value, group = byId("group-filter").value; renderFilters(); byId("event-filter").value = firstEventForGroup(area, group); renderFilters(); loadRanking(); });
   byId("event-filter").addEventListener("change", loadRanking);
   byId("category-filter").addEventListener("change", loadRanking);
   byId("clear-filters").addEventListener("click", function () {

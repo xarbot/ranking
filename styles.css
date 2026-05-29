@@ -708,3 +708,25 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .filter-tab-row { grid-template-columns: 1fr; }
   .filter-tab-row > span { padding-top: 0; }
 }
+
+.subtle-action {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+  height: 34px;
+  padding: 0 8px;
+}
+.subtle-action:hover {
+  background: #f6f8f7;
+  border-color: var(--line);
+  color: var(--primary-dark);
+}
+.filter-tab-row {
+  display: block;
+}
+.filter-tab-row > span {
+  display: none;
+}
+@media (max-width: 600px) {
+  .subtle-action { justify-self: start; }
+}
