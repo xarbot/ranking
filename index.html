@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260529-3">
+    <link rel="stylesheet" href="styles.css?v=20260529-4">
     <script src="i18n.js?v=20260528-2" defer></script>
-    <script src="app.js?v=20260529-3" defer></script>
+    <script src="app.js?v=20260529-4" defer></script>
   </head>
   <body>
     <div class="top-actions">
@@ -63,19 +63,20 @@
           <button class="secondary subtle-action" id="clear-filters" type="button">Limpiar filtros</button>
         </div>
         <div class="filter-grid ranking-filters">
-          <label>Ámbito
+          <label class="hierarchy-filter">Ámbito
             <select id="area-filter"><option value="">Todos los ámbitos</option></select>
           </label>
-          <label>Grupo
+          <label class="hierarchy-filter">Grupo
             <select id="group-filter"><option value="">Todos los grupos</option></select>
           </label>
-          <label>Prueba
+          <label class="hierarchy-filter">Prueba
             <select id="event-filter"><option value="">Todas las pruebas</option></select>
           </label>
           <label>Categoria
             <select id="category-filter"><option value="">Todas las categorias</option></select>
           </label>
         </div>
+        <div class="filter-tabs" id="filter-tabs" aria-label="Pestañas de resultados"></div>
       </section>
       <p id="public-error" class="status failure hidden" role="alert"></p>
       <section class="card results" id="latest-section">
@@ -103,13 +104,6 @@
         </div>
       </section>
       <section class="ranking-view hidden" id="ranking-section" aria-live="polite">
-        <article class="card ranking-header">
-          <div>
-            <p class="eyebrow">Ranking</p>
-            <h2 id="ranking-title"></h2>
-          </div>
-        </article>
-        <div class="filter-tabs" id="filter-tabs" aria-label="Pestañas de resultados"></div>
         <p class="card empty hidden" id="ranking-empty">No hay marcas registradas para los filtros indicados.</p>
         <div class="ranking-groups" id="ranking-groups"></div>
       </section>

@@ -730,3 +730,13 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 @media (max-width: 600px) {
   .subtle-action { justify-self: start; }
 }
+
+.hierarchy-filter {
+  display: none;
+}
+.ranking-filters {
+  grid-template-columns: minmax(180px, 260px);
+}
+.filters .filter-tabs {
+  margin-top: 16px;
+}
