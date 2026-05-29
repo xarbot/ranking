@@ -740,3 +740,72 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 .filters .filter-tabs {
   margin-top: 16px;
 }
+
+.filters {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.clear-filter-action {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 8px;
+}
+.clear-filter-action:hover {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--primary-dark);
+}
+.clear-filter-action svg {
+  height: 16px;
+  width: 16px;
+}
+.clear-filter-action svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+.filter-tabs {
+  display: grid;
+  gap: 10px;
+  margin-top: 0;
+}
+.filter-card {
+  background: var(--paper);
+  border: 1px solid #e1e5e2;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+}
+.filter-card--sex .filter-tab {
+  min-width: 150px;
+}
+.filters .filter-tab-list {
+  gap: 7px;
+}
+.filters .filter-tab {
+  min-height: 34px;
+  padding: 6px 11px;
+}
+@media (max-width: 600px) {
+  .filter-actions { justify-content: flex-start; }
+  .clear-filter-action span { display: inline; }
+  .filter-card { padding: 10px; }
+  .filter-card--sex .filter-tab { min-width: 0; }
+}

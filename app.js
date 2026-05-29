@@ -95,6 +95,7 @@
   function filterButton(level, value, label, active) {
     return '<button class="filter-tab' + (active ? ' active' : '') + '" type="button" data-filter-level="' + level + '" data-filter-value="' + escapeHtml(value) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + escapeHtml(label) + '</button>';
   }
+  function filterCard(kind, contents) { return '<section class="filter-card filter-card--' + kind + '"><div class="filter-tab-list">' + contents + '</div></section>'; }
   function groupsForArea(area) {
     return unique(state.events.filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; })).sort(function (first, second) {
       return groupLabel(first).localeCompare(groupLabel(second));
@@ -147,33 +148,33 @@
     var group = byId("group-filter").value;
     var eventId = byId("event-filter").value;
     var rows = [];
-    rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + ["masculino", "femenino"].map(function (item) {
+    rows.push(filterCard("sex", ["masculino", "femenino"].map(function (item) {
       return filterButton("sex", item, sexLabel(item), item === sex);
-    }).join("") + '</div></div>');
+    }).join("")));
     if (sex) {
       var categories = categoryTabsForSex(sex);
       if (categories.length) {
-        rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + categories.map(function (item) {
+        rows.push(filterCard("category", categories.map(function (item) {
           return filterButton("category", item, categoryTabLabel(item), item === category);
-        }).join("") + '</div></div>');
+        }).join("")));
       }
       var areas = tabAreas();
       if (areas.length) {
-        rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + areas.map(function (item) {
+        rows.push(filterCard("area", areas.map(function (item) {
           return filterButton("area", item, t(areaLabel(item)), item === area);
-        }).join("") + '</div></div>');
+        }).join("")));
       }
       if (area) {
         var groups = tabGroups(area);
-        if (groups.length) rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + groups.map(function (item) {
+        if (groups.length) rows.push(filterCard("group", groups.map(function (item) {
           return filterButton("group", item, groupLabel(item), item === group);
-        }).join("") + '</div></div>');
+        }).join("")));
       }
       if (area && group) {
         var events = tabEvents(area, group);
-        if (events.length) rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + events.map(function (event) {
+        if (events.length) rows.push(filterCard("event", events.map(function (event) {
           return filterButton("event", event.id, t(event.name), String(event.id) === eventId);
-        }).join("") + '</div></div>');
+        }).join("")));
       }
     }
     byId("filter-tabs").innerHTML = rows.join("");
@@ -244,7 +245,7 @@
     var rows = grouped.marks.slice(0, visible).map(function (mark, index) {
       return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
         mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td>' + (opts.showEvent === false ? "" : "<td>" + eventCell(mark) + "</td>") +
-        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryLabel(mark.category)) + "</td>") + '<td><strong>' + escapeHtml(mark.result) +
+        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryTabLabel(mark.category)) + "</td>") + '<td><strong>' + escapeHtml(mark.result) +
         '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td></tr>';
     }).join("");
     var heading = includeHeading && grouped.category ? '<p class="ranking-category">' + escapeHtml(categoryLabel(grouped.category)) + '</p>' : "";
@@ -265,7 +266,7 @@
     byId("ranking-empty").classList.toggle("hidden", groups.length > 0);
     renderFilterTabs();
     if (eventId) {
-      byId("ranking-groups").innerHTML = '<article class="card ranking-group">' + groups.map(function (grouped) { return rankingTable(grouped, !category, { showEvent: false, showCategory: false }); }).join("") + '</article>';
+      byId("ranking-groups").innerHTML = '<article class="card ranking-group">' + groups.map(function (grouped) { return rankingTable(grouped, false, { showEvent: false, showCategory: !category }); }).join("") + '</article>';
       return;
     }
     var showCategory = !category;
@@ -455,9 +456,28 @@
     byId("sex-filter").value = params.get("sex") || "";
     renderFilters();
     if (byId("area-filter").value || byId("group-filter").value || byId("event-filter").value || byId("category-filter").value || byId("sex-filter").value) {
-      loadRanking(false);
+      loadRanking(false).then(function () {
+        if (byId("sex-filter").value && !byId("event-filter").value) {
+          selectFirstAvailablePath();
+          loadRanking(false);
+        }
+      });
     }
   }
+  function selectFirstAvailablePath() {
+    var areas = tabAreas();
+    var area = areas[0] || "";
+    var groups = area ? tabGroups(area) : [];
+    var group = groups[0] || "";
+    var events = area && group ? tabEvents(area, group) : [];
+    byId("area-filter").value = area;
+    renderFilters();
+    byId("group-filter").value = group;
+    renderFilters();
+    byId("event-filter").value = events.length ? String(events[0].id) : "";
+    renderFilters();
+  }
+
   function selectSearchedAthlete() {
     var query = normalized(byId("athlete-search").value);
     var matches = state.athletes.filter(function (athlete) {
@@ -471,7 +491,7 @@
   }
 
 
-  byId("filter-tabs").addEventListener("click", function (event) {
+  byId("filter-tabs").addEventListener("click", async function (event) {
     var tab = event.target.closest("[data-filter-level]");
     if (!tab) return;
     if (tab.dataset.filterLevel === "sex") {
@@ -481,6 +501,8 @@
       byId("group-filter").value = "";
       byId("event-filter").value = "";
       renderFilters();
+      await loadRanking(false);
+      selectFirstAvailablePath();
       loadRanking();
       return;
     }
@@ -490,6 +512,8 @@
       byId("group-filter").value = "";
       byId("event-filter").value = "";
       renderFilters();
+      await loadRanking(false);
+      selectFirstAvailablePath();
       loadRanking();
       return;
     }
