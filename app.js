@@ -94,20 +94,23 @@
     var area = byId("area-filter").value;
     var group = byId("group-filter").value;
     var eventId = byId("event-filter").value;
-    var areas = unique(state.events.map(function (event) { return event.area; }));
     var rows = [];
-    if (areas.length) {
+    var rankingGroups = state.ranking ? state.ranking.groups.slice().sort(compareRankingGroups) : [];
+    if (!rankingGroups.length) {
+      byId("filter-tabs").innerHTML = "";
+      return;
+    }
+    if (!area) {
+      var areas = unique(rankingGroups.map(function (grouped) { return grouped.event.area; })).sort(function (first, second) { return areaRank(first) - areaRank(second); });
       rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Ámbito")) + '</span><div class="filter-tab-list">' + areas.map(function (item) {
         return filterButton("area", item, t(areaLabel(item)), item === area);
       }).join("") + '</div></div>');
-    }
-    if (area) {
-      var groups = unique(state.events.filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; }));
+    } else if (!group) {
+      var groups = unique(rankingGroups.map(function (grouped) { return grouped.event.eventGroup; })).sort(function (first, second) { return groupLabel(first).localeCompare(groupLabel(second)); });
       rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Grupo")) + '</span><div class="filter-tab-list">' + groups.map(function (item) {
         return filterButton("group", item, groupLabel(item), item === group);
       }).join("") + '</div></div>');
-    }
-    if (area && group) {
+    } else {
       var events = state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents);
       rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Prueba")) + '</span><div class="filter-tab-list">' + events.map(function (event) {
         return filterButton("event", event.id, t(event.name), String(event.id) === eventId);
@@ -146,7 +149,6 @@
     byId("category-filter").value = category;
     byId("group-filter").disabled = !area;
     byId("event-filter").disabled = !group;
-    renderFilterTabs();
   }
   function renderMarks() {
     var marks = state.marks;
@@ -191,7 +193,7 @@
       '</th><th>' + t("Fecha") + '</th><th>' + t("Ciudad") + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + more + '</section>';
   }
   function renderRanking() {
-    if (!state.ranking) return;
+    if (!state.ranking) { renderFilterTabs(); return; }
     var area = byId("area-filter").value;
     var group = byId("group-filter").value;
     var eventId = byId("event-filter").value;
@@ -203,6 +205,7 @@
     byId("ranking-title").textContent = title;
     var groups = state.ranking.groups.slice().sort(compareRankingGroups);
     byId("ranking-empty").classList.toggle("hidden", groups.length > 0);
+    renderFilterTabs();
     if (eventId) {
       byId("ranking-groups").innerHTML = '<article class="card ranking-group">' + groups.map(function (grouped) { return rankingTable(grouped, !category, { showEvent: false, showCategory: false }); }).join("") + '</article>';
       return;
