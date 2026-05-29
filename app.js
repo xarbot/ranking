@@ -53,11 +53,20 @@
   function isEditingMark(mark) { return state.editingMarkId && String(state.editingMarkId) === String(mark.id); }
   function normalizeResultText(value) {
     var result = String(value == null ? "" : value).trim();
-    var match = /^(\d+)[hH](\d{1,2})'(\d{1,2})"(\d{0,2})$/.exec(result);
-    if (!match) return result;
-    var decimal = match[4] || "0";
-    decimal = decimal.length === 1 ? decimal + "0" : decimal.slice(0, 2);
-    return String(Number(match[1])) + ":" + String(Number(match[2])).padStart(2, "0") + ":" + String(Number(match[3])).padStart(2, "0") + "." + decimal.padStart(2, "0");
+    var hourMatch = /^(\d+)[hH](\d{1,2})['’](\d{1,2})"(\d{0,2})$/.exec(result);
+    if (hourMatch) {
+      var hourDecimal = hourMatch[4] || "0";
+      hourDecimal = hourDecimal.length === 1 ? hourDecimal + "0" : hourDecimal.slice(0, 2);
+      return String(Number(hourMatch[1])) + ":" + String(Number(hourMatch[2])).padStart(2, "0") + ":" + String(Number(hourMatch[3])).padStart(2, "0") + "." + hourDecimal.padStart(2, "0");
+    }
+    var minuteMatch = /^(\d+)['’](\d{1,2})"(\d{0,2})$/.exec(result);
+    if (minuteMatch) {
+      var minuteDecimal = minuteMatch[3] || "0";
+      minuteDecimal = minuteDecimal.length === 1 ? minuteDecimal + "0" : minuteDecimal.slice(0, 2);
+      return String(Number(minuteMatch[1])) + ":" + String(Number(minuteMatch[2])).padStart(2, "0") + "." + minuteDecimal.padStart(2, "0");
+    }
+    if (/^\d+,\d+$/.test(result)) return result.replace(",", ".");
+    return result;
   }
   function displayResult(value) { return normalizeResultText(value); }
   function resultCell(mark, strong) {
