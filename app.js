@@ -86,6 +86,35 @@
       return "<option value=\"" + escapeHtml(athlete.name) + "\"></option>";
     }).join("");
   }
+
+  function filterButton(level, value, label, active) {
+    return '<button class="filter-tab' + (active ? ' active' : '') + '" type="button" data-filter-level="' + level + '" data-filter-value="' + escapeHtml(value) + '" aria-pressed="' + (active ? 'true' : 'false') + '">' + escapeHtml(label) + '</button>';
+  }
+  function renderFilterTabs() {
+    var area = byId("area-filter").value;
+    var group = byId("group-filter").value;
+    var eventId = byId("event-filter").value;
+    var areas = unique(state.events.map(function (event) { return event.area; }));
+    var rows = [];
+    if (areas.length) {
+      rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Ámbito")) + '</span><div class="filter-tab-list">' + areas.map(function (item) {
+        return filterButton("area", item, t(areaLabel(item)), item === area);
+      }).join("") + '</div></div>');
+    }
+    if (area) {
+      var groups = unique(state.events.filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; }));
+      rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Grupo")) + '</span><div class="filter-tab-list">' + groups.map(function (item) {
+        return filterButton("group", item, groupLabel(item), item === group);
+      }).join("") + '</div></div>');
+    }
+    if (area && group) {
+      var events = state.events.filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents);
+      rows.push('<div class="filter-tab-row"><span>' + escapeHtml(t("Prueba")) + '</span><div class="filter-tab-list">' + events.map(function (event) {
+        return filterButton("event", event.id, t(event.name), String(event.id) === eventId);
+      }).join("") + '</div></div>');
+    }
+    byId("filter-tabs").innerHTML = rows.join("");
+  }
   function renderFilters() {
     var area = byId("area-filter").value;
     var group = byId("group-filter").value;
@@ -117,6 +146,7 @@
     byId("category-filter").value = category;
     byId("group-filter").disabled = !area;
     byId("event-filter").disabled = !group;
+    renderFilterTabs();
   }
   function renderMarks() {
     var marks = state.marks;
@@ -377,6 +407,23 @@
     }
   }
 
+
+  byId("filter-tabs").addEventListener("click", function (event) {
+    var tab = event.target.closest("[data-filter-level]");
+    if (!tab) return;
+    if (tab.dataset.filterLevel === "area") {
+      byId("area-filter").value = tab.dataset.filterValue;
+      byId("group-filter").value = "";
+      byId("event-filter").value = "";
+    }
+    if (tab.dataset.filterLevel === "group") {
+      byId("group-filter").value = tab.dataset.filterValue;
+      byId("event-filter").value = "";
+    }
+    if (tab.dataset.filterLevel === "event") byId("event-filter").value = tab.dataset.filterValue;
+    renderFilters();
+    loadRanking();
+  });
   byId("athlete-search-form").addEventListener("submit", function (event) {
     event.preventDefault();
     selectSearchedAthlete();

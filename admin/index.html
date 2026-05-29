@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260528-9">
+    <link rel="stylesheet" href="styles.css?v=20260529-1">
     <script src="i18n.js?v=20260528-14" defer></script>
-    <script src="app.js?v=20260528-16" defer></script>
+    <script src="app.js?v=20260529-1" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -18,7 +18,6 @@
           <img src="../assets/logo-cac-blanc.png?v=20260525-2" alt="">
           <strong>Club Atlètic Castellar</strong>
         </div>
-        <a class="back-link" href="/">Consulta publica</a>
         <p class="eyebrow">Acceso restringido</p>
         <h1 class="auth-title">Gestion de datos</h1>
         <form id="login-form" class="auth-form">
@@ -38,30 +37,33 @@
       </article>
     </main>
 
+    <div id="app-top-actions" class="top-actions hidden">
+      <label class="language-picker">
+        <span>Idioma</span>
+        <select id="language" aria-label="Idioma">
+          <option value="ca">Català</option>
+          <option value="es">Castellano</option>
+        </select>
+      </label>
+      <button class="icon-link logout-link" id="logout" type="button" aria-label="Cerrar sesion">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5"></path><path d="M14 8l4 4-4 4"></path><path d="M18 12H9"></path></svg>
+      </button>
+    </div>
     <header id="app-header" class="hero hidden">
       <div class="hero-copy">
-        <div class="brand">
+        <a class="brand" href="/admin/">
           <img class="brand-logo" src="../assets/logo-cac-blanc.png?v=20260525-2" alt="">
           <span>Club Atlètic Castellar</span>
+        </a>
+        <a class="hero-title" href="/admin/">Ranking de Atletismo</a>
+      </div>
+      <div class="stats-wrap">
+        <div class="stats" aria-label="Resumen">
+          <div><strong id="count-athletes">0</strong><span>Atletas</span></div>
+          <div><strong id="count-events">0</strong><span>Pruebas</span></div>
+          <div><strong id="count-marks">0</strong><span>Marcas</span></div>
         </div>
-        <h1>Ranking de Atletismo</h1>
-      </div>
-      <div class="stats" aria-label="Resumen">
-        <div><strong id="count-athletes">0</strong><span>Atletas</span></div>
-        <div><strong id="count-events">0</strong><span>Pruebas</span></div>
-        <div><strong id="count-marks">0</strong><span>Marcas</span></div>
-      </div>
-      <div class="user-session">
-        <label class="language-picker">
-          <span>Idioma</span>
-          <select id="language" aria-label="Idioma">
-            <option value="ca">Català</option>
-            <option value="es">Castellano</option>
-          </select>
-        </label>
-        <a class="public-link" href="/">Consulta publica</a>
-        <span id="current-user-name"></span>
-        <button class="secondary" id="logout" type="button">Cerrar sesion</button>
+        <p class="welcome-line hidden" id="welcome-user">Benvingut/da <span id="current-user-name"></span></p>
       </div>
     </header>
 

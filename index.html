@@ -7,33 +7,35 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260528-4">
+    <link rel="stylesheet" href="styles.css?v=20260529-1">
     <script src="i18n.js?v=20260528-2" defer></script>
-    <script src="app.js?v=20260528-10" defer></script>
+    <script src="app.js?v=20260529-1" defer></script>
   </head>
   <body>
+    <div class="top-actions">
+      <label class="language-picker">
+        <span>Idioma</span>
+        <select id="language" aria-label="Idioma">
+          <option value="ca">Català</option>
+          <option value="es">Castellano</option>
+        </select>
+      </label>
+      <a class="icon-link admin-link" href="/admin/" aria-label="Administracion">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 13.8a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6Z"></path><path d="M19.4 13.4c.1-.5.1-.9.1-1.4s0-.9-.1-1.4l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.4-1.4L14.3 2h-4.6l-.4 3.2A8 8 0 0 0 7 6.6l-2.5-1-2 3.5 2 1.5c-.1.5-.1.9-.1 1.4s0 .9.1 1.4l-2 1.5 2 3.5 2.5-1c.7.6 1.4 1 2.3 1.4l.4 3.2h4.6l.4-3.2c.8-.3 1.6-.8 2.3-1.4l2.4 1 2-3.5-2-1.5Z"></path></svg>
+      </a>
+    </div>
     <header class="hero">
       <div class="hero-copy">
-        <div class="brand">
+        <a class="brand" href="/">
           <img class="brand-logo" src="assets/logo-cac-blanc.png?v=20260525-2" alt="">
           <span>Club Atlètic Castellar</span>
-        </div>
-        <h1>Ranking de Atletismo</h1>
+        </a>
+        <a class="hero-title" href="/">Ranking de Atletismo</a>
       </div>
       <div class="stats" aria-label="Resumen">
         <div><strong id="count-athletes">0</strong><span>Atletas</span></div>
         <div><strong id="count-events">0</strong><span>Pruebas</span></div>
         <div><strong id="count-marks">0</strong><span>Marcas</span></div>
-      </div>
-      <div class="hero-actions">
-        <label class="language-picker">
-          <span>Idioma</span>
-          <select id="language" aria-label="Idioma">
-            <option value="ca">Català</option>
-            <option value="es">Castellano</option>
-          </select>
-        </label>
-        <a class="admin-link" href="/admin/">Administracion</a>
       </div>
     </header>
     <main>
@@ -74,6 +76,7 @@
             <select id="category-filter"><option value="">Todas las categorias</option></select>
           </label>
         </div>
+        <div class="filter-tabs" id="filter-tabs" aria-label="Filtros por pestañas"></div>
       </section>
       <p id="public-error" class="status failure hidden" role="alert"></p>
       <section class="card results" id="latest-section">
