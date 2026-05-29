@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editingMarkId: null };
+  var state = { events: [], categories: [], athletes: [], cities: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editingMarkId: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -36,14 +36,27 @@
   function technicalDetail(value) { return normalized(value) === "no" ? "" : detailLine(value); }
   function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
   function eventCell(mark) { return escapeHtml(eventLabel(mark)) + technicalDetail(mark.technicalInfo); }
-  function cityCell(mark) { return escapeHtml(mark.city) + detailLine(mark.trackName); }
+  function cityLabel(city) { return city.name + (city.province ? " (" + city.province + ")" : ""); }
+  function selectedPublicCity(value) {
+    var query = normalized(value);
+    return state.cities.find(function (city) { return normalized(cityLabel(city)) === query || normalized(city.name) === query; });
+  }
+  function cityInputValue(mark) {
+    var current = state.cities.find(function (city) { return String(city.id) === String(mark.cityId); });
+    return current ? cityLabel(current) : (mark.city || "");
+  }
+  function cityCell(mark) {
+    if (isPublicAdmin() && isEditingMark(mark)) return '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">' + detailLine(mark.trackName);
+    return escapeHtml(mark.city) + detailLine(mark.trackName);
+  }
   function publicActionHeader() { return isPublicAdmin() ? "<th></th>" : ""; }
   function isEditingMark(mark) { return state.editingMarkId && String(state.editingMarkId) === String(mark.id); }
   function normalizeResultText(value) {
     var result = String(value == null ? "" : value).trim();
-    var match = /^(\d+)h(\d{1,2})'(\d{1,2})"(\d{1,2})$/.exec(result);
+    var match = /^(\d+)[hH](\d{1,2})'(\d{1,2})"(\d{0,2})$/.exec(result);
     if (!match) return result;
-    var decimal = match[4].length === 1 ? match[4] + "0" : match[4].slice(0, 2);
+    var decimal = match[4] || "0";
+    decimal = decimal.length === 1 ? decimal + "0" : decimal.slice(0, 2);
     return String(Number(match[1])) + ":" + String(Number(match[2])).padStart(2, "0") + ":" + String(Number(match[3])).padStart(2, "0") + "." + decimal.padStart(2, "0");
   }
   function displayResult(value) { return normalizeResultText(value); }
@@ -115,7 +128,10 @@
 
   function renderSearch() {
     byId("public-athletes").innerHTML = state.athletes.map(function (athlete) {
-      return "<option value=\"" + escapeHtml(athlete.name) + "\"></option>";
+      return '<option value="' + escapeHtml(athlete.name) + '"></option>';
+    }).join("");
+    if (byId("public-cities")) byId("public-cities").innerHTML = state.cities.map(function (city) {
+      return '<option value="' + escapeHtml(cityLabel(city)) + '"></option>';
     }).join("");
   }
 
@@ -402,11 +418,18 @@
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
       var authResponse = await fetch("/api/auth/status");
       var auth = await authResponse.json().catch(function () { return {}; });
+      var adminData = { cities: [] };
+      if (auth.user && auth.user.role === "admin") {
+        var adminResponse = await fetch("/api/bootstrap");
+        adminData = await adminResponse.json().catch(function () { return { cities: [] }; });
+        if (!adminResponse.ok) adminData = { cities: [] };
+      }
       if (window.RankingI18n.setManagedTranslations) window.RankingI18n.setManagedTranslations(data.translations || []);
       state = {
         events: data.events || [],
         categories: data.categories || [],
         athletes: data.athletes || [],
+        cities: adminData.cities || [],
         marks: data.marks || [],
         counts: data.counts || {},
         ranking: null,
@@ -546,11 +569,11 @@
     if (!response.ok) throw new Error(data.error || "No se ha podido guardar el cambio.");
     return data;
   }
-  function publicMarkPayload(mark, result, date) {
+  function publicMarkPayload(mark, result, date, cityId) {
     return {
       athleteId: mark.athleteId,
       eventId: mark.eventId,
-      cityId: mark.cityId,
+      cityId: cityId || mark.cityId,
       result: result,
       date: date,
       trackName: mark.trackName || "",
@@ -575,8 +598,11 @@
     if (!mark || !row) return;
     var resultInput = row.querySelector("[data-public-edit-result]");
     var dateInput = row.querySelector("[data-public-edit-date]");
+    var cityInput = row.querySelector("[data-public-edit-city]");
+    var city = cityInput ? selectedPublicCity(cityInput.value) : null;
+    if (cityInput && !city) { showError("Selecciona una ciudad existente."); return; }
     try {
-      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date)) });
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, city ? city.id : mark.cityId)) });
       state.editingMarkId = null;
       await loadMarks();
     } catch (error) {
