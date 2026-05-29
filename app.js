@@ -9,6 +9,10 @@
   function groupLabel(group) { return t(normalized(group).replace("ç", "c") === "llancaments" ? "Llançaments" : group); }
   function eventLabel(event) { return t(areaLabel(event.area)) + " / " + groupLabel(event.eventGroup) + " / " + t(event.name || event.event || ""); }
   function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
+  function sexLabel(value) { return value === "femenino" ? t("Ranking Femenino") : t("Ranking Masculino"); }
+  function categorySex(category) { return normalized(String(category).split(" - ")[1] || "") === "femenino" ? "femenino" : "masculino"; }
+  function categoryBase(category) { return String(category || "").split(" - ")[0]; }
+  function categoryTabLabel(category) { return categoryLabel(categoryBase(category)); }
   function normalized(value) { return String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
   function raceDistance(event) { var name = normalized(event.name || event.event).replace(",", "."), match, group = normalized(event.eventGroup); if (group !== "curses" && group !== "tanques") return null; if (name === "milla") return 1609; if (name.indexOf("mitja") === 0) return 21097; if (name === "marato") return 42195; match = /^(\d+(?:\.\d+)?)\s*(km)?/.exec(name); return match ? Number(match[1]) * (match[2] ? 1000 : 1) : null; }
   function compareEvents(first, second) { var firstDistance = raceDistance(first), secondDistance = raceDistance(second); if (firstDistance !== null && secondDistance !== null) return firstDistance - secondDistance; return t(first.name || first.event).localeCompare(t(second.name || second.event)); }
@@ -76,7 +80,8 @@
       area: byId("area-filter").value,
       group: byId("group-filter").value,
       event: byId("event-filter").value,
-      category: byId("category-filter").value
+      category: byId("category-filter").value,
+      sex: byId("sex-filter").value
     };
   }
   function clearUrl(replace) { setUrl({}, replace); }
@@ -118,33 +123,58 @@
   }
   function firstRankingGroupForArea(area) { return rankingGroupsForArea(area)[0] || firstGroupForArea(area); }
   function firstRankingEventForGroup(area, group) { var events = rankingEventsForGroup(area, group); return events.length ? String(events[0].id) : firstEventForGroup(area, group); }
+  function availableEvents() { return state.ranking && state.ranking.available ? state.ranking.available : []; }
   function tabAreas() {
-    return unique(state.events.map(function (event) { return event.area; })).sort(function (first, second) { return areaRank(first) - areaRank(second); });
+    return unique(availableEvents().map(function (event) { return event.area; })).sort(function (first, second) { return areaRank(first) - areaRank(second); });
   }
-  function tabGroups(area) { return groupsForArea(area); }
-  function tabEvents(area, group) { return eventsForGroup(area, group); }
+  function tabGroups(area) {
+    return unique(availableEvents().filter(function (event) { return event.area === area; }).map(function (event) { return event.eventGroup; })).sort(function (first, second) {
+      return groupLabel(first).localeCompare(groupLabel(second));
+    });
+  }
+  function tabEvents(area, group) { return availableEvents().filter(function (event) { return event.area === area && event.eventGroup === group; }).sort(compareEvents); }
+  function categoryTabsForSex(sex) {
+    return state.categories.filter(function (category) { return categorySex(category) === sex; }).sort(function (first, second) {
+      return categoryRank(first) - categoryRank(second) || first.localeCompare(second);
+    });
+  }
+  function firstTabGroupForArea(area) { return tabGroups(area)[0] || firstGroupForArea(area); }
+  function firstTabEventForGroup(area, group) { var events = tabEvents(area, group); return events.length ? String(events[0].id) : firstEventForGroup(area, group); }
   function renderFilterTabs() {
+    var sex = byId("sex-filter").value;
+    var category = byId("category-filter").value;
     var area = byId("area-filter").value;
     var group = byId("group-filter").value;
     var eventId = byId("event-filter").value;
     var rows = [];
-    var areas = tabAreas();
-    if (areas.length) {
-      rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + areas.map(function (item) {
-        return filterButton("area", item, t(areaLabel(item)), item === area);
-      }).join("") + '</div></div>');
-    }
-    if (area) {
-      var groups = tabGroups(area);
-      rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + groups.map(function (item) {
-        return filterButton("group", item, groupLabel(item), item === group);
-      }).join("") + '</div></div>');
-    }
-    if (area && group) {
-      var events = tabEvents(area, group);
-      rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + events.map(function (event) {
-        return filterButton("event", event.id, t(event.name), String(event.id) === eventId);
-      }).join("") + '</div></div>');
+    rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + ["masculino", "femenino"].map(function (item) {
+      return filterButton("sex", item, sexLabel(item), item === sex);
+    }).join("") + '</div></div>');
+    if (sex) {
+      var categories = categoryTabsForSex(sex);
+      if (categories.length) {
+        rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + categories.map(function (item) {
+          return filterButton("category", item, categoryTabLabel(item), item === category);
+        }).join("") + '</div></div>');
+      }
+      var areas = tabAreas();
+      if (areas.length) {
+        rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + areas.map(function (item) {
+          return filterButton("area", item, t(areaLabel(item)), item === area);
+        }).join("") + '</div></div>');
+      }
+      if (area) {
+        var groups = tabGroups(area);
+        if (groups.length) rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + groups.map(function (item) {
+          return filterButton("group", item, groupLabel(item), item === group);
+        }).join("") + '</div></div>');
+      }
+      if (area && group) {
+        var events = tabEvents(area, group);
+        if (events.length) rows.push('<div class="filter-tab-row"><div class="filter-tab-list">' + events.map(function (event) {
+          return filterButton("event", event.id, t(event.name), String(event.id) === eventId);
+        }).join("") + '</div></div>');
+      }
     }
     byId("filter-tabs").innerHTML = rows.join("");
   }
@@ -153,6 +183,7 @@
     var group = byId("group-filter").value;
     var eventId = byId("event-filter").value;
     var category = byId("category-filter").value;
+    var sex = byId("sex-filter").value;
     var areas = unique(state.events.map(function (event) { return event.area; }));
     if (!areas.includes(area)) area = "";
     var groups = area ? groupsForArea(area) : [];
@@ -177,6 +208,7 @@
     byId("group-filter").value = group;
     byId("event-filter").value = eventId;
     byId("category-filter").value = category;
+    byId("sex-filter").value = sex;
     byId("group-filter").disabled = !area;
     byId("event-filter").disabled = !group;
     renderFilterTabs();
@@ -364,7 +396,8 @@
     byId("athlete-search").value = "";
     renderHistory();
     var category = byId("category-filter").value;
-    if (!area && !group && !eventId && !category) {
+    var sex = byId("sex-filter").value;
+    if (!area && !group && !eventId && !category && !sex) {
       state.ranking = null;
       state.rankingVisible = {};
       renderHistory();
@@ -372,7 +405,7 @@
       return;
     }
     try {
-      var url = "/api/public/ranking?area=" + encodeURIComponent(area) + "&eventGroup=" + encodeURIComponent(group) + "&eventId=" + encodeURIComponent(eventId) + "&category=" + encodeURIComponent(category);
+      var url = "/api/public/ranking?area=" + encodeURIComponent(area) + "&eventGroup=" + encodeURIComponent(group) + "&eventId=" + encodeURIComponent(eventId) + "&category=" + encodeURIComponent(category) + "&sex=" + encodeURIComponent(sex);
       var response = await fetch(url);
       var data = await response.json().catch(function () { return {}; });
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
@@ -419,8 +452,9 @@
     renderFilters();
     byId("event-filter").value = eventId;
     byId("category-filter").value = params.get("category") || "";
+    byId("sex-filter").value = params.get("sex") || "";
     renderFilters();
-    if (byId("area-filter").value || byId("group-filter").value || byId("event-filter").value || byId("category-filter").value) {
+    if (byId("area-filter").value || byId("group-filter").value || byId("event-filter").value || byId("category-filter").value || byId("sex-filter").value) {
       loadRanking(false);
     }
   }
@@ -440,13 +474,32 @@
   byId("filter-tabs").addEventListener("click", function (event) {
     var tab = event.target.closest("[data-filter-level]");
     if (!tab) return;
+    if (tab.dataset.filterLevel === "sex") {
+      byId("sex-filter").value = tab.dataset.filterValue;
+      byId("category-filter").value = "";
+      byId("area-filter").value = "";
+      byId("group-filter").value = "";
+      byId("event-filter").value = "";
+      renderFilters();
+      loadRanking();
+      return;
+    }
+    if (tab.dataset.filterLevel === "category") {
+      byId("category-filter").value = tab.dataset.filterValue;
+      byId("area-filter").value = "";
+      byId("group-filter").value = "";
+      byId("event-filter").value = "";
+      renderFilters();
+      loadRanking();
+      return;
+    }
     if (tab.dataset.filterLevel === "area") {
-      var firstGroup = firstGroupForArea(tab.dataset.filterValue);
+      var firstGroup = firstTabGroupForArea(tab.dataset.filterValue);
       byId("area-filter").value = tab.dataset.filterValue;
       renderFilters();
       byId("group-filter").value = firstGroup;
       renderFilters();
-      byId("event-filter").value = firstEventForGroup(tab.dataset.filterValue, firstGroup);
+      byId("event-filter").value = firstTabEventForGroup(tab.dataset.filterValue, firstGroup);
       renderFilters();
       loadRanking();
       return;
@@ -454,7 +507,7 @@
     if (tab.dataset.filterLevel === "group") {
       byId("group-filter").value = tab.dataset.filterValue;
       renderFilters();
-      byId("event-filter").value = firstEventForGroup(byId("area-filter").value, tab.dataset.filterValue);
+      byId("event-filter").value = firstTabEventForGroup(byId("area-filter").value, tab.dataset.filterValue);
       renderFilters();
       loadRanking();
       return;
@@ -477,6 +530,7 @@
     byId("group-filter").value = "";
     byId("event-filter").value = "";
     byId("category-filter").value = "";
+    byId("sex-filter").value = "";
     byId("athlete-search").value = "";
     state.ranking = null;
     state.rankingVisible = {};
@@ -523,6 +577,7 @@
     byId("group-filter").value = "";
     byId("event-filter").value = "";
     byId("category-filter").value = "";
+    byId("sex-filter").value = "";
     render();
     restoreFromUrl();
   });

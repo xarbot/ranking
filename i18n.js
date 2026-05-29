@@ -33,6 +33,8 @@
       "Descargar plantilla de resultados": "Descarrega la plantilla de resultats",
       "Importar resultados CSV": "Importa resultats CSV",
       "Ranking de Atletismo": "Rànquing d'Atletisme",
+      "Ranking Masculino": "Rànquing Masculí",
+      "Ranking Femenino": "Rànquing Femení",
       "Idioma": "Idioma",
       "Castellano": "Castellà",
       "Acceso restringido": "Accés restringit",

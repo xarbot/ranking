@@ -116,8 +116,9 @@ function publicMarks(PDO $db): array {
     $total = (int) execute($db, 'SELECT COUNT(*) FROM marcas')->fetchColumn();
     return ['events' => $events, 'athletes' => $athletes, 'categories' => $categories, 'marks' => $marks, 'translations' => translations($db), 'counts' => ['athletes' => count($athletes), 'events' => count($events), 'marks' => $total]];
 }
-function publicRanking(PDO $db, ?string $area, ?string $eventGroup, ?int $eventId, ?string $category): array {
-    if ($area === null && $eventGroup === null && $eventId === null && $category === null) throw new ApiException('Selecciona una prueba o una categoria.');
+function publicRanking(PDO $db, ?string $area, ?string $eventGroup, ?int $eventId, ?string $category, ?string $sex): array {
+    if ($sex !== null && !in_array($sex, ['femenino', 'masculino'], true)) throw new ApiException('Indica un sexo valido.');
+    if ($area === null && $eventGroup === null && $eventId === null && $category === null && $sex === null) throw new ApiException('Selecciona una prueba, una categoria o un sexo.');
     refreshCategories($db);
     $filters = [];
     $params = [];
@@ -125,9 +126,16 @@ function publicRanking(PDO $db, ?string $area, ?string $eventGroup, ?int $eventI
     if ($eventGroup !== null) { $filters[] = 'p.grupo = ?'; $params[] = $eventGroup; }
     if ($eventId !== null) { $filters[] = 'm.prueba_id = ?'; $params[] = $eventId; }
     if ($category !== null) { $filters[] = 'm.categoria = ?'; $params[] = $category; }
+    if ($sex !== null) { $filters[] = 'a.sexo = ?'; $params[] = $sex; }
+    $availableFilters = [];
+    $availableParams = [];
+    if ($category !== null) { $availableFilters[] = 'm.categoria = ?'; $availableParams[] = $category; }
+    if ($sex !== null) { $availableFilters[] = 'a.sexo = ?'; $availableParams[] = $sex; }
+    $availableWhere = $availableFilters ? ' WHERE ' . implode(' AND ', $availableFilters) : '';
+    $available = execute($db, "SELECT DISTINCT p.id, p.nombre AS name, p.ambito AS area, p.grupo AS eventGroup FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id{$availableWhere} ORDER BY " . eventOrderSql(), $availableParams)->fetchAll();
     $location = locationSql();
     $rows = execute($db, "SELECT m.atleta_id AS athleteId,m.prueba_id AS eventId,CONCAT(a.nombre,' ',a.apellidos) AS athlete,p.nombre AS event,p.ambito AS area,p.grupo AS eventGroup,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,DATE_FORMAT(m.fecha,'%Y-%m-%d') AS date,{$location} FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id WHERE ".implode(' AND ', $filters), $params)->fetchAll();
-    $combineCategories = $eventId !== null && $category === null;
+    $combineCategories = $category === null;
     $grouped = [];
     foreach ($rows as $row) {
         $row['_value'] = comparableResult($row['result']);
@@ -145,7 +153,7 @@ function publicRanking(PDO $db, ?string $area, ?string $eventGroup, ?int $eventI
         usort($group['marks'], static fn($a, $b) => $a['resultDirection'] === 'higher' ? ($b['_value'] <=> $a['_value']) : ($a['_value'] <=> $b['_value']));
         foreach ($group['marks'] as &$mark) unset($mark['_value']);
     }
-    return compact('area', 'eventGroup', 'eventId', 'category', 'groups');
+    return compact('area', 'eventGroup', 'eventId', 'category', 'sex', 'available', 'groups');
 }
 function publicHistory(PDO $db, int $id): array { refreshCategories($db); $athlete=execute($db,"SELECT id, CONCAT(nombre,' ',apellidos) AS name FROM atletas WHERE id = ?",[$id])->fetch(); if(!$athlete)throw new ApiException('El atleta indicado no existe.',404);$location=locationSql();$marks=execute($db,"SELECT m.prueba_id AS eventId,p.nombre AS event,p.ambito AS area,p.grupo AS eventGroup,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,DATE_FORMAT(m.fecha,'%Y-%m-%d') AS date,{$location} FROM marcas m JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id WHERE m.atleta_id=? ORDER BY m.fecha DESC",[$id])->fetchAll();return compact('athlete','marks'); }
 
@@ -167,7 +175,7 @@ function route(PDO $db,string $method,string $path,array $payload): array {
  if($method==='POST'&&$path==='/auth/logout'){unset($_SESSION['user_id']);return [['ok'=>true],200];}
  if($method==='GET'&&$path==='/public/translations')return [['translations'=>translations($db)],200];
  if($method==='GET'&&$path==='/public/marks')return [publicMarks($db),200];
- if($method==='GET'&&$path==='/public/ranking'){$raw=trim((string)($_GET['eventId']??''));$id=$raw===''?null:filter_var($raw,FILTER_VALIDATE_INT);return [publicRanking($db,trim((string)($_GET['area']??''))?:null,trim((string)($_GET['eventGroup']??''))?:null,$id?(int)$id:null,trim((string)($_GET['category']??''))?:null),200];}
+ if($method==='GET'&&$path==='/public/ranking'){$raw=trim((string)($_GET['eventId']??''));$id=$raw===''?null:filter_var($raw,FILTER_VALIDATE_INT);return [publicRanking($db,trim((string)($_GET['area']??''))?:null,trim((string)($_GET['eventGroup']??''))?:null,$id?(int)$id:null,trim((string)($_GET['category']??''))?:null,trim((string)($_GET['sex']??''))?:null),200];}
  if($method==='GET'&&preg_match('#^/public/athletes/(\d+)/history$#',$path,$m))return [publicHistory($db,(int)$m[1]),200];
  $actor=requireUser($db);
  if($method==='POST'&&$path==='/auth/password'){changePassword($db,$payload,$actor);return [['ok'=>true],200];}
