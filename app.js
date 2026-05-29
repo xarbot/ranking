@@ -8,6 +8,7 @@
   function areaLabel(area) { return { pista_cubierta: "Pista Cubierta", aire_libre: "Aire Libre", ruta: "Ruta" }[area] || area; }
   function groupLabel(group) { return t(normalized(group).replace("ç", "c") === "llancaments" ? "Llançaments" : group); }
   function eventLabel(event) { return t(areaLabel(event.area)) + " / " + groupLabel(event.eventGroup) + " / " + t(event.name || event.event || ""); }
+  function eventShortLabel(event) { return groupLabel(event.eventGroup) + " / " + t(event.name || event.event || ""); }
   function categoryLabel(value) { var parts = String(value || "").split(" - "); parts[0] = parts[0].replace(/^Master /, t("Master") + " "); if (parts[0] === "Senior") parts[0] = t("Senior"); if (parts[1]) parts[1] = t(parts[1]); return parts.join(" - "); }
   function sexLabel(value) { return value === "femenino" ? t("Ranking Femenino") : t("Ranking Masculino"); }
   function categorySex(category) { return normalized(String(category).split(" - ")[1] || "") === "femenino" ? "femenino" : "masculino"; }
@@ -332,8 +333,8 @@
         var group = groupLabel(first.event.eventGroup).localeCompare(groupLabel(second.event.eventGroup));
         return rank || group || compareEvents(first.event, second.event);
       });
-      return "<article class=\"card category-history\"><p class=\"eyebrow\">" + t("Categoria") + "</p><h3>" +
-        escapeHtml(categoryLabel(category)) + "</h3>" + events.map(function (eventGroup) {
+      return "<section class=\"history-category-group\"><div class=\"category-pill category-pill--" + escapeHtml(normalized(categoryBase(category)).replace(/[^a-z0-9]+/g, "-")) + "\">" +
+        escapeHtml(categoryTabLabel(category)) + "</div><article class=\"card category-history\">" + events.map(function (eventGroup) {
           var key = historyKey(category, eventGroup);
           var sortedMarks = eventGroup.marks.slice().sort(compareHistory);
           var visible = state.historyVisible[key] || 1;
@@ -349,9 +350,9 @@
             ? '<button class="history-toggle" type="button" data-more-history="' + escapeHtml(key) + '" aria-label="' + escapeHtml(t("Mostrar 20 resultados mas")) + '">+</button>'
             : "";
           var controls = more || less ? '<div class="history-controls">' + less + more + '</div>' : "";
-          return "<section class=\"event-history\"><h4>" + escapeHtml(eventLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
+          return "<section class=\"event-history\"><h4>" + escapeHtml(eventShortLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
             t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" + controls + "</section>";
-        }).join("") + "</article>";
+        }).join("") + "</article></section>";
     }).join("");
     byId("history-empty").classList.toggle("hidden", history.marks.length > 0);
   }

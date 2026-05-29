@@ -928,3 +928,55 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 .filter-tabs[hidden] {
   display: none !important;
 }
+
+.history-category-group {
+  display: grid;
+  gap: 8px;
+}
+.category-pill {
+  align-self: start;
+  border: 1px solid #cddfcf;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 8px 13px;
+  width: max-content;
+}
+.category-pill--sub8,
+.category-pill--sub10,
+.category-pill--sub12 {
+  background: #eef7f4;
+  border-color: #c5e1d8;
+}
+.category-pill--sub14,
+.category-pill--sub16 {
+  background: #eef3fb;
+  border-color: #c7d8ef;
+}
+.category-pill--sub18,
+.category-pill--sub20,
+.category-pill--sub23 {
+  background: #f4f0fb;
+  border-color: #d9cdec;
+}
+.category-pill--senior {
+  background: #fff6df;
+  border-color: #ead79d;
+}
+.category-pill[class*="master"] {
+  background: #f8eeee;
+  border-color: #e5c7c7;
+}
+.category-history h3,
+.category-history .eyebrow {
+  display: none;
+}
+.category-history .event-history:first-child h4 {
+  margin-top: 0;
+}
+@media (max-width: 600px) {
+  .category-pill { width: max-content; }
+}
