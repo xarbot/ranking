@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "" };
+  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -34,8 +34,14 @@
   }
   function detailLine(value) { return value ? '<span class="cell-detail">' + escapeHtml(value) + '</span>' : ""; }
   function technicalDetail(value) { return normalized(value) === "no" ? "" : detailLine(value); }
+  function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
   function eventCell(mark) { return escapeHtml(eventLabel(mark)) + technicalDetail(mark.technicalInfo); }
   function cityCell(mark) { return escapeHtml(mark.city) + detailLine(mark.trackName); }
+  function publicActionHeader() { return isPublicAdmin() ? "<th></th>" : ""; }
+  function publicActions(mark) {
+    if (!isPublicAdmin() || !mark.id) return "";
+    return '<td class="public-actions"><button class="public-action-button" type="button" data-public-edit-mark="' + escapeHtml(mark.id) + '" title="' + escapeHtml(t("Editar")) + '">' + escapeHtml(t("Editar")) + '</button><button class="public-action-button danger" type="button" data-public-delete-mark="' + escapeHtml(mark.id) + '" title="' + escapeHtml(t("Eliminar")) + '">' + escapeHtml(t("Eliminar")) + '</button></td>';
+  }
   function unique(values) { return values.filter(function (value, index) { return values.indexOf(value) === index; }); }
   function formatDate(value) {
     if (!value) return "";
@@ -217,12 +223,14 @@
   }
   function renderMarks() {
     var marks = state.marks;
+    var latestHead = document.querySelector("#latest-section thead tr");
+    if (latestHead) latestHead.innerHTML = "<th>" + t("Atleta") + "</th><th>" + t("Prueba") + "</th><th>" + t("Categoria") + "</th><th>" + t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th>" + publicActionHeader();
     byId("results-title").textContent = t("Ultimas marcas registradas");
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return '<tr><td><button class="athlete-button" type="button" data-athlete-id="' + mark.athleteId + '">' +
         escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
         '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + escapeHtml(mark.result) + '</td><td>' +
-        formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td></tr>';
+        formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
   }
@@ -247,7 +255,7 @@
       return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
         mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td>' + (opts.showEvent === false ? "" : "<td>" + eventCell(mark) + "</td>") +
         (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryTabLabel(mark.category)) + "</td>") + '<td><strong>' + escapeHtml(mark.result) +
-        '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td></tr>';
+        '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     var heading = includeHeading && grouped.category ? '<p class="ranking-category">' + escapeHtml(categoryLabel(grouped.category)) + '</p>' : "";
     var more = visible < grouped.marks.length
@@ -255,7 +263,7 @@
       : "";
     return '<section class="ranking-result">' + heading + '<div class="table-wrap"><table><thead><tr><th>#</th><th>' + t("Atleta") +
       '</th>' + (opts.showEvent === false ? "" : "<th>" + t("Prueba") + "</th>") + (opts.showCategory === false ? "" : "<th>" + t("Categoria") + "</th>") + '<th>' + t("Marca") +
-      '</th><th>' + t("Fecha") + '</th><th>' + t("Ciudad") + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + more + '</section>';
+      '</th><th>' + t("Fecha") + '</th><th>' + t("Ciudad") + '</th>' + publicActionHeader() + '</tr></thead><tbody>' + rows + '</tbody></table></div>' + more + '</section>';
   }
   function renderRanking() {
     if (!state.ranking) { renderFilterTabs(); return; }
@@ -341,7 +349,7 @@
           var rows = sortedMarks.slice(0, visible).map(function (mark, index) {
             var personalBest = index === 0 ? ' <span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' : "";
             return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong>" + personalBest + "</td><td>" + formatDate(mark.date) +
-              "</td><td>" + cityCell(mark) + "</td></tr>";
+              "</td><td>" + cityCell(mark) + "</td>" + publicActions(mark) + "</tr>";
           }).join("");
           var less = visible > 1
             ? '<button class="history-toggle" type="button" data-less-history="' + escapeHtml(key) + '" aria-label="' + escapeHtml(t("Mostrar menos resultados")) + '">-</button>'
@@ -351,7 +359,7 @@
             : "";
           var controls = more || less ? '<div class="history-controls">' + less + more + '</div>' : "";
           return "<section class=\"event-history\"><h4>" + escapeHtml(eventShortLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
-            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th></tr></thead><tbody>" + rows + "</tbody></table></div>" + controls + "</section>";
+            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th>" + publicActionHeader() + "</tr></thead><tbody>" + rows + "</tbody></table></div>" + controls + "</section>";
         }).join("") + "</article></section>";
     }).join("");
     byId("history-empty").classList.toggle("hidden", history.marks.length > 0);
@@ -372,6 +380,8 @@
       var response = await fetch("/api/public/marks");
       var data = await response.json().catch(function () { return {}; });
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
+      var authResponse = await fetch("/api/auth/status");
+      var auth = await authResponse.json().catch(function () { return {}; });
       if (window.RankingI18n.setManagedTranslations) window.RankingI18n.setManagedTranslations(data.translations || []);
       state = {
         events: data.events || [],
@@ -383,7 +393,8 @@
         rankingVisible: {},
         history: null,
         historyVisible: {},
-        historyArea: ""
+        historyArea: "",
+        currentUser: auth.user || null
       };
       showError("");
       render();
@@ -496,6 +507,60 @@
   }
 
 
+  function findPublicMark(id) {
+    var target = String(id);
+    var sources = [state.marks || []];
+    if (state.ranking && state.ranking.groups) state.ranking.groups.forEach(function (grouped) { sources.push(grouped.marks || []); });
+    if (state.history && state.history.marks) sources.push(state.history.marks || []);
+    for (var sourceIndex = 0; sourceIndex < sources.length; sourceIndex += 1) {
+      for (var index = 0; index < sources[sourceIndex].length; index += 1) {
+        if (String(sources[sourceIndex][index].id) === target) return sources[sourceIndex][index];
+      }
+    }
+    return null;
+  }
+  async function requestPublicAdmin(path, options) {
+    var response = await fetch("/api" + path, Object.assign({ headers: { "Content-Type": "application/json" } }, options || {}));
+    var data = await response.json().catch(function () { return {}; });
+    if (!response.ok) throw new Error(data.error || "No se ha podido guardar el cambio.");
+    return data;
+  }
+  function publicMarkPayload(mark, result, date) {
+    return {
+      athleteId: mark.athleteId,
+      eventId: mark.eventId,
+      cityId: mark.cityId,
+      result: result,
+      date: date,
+      trackName: mark.trackName || "",
+      technicalInfo: mark.technicalInfo || ""
+    };
+  }
+  async function editPublicMark(id) {
+    var mark = findPublicMark(id);
+    if (!mark) return;
+    var result = window.prompt(t("Marca"), mark.result || "");
+    if (result === null) return;
+    var date = window.prompt(t("Fecha"), mark.date || "");
+    if (date === null) return;
+    try {
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, result, date)) });
+      await loadMarks();
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+  async function deletePublicMark(id) {
+    if (!window.confirm(t("Eliminar") + "?")) return;
+    try {
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "DELETE" });
+      await loadMarks();
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
+
   byId("filter-tabs").addEventListener("click", async function (event) {
     var tab = event.target.closest("[data-filter-level]");
     if (!tab) return;
@@ -571,10 +636,18 @@
     clearUrl(false);
   });
   byId("marks-body").addEventListener("click", function (event) {
+    var edit = event.target.closest("[data-public-edit-mark]");
+    if (edit) { editPublicMark(edit.dataset.publicEditMark); return; }
+    var remove = event.target.closest("[data-public-delete-mark]");
+    if (remove) { deletePublicMark(remove.dataset.publicDeleteMark); return; }
     var button = event.target.closest("[data-athlete-id]");
     if (button) loadHistory(button.dataset.athleteId);
   });
   byId("ranking-groups").addEventListener("click", function (event) {
+    var edit = event.target.closest("[data-public-edit-mark]");
+    if (edit) { editPublicMark(edit.dataset.publicEditMark); return; }
+    var remove = event.target.closest("[data-public-delete-mark]");
+    if (remove) { deletePublicMark(remove.dataset.publicDeleteMark); return; }
     var athlete = event.target.closest("[data-athlete-id]");
     if (athlete) {
       loadHistory(athlete.dataset.athleteId);
@@ -618,6 +691,10 @@
     renderHistory();
   });
   byId("history-categories").addEventListener("click", function (event) {
+    var edit = event.target.closest("[data-public-edit-mark]");
+    if (edit) { editPublicMark(edit.dataset.publicEditMark); return; }
+    var remove = event.target.closest("[data-public-delete-mark]");
+    if (remove) { deletePublicMark(remove.dataset.publicDeleteMark); return; }
     var more = event.target.closest("[data-more-history]");
     if (more) {
       var key = more.dataset.moreHistory;

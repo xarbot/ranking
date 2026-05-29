@@ -263,6 +263,36 @@ td strong { color: var(--primary-dark); }
 .row-button.danger { color: var(--danger); }
 .empty { color: var(--muted); margin: 20px 4px 4px; text-align: center; }
 
+.public-actions {
+  text-align: right;
+  white-space: nowrap;
+  width: 124px;
+}
+.public-action-button {
+  background: #f5f8f5;
+  border: 1px solid #d9e3da;
+  border-radius: 6px;
+  color: var(--primary-dark);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 6px;
+  padding: 5px 8px;
+}
+.public-action-button:hover {
+  background: #edf5ee;
+  border-color: #bfd4c0;
+}
+.public-action-button.danger {
+  background: #fff7f6;
+  border-color: #f1d5d2;
+  color: var(--danger);
+}
+.public-action-button.danger:hover {
+  background: #fff0ee;
+  border-color: #e7bdb8;
+}
+
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }
 .marks-search { margin-bottom: 20px; max-width: 420px; }
@@ -524,6 +554,8 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 }
 @media (max-width: 600px) {
   .filter-grid { grid-template-columns: 1fr; }
+  .public-actions { white-space: normal; width: auto; }
+  .public-action-button { margin: 3px 0 3px 4px; }
   .athlete-history-header { align-items: stretch; flex-direction: column; }
   .athlete-history-header .secondary { width: 100%; }
   .history-tabs {
