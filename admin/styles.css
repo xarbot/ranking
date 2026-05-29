@@ -470,7 +470,11 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   text-decoration: none;
   width: 34px;
 }
-.icon-link:hover {
+.home-link:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.logout-link:hover {
   border-color: var(--danger);
   color: var(--danger);
 }

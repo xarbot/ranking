@@ -293,6 +293,22 @@ td strong { color: var(--primary-dark); }
   border-color: #e7bdb8;
 }
 
+.inline-mark-input {
+  background: var(--paper);
+  border: 1px solid #cbd9cc;
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  max-width: 132px;
+  min-height: 32px;
+  padding: 5px 8px;
+  width: 100%;
+}
+.inline-mark-input:focus {
+  border-color: var(--primary);
+  outline: 2px solid rgba(48, 99, 52, .14);
+}
+
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }
 .marks-search { margin-bottom: 20px; max-width: 420px; }

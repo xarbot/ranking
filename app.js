@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null };
+  var state = { events: [], categories: [], athletes: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editingMarkId: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -38,8 +38,28 @@
   function eventCell(mark) { return escapeHtml(eventLabel(mark)) + technicalDetail(mark.technicalInfo); }
   function cityCell(mark) { return escapeHtml(mark.city) + detailLine(mark.trackName); }
   function publicActionHeader() { return isPublicAdmin() ? "<th></th>" : ""; }
+  function isEditingMark(mark) { return state.editingMarkId && String(state.editingMarkId) === String(mark.id); }
+  function normalizeResultText(value) {
+    var result = String(value == null ? "" : value).trim();
+    var match = /^(\d+)h(\d{1,2})'(\d{1,2})"(\d{1,2})$/.exec(result);
+    if (!match) return result;
+    var decimal = match[4].length === 1 ? match[4] + "0" : match[4].slice(0, 2);
+    return String(Number(match[1])) + ":" + String(Number(match[2])).padStart(2, "0") + ":" + String(Number(match[3])).padStart(2, "0") + "." + decimal.padStart(2, "0");
+  }
+  function displayResult(value) { return normalizeResultText(value); }
+  function resultCell(mark, strong) {
+    if (isPublicAdmin() && isEditingMark(mark)) return '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">';
+    return strong ? '<strong>' + escapeHtml(displayResult(mark.result)) + '</strong>' : escapeHtml(displayResult(mark.result));
+  }
+  function dateCell(mark) {
+    if (isPublicAdmin() && isEditingMark(mark)) return '<input class="inline-mark-input" type="date" data-public-edit-date value="' + escapeHtml(mark.date || "") + '" aria-label="' + escapeHtml(t("Fecha")) + '">';
+    return formatDate(mark.date);
+  }
   function publicActions(mark) {
     if (!isPublicAdmin() || !mark.id) return "";
+    if (isEditingMark(mark)) {
+      return '<td class="public-actions"><button class="public-action-button" type="button" data-public-save-mark="' + escapeHtml(mark.id) + '" title="' + escapeHtml(t("Guardar")) + '">' + escapeHtml(t("Guardar")) + '</button><button class="public-action-button" type="button" data-public-cancel-edit="' + escapeHtml(mark.id) + '" title="' + escapeHtml(t("Cancelar")) + '">' + escapeHtml(t("Cancelar")) + '</button></td>';
+    }
     return '<td class="public-actions"><button class="public-action-button" type="button" data-public-edit-mark="' + escapeHtml(mark.id) + '" title="' + escapeHtml(t("Editar")) + '">' + escapeHtml(t("Editar")) + '</button><button class="public-action-button danger" type="button" data-public-delete-mark="' + escapeHtml(mark.id) + '" title="' + escapeHtml(t("Eliminar")) + '">' + escapeHtml(t("Eliminar")) + '</button></td>';
   }
   function unique(values) { return values.filter(function (value, index) { return values.indexOf(value) === index; }); }
@@ -49,7 +69,7 @@
     return new Date(value + "T00:00:00").toLocaleDateString(locale);
   }
   function resultValue(result) {
-    var clean = String(result || "").replace(",", ".").replace(/[^\d:.]/g, "");
+    var clean = normalizeResultText(result).replace(",", ".").replace(/[^\d:.]/g, "");
     var parts = clean.split(":").map(Number);
     if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
     if (parts.length === 2) return parts[0] * 60 + parts[1];
@@ -229,8 +249,8 @@
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return '<tr><td><button class="athlete-button" type="button" data-athlete-id="' + mark.athleteId + '">' +
         escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
-        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + escapeHtml(mark.result) + '</td><td>' +
-        formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
+        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + resultCell(mark, false) + '</td><td>' +
+        dateCell(mark) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
   }
@@ -254,8 +274,8 @@
     var rows = grouped.marks.slice(0, visible).map(function (mark, index) {
       return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
         mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td>' + (opts.showEvent === false ? "" : "<td>" + eventCell(mark) + "</td>") +
-        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryTabLabel(mark.category)) + "</td>") + '<td><strong>' + escapeHtml(mark.result) +
-        '</strong></td><td>' + formatDate(mark.date) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
+        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryTabLabel(mark.category)) + "</td>") + '<td>' + resultCell(mark, true) +
+        '</td><td>' + dateCell(mark) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     var heading = includeHeading && grouped.category ? '<p class="ranking-category">' + escapeHtml(categoryLabel(grouped.category)) + '</p>' : "";
     var more = visible < grouped.marks.length
@@ -348,7 +368,7 @@
           var visible = state.historyVisible[key] || 1;
           var rows = sortedMarks.slice(0, visible).map(function (mark, index) {
             var personalBest = index === 0 ? ' <span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' : "";
-            return "<tr><td><strong>" + escapeHtml(mark.result) + "</strong>" + personalBest + "</td><td>" + formatDate(mark.date) +
+            return "<tr><td>" + resultCell(mark, true) + personalBest + "</td><td>" + dateCell(mark) +
               "</td><td>" + cityCell(mark) + "</td>" + publicActions(mark) + "</tr>";
           }).join("");
           var less = visible > 1
@@ -394,7 +414,8 @@
         history: null,
         historyVisible: {},
         historyArea: "",
-        currentUser: auth.user || null
+        currentUser: auth.user || null,
+        editingMarkId: null
       };
       showError("");
       render();
@@ -536,15 +557,27 @@
       technicalInfo: mark.technicalInfo || ""
     };
   }
-  async function editPublicMark(id) {
+  function renderCurrentPublicViews() {
+    renderMarks();
+    renderRanking();
+    renderHistory();
+  }
+  function editPublicMark(id) {
+    state.editingMarkId = String(id);
+    renderCurrentPublicViews();
+  }
+  function cancelPublicEdit() {
+    state.editingMarkId = null;
+    renderCurrentPublicViews();
+  }
+  async function savePublicMark(id, row) {
     var mark = findPublicMark(id);
-    if (!mark) return;
-    var result = window.prompt(t("Marca"), mark.result || "");
-    if (result === null) return;
-    var date = window.prompt(t("Fecha"), mark.date || "");
-    if (date === null) return;
+    if (!mark || !row) return;
+    var resultInput = row.querySelector("[data-public-edit-result]");
+    var dateInput = row.querySelector("[data-public-edit-date]");
     try {
-      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, result, date)) });
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date)) });
+      state.editingMarkId = null;
       await loadMarks();
     } catch (error) {
       showError(error.message);
@@ -636,6 +669,10 @@
     clearUrl(false);
   });
   byId("marks-body").addEventListener("click", function (event) {
+    var save = event.target.closest("[data-public-save-mark]");
+    if (save) { savePublicMark(save.dataset.publicSaveMark, save.closest("tr")); return; }
+    var cancel = event.target.closest("[data-public-cancel-edit]");
+    if (cancel) { cancelPublicEdit(); return; }
     var edit = event.target.closest("[data-public-edit-mark]");
     if (edit) { editPublicMark(edit.dataset.publicEditMark); return; }
     var remove = event.target.closest("[data-public-delete-mark]");
@@ -644,6 +681,10 @@
     if (button) loadHistory(button.dataset.athleteId);
   });
   byId("ranking-groups").addEventListener("click", function (event) {
+    var save = event.target.closest("[data-public-save-mark]");
+    if (save) { savePublicMark(save.dataset.publicSaveMark, save.closest("tr")); return; }
+    var cancel = event.target.closest("[data-public-cancel-edit]");
+    if (cancel) { cancelPublicEdit(); return; }
     var edit = event.target.closest("[data-public-edit-mark]");
     if (edit) { editPublicMark(edit.dataset.publicEditMark); return; }
     var remove = event.target.closest("[data-public-delete-mark]");
@@ -691,6 +732,10 @@
     renderHistory();
   });
   byId("history-categories").addEventListener("click", function (event) {
+    var save = event.target.closest("[data-public-save-mark]");
+    if (save) { savePublicMark(save.dataset.publicSaveMark, save.closest("tr")); return; }
+    var cancel = event.target.closest("[data-public-cancel-edit]");
+    if (cancel) { cancelPublicEdit(); return; }
     var edit = event.target.closest("[data-public-edit-mark]");
     if (edit) { editPublicMark(edit.dataset.publicEditMark); return; }
     var remove = event.target.closest("[data-public-delete-mark]");
