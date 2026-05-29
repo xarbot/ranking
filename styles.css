@@ -922,3 +922,9 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
     padding: 0;
   }
 }
+
+[hidden],
+.filters[hidden],
+.filter-tabs[hidden] {
+  display: none !important;
+}
