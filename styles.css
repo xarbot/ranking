@@ -903,3 +903,22 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
     padding: 10px;
   }
 }
+
+.filters.hidden,
+.filter-tabs.hidden {
+  display: none;
+}
+.history-tabs {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+@media (max-width: 600px) {
+  .history-tabs {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+  }
+}
