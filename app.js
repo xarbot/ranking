@@ -65,6 +65,8 @@
       minuteDecimal = minuteDecimal.length === 1 ? minuteDecimal + "0" : minuteDecimal.slice(0, 2);
       return String(Number(minuteMatch[1])) + ":" + String(Number(minuteMatch[2])).padStart(2, "0") + "." + minuteDecimal.padStart(2, "0");
     }
+    var secondMatch = /^(\d+)"(\d{1,2})$/.exec(result);
+    if (secondMatch) return String(Number(secondMatch[1])) + "." + secondMatch[2];
     if (/^\d+,\d+$/.test(result)) return result.replace(",", ".");
     return result;
   }
