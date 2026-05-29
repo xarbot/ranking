@@ -980,3 +980,28 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
 @media (max-width: 600px) {
   .category-pill { width: max-content; }
 }
+
+.category-pill {
+  background: #edf6ef;
+  border-color: #c7dfcc;
+  border-radius: 8px;
+  justify-content: flex-start;
+  padding: 10px 13px;
+  width: 100%;
+}
+.category-pill--sub8,
+.category-pill--sub10,
+.category-pill--sub12,
+.category-pill--sub14,
+.category-pill--sub16,
+.category-pill--sub18,
+.category-pill--sub20,
+.category-pill--sub23,
+.category-pill--senior,
+.category-pill[class*="master"] {
+  background: #edf6ef;
+  border-color: #c7dfcc;
+}
+@media (max-width: 600px) {
+  .category-pill { width: 100%; }
+}
