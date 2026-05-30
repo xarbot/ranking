@@ -59,7 +59,7 @@
       return inlineField(t("Ciudad"), '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">') +
         inlineField(t("Nombre de la pista de atletismo"), '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo")) + '">');
     }
-    return escapeHtml(mark.city) + detailLine(mark.trackName, t("Nombre de la pista de atletismo"));
+    return escapeHtml(mark.city) + detailLine(mark.trackName);
   }
   function publicActionHeader() { return hasPublicEditAccess() ? "<th></th>" : ""; }
   function isEditingMark(mark) { return state.editingMarkId && String(state.editingMarkId) === String(mark.id); }
