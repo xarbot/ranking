@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   usuario VARCHAR(100) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   activo BOOLEAN NOT NULL DEFAULT TRUE,
-  rol ENUM('admin', 'normal') NOT NULL DEFAULT 'admin',
+  rol ENUM('admin', 'normal', 'marks_manager') NOT NULL DEFAULT 'admin',
   creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
@@ -120,4 +120,5 @@ VALUES ('001_create_migration_tracking.sql'),
        ('002_add_pruebas_sentido_resultado.sql'),
        ('003_clasificacion_sexo_catalogos_ciudades_traducciones.sql'),
        ('004_catalogo_pruebas_cerrado.sql'),
-       ('005_usuarios_roles_permisos_marcas.sql');
+       ('005_usuarios_roles_permisos_marcas.sql'),
+       ('006_rol_gestor_marcas.sql');

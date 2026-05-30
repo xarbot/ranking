@@ -31,13 +31,15 @@
   function today() { var d = new Date(), o = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - o).toISOString().slice(0, 10); }
   function setError(prefix, value) { byId(prefix + "-error").textContent = t(value || ""); }
   function isAdmin() { return currentUser && currentUser.role === "admin"; }
+  function isMarksManager() { return currentUser && currentUser.role === "marks_manager"; }
+  function hasGlobalMarkAccess() { return isAdmin() || isMarksManager(); }
   function permissionMap(user) { var map = {}; (user && user.permissions || []).forEach(function (p) { map[String(p.athleteId)] = p; }); return map; }
-  function allowedPanels() { return isAdmin() ? null : ["control", "marcas", "consulta-marcas", "atletas"]; }
+  function allowedPanels() { return isAdmin() ? null : (isMarksManager() ? ["control", "marcas", "consulta-marcas"] : ["control", "marcas", "consulta-marcas", "atletas"]); }
   function applyAccessUi() {
     var panels = allowedPanels();
     document.querySelectorAll(".tab").forEach(function (tab) { tab.classList.toggle("hidden", panels && panels.indexOf(tab.dataset.panel) === -1); });
     document.querySelectorAll(".admin-only").forEach(function (item) { item.classList.toggle("hidden", !isAdmin()); });
-    byId("replace-marks-form").classList.toggle("hidden", !isAdmin());
+    byId("replace-marks-form").classList.toggle("hidden", !hasGlobalMarkAccess());
     if (panels && panels.indexOf(document.querySelector(".tab.active").dataset.panel) === -1) switchPanel("marcas");
   }
   async function request(path, options) { var config = options || {}; config.headers = { "Content-Type": "application/json" }; var response = await fetch(API + path, config); var data = await response.json().catch(function () { return {}; }); if (response.status === 401 && path !== "/auth/login") showAuthentication(false); if (!response.ok) throw new Error(t(data.error || "No se ha podido guardar la informacion.")); return data; }
@@ -52,7 +54,7 @@
   function ages(birthdate, date) { if (!birthdate || !date || date < birthdate) return null; var b = new Date(birthdate + "T00:00:00"), d = new Date(date + "T00:00:00"), exact = d.getFullYear() - b.getFullYear(), calendar = exact; if (d.getMonth() < b.getMonth() || (d.getMonth() === b.getMonth() && d.getDate() < b.getDate())) exact -= 1; return { exact: exact, calendar: calendar }; }
   function category(athlete, date) { var n = ages(athlete.birthdate, date); if (n === null) return null; var base = n.exact >= 35 ? "Master " + Math.min(100, Math.floor(n.exact / 5) * 5) : n.calendar < 8 ? "Sub8" : n.calendar < 10 ? "Sub10" : n.calendar < 12 ? "Sub12" : n.calendar < 14 ? "Sub14" : n.calendar < 16 ? "Sub16" : n.calendar < 18 ? "Sub18" : n.calendar < 20 ? "Sub20" : n.calendar < 23 ? "Sub23" : "Senior"; return base + " - " + (athlete.sex === "femenino" ? "Femenino" : "Masculino"); }
   function selectedAthlete() { var value = normalized(byId("mark-athlete").value); return state.athletes.find(function (a) { return normalized(athleteLabel(a)) === value; }); }
-  function canEditAthleteMarks(id) { var athlete = byValue(state.athletes, id); return isAdmin() || Boolean(athlete && athlete.canEditMarks); }
+  function canEditAthleteMarks(id) { var athlete = byValue(state.athletes, id); return hasGlobalMarkAccess() || Boolean(athlete && athlete.canEditMarks); }
   function athleteFromInput(id) { var value = normalized(byId(id).value); return state.athletes.find(function (a) { return normalized(athleteLabel(a)) === value; }); }
   function selectedCity(input) { var value = normalized(input); return state.cities.find(function (c) { return normalized(cityLabel(c)) === value || normalized(c.name) === value; }); }
   function selectedImportAthlete() { var value = normalized(byId("mark-import-athlete").value); return state.athletes.find(function (a) { return normalized(athleteLabel(a)) === value; }); }
@@ -84,7 +86,7 @@
       return "<span class=\"permission-chip\" data-permission-athlete=\"" + athlete.id + "\"><span>" + escapeHtml(athleteLabel(athlete)) + "</span><button type=\"button\" aria-label=\"" + escapeHtml(t("Eliminar")) + "\" data-remove-permission=\"" + kind + "\" data-athlete-id=\"" + athlete.id + "\">&times;</button></span>";
     }).join("");
   }
-  function renderUsers() { byId("users-body").innerHTML = state.users.map(function (u) { return "<tr><td>" + escapeHtml(u.name) + "</td><td>" + escapeHtml(u.username) + "</td><td>" + t(u.role === "admin" ? "Administrador" : "Usuario normal") + "</td><td>" + t(u.active ? "Activo" : "Inactivo") + "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-user=\"" + u.id + "\">" + t("Editar") + "</button><button class=\"row-button danger\" data-delete-user=\"" + u.id + "\">" + t("Eliminar") + "</button></td></tr>"; }).join(""); byId("users-empty").classList.toggle("hidden", state.users.length > 0); renderUserPermissions(byValue(state.users, byId("user-id").value)); }
+  function renderUsers() { byId("users-body").innerHTML = state.users.map(function (u) { return "<tr><td>" + escapeHtml(u.name) + "</td><td>" + escapeHtml(u.username) + "</td><td>" + t(u.role === "admin" ? "Administrador" : (u.role === "marks_manager" ? "Gestor de marcas" : "Usuario normal")) + "</td><td>" + t(u.active ? "Activo" : "Inactivo") + "</td><td class=\"row-actions\"><button class=\"row-button\" data-edit-user=\"" + u.id + "\">" + t("Editar") + "</button><button class=\"row-button danger\" data-delete-user=\"" + u.id + "\">" + t("Eliminar") + "</button></td></tr>"; }).join(""); byId("users-empty").classList.toggle("hidden", state.users.length > 0); renderUserPermissions(byValue(state.users, byId("user-id").value)); }
   function filteredMarks() { var q = normalized(byId("marks-athlete-filter").value); if (!q) return []; var ids = state.athletes.filter(function (a) { return normalized(athleteLabel(a)).includes(q); }).map(function (a) { return String(a.id); }); return state.marks.filter(function (m) { return ids.includes(String(m.athleteId)); }); }
   function eventOptions(selected) { return state.events.slice().sort(compareEvents).map(function (e) { return "<option value=\"" + e.id + "\"" + (String(e.id) === String(selected) ? " selected" : "") + ">" + escapeHtml(eventLabel(e)) + "</option>"; }).join(""); }
   function markAuditTitle(mark) { var parts = []; if (mark.createdBy) parts.push(t("Entrada por") + ": " + mark.createdBy); if (mark.updatedBy) parts.push(t("Modificada por") + ": " + mark.updatedBy); return parts.join("\n"); }
