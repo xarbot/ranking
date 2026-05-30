@@ -308,9 +308,21 @@ td strong { color: var(--primary-dark); }
   border-color: var(--primary);
   outline: 2px solid rgba(48, 99, 52, .14);
 }
+.inline-edit-field {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 210px;
+}
+.inline-edit-field + .inline-edit-field { margin-top: 6px; }
+.inline-edit-field span {
+  display: block;
+  margin-bottom: 3px;
+}
 .inline-city-input { max-width: 210px; }
-.inline-track-input { display: block; margin-top: 6px; max-width: 210px; }
-.inline-technical-input { display: block; margin-top: 6px; }
+.inline-track-input,
+.inline-technical-input { max-width: 210px; }
 
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }

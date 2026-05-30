@@ -33,7 +33,9 @@
     });
   }
   function detailLine(value, label) { return value ? '<span class="cell-detail">' + (label ? '<span class="cell-detail-label">' + escapeHtml(label) + ':</span> ' : "") + escapeHtml(value) + '</span>' : ""; }
-  function technicalDetail(value) { return detailLine(value, t("Marca técnica")); }
+  function technicalValue(value) { return normalized(value) === "no" ? "" : String(value || ""); }
+  function technicalDetail(value) { return detailLine(technicalValue(value), t("Marca técnica")); }
+  function inlineField(label, input) { return '<label class="inline-edit-field"><span>' + escapeHtml(label) + '</span>' + input + '</label>'; }
   function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
   function eventCell(mark) { return escapeHtml(eventLabel(mark)); }
   function cityLabel(city) { return city.name + (city.province ? " (" + city.province + ")" : ""); }
@@ -47,8 +49,8 @@
   }
   function cityCell(mark) {
     if (isPublicAdmin() && isEditingMark(mark)) {
-      return '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">' +
-        '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" placeholder="' + escapeHtml(t("Instalación")) + '" aria-label="' + escapeHtml(t("Instalación")) + '">';
+      return inlineField(t("Ciudad"), '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">') +
+        inlineField(t("Instalación"), '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" aria-label="' + escapeHtml(t("Instalación")) + '">');
     }
     return escapeHtml(mark.city) + detailLine(mark.trackName, t("Instalación"));
   }
@@ -78,8 +80,8 @@
   function displayResult(value) { return normalizeResultText(value); }
   function resultCell(mark, strong) {
     if (isPublicAdmin() && isEditingMark(mark)) {
-      return '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">' +
-        '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(mark.technicalInfo || "") + '" placeholder="' + escapeHtml(t("Marca técnica")) + '" aria-label="' + escapeHtml(t("Marca técnica")) + '">';
+      return inlineField(t("Marca"), '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">') +
+        inlineField(t("Marca técnica"), '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(technicalValue(mark.technicalInfo)) + '" aria-label="' + escapeHtml(t("Marca técnica")) + '">');
     }
     var result = strong ? '<strong>' + escapeHtml(displayResult(mark.result)) + '</strong>' : escapeHtml(displayResult(mark.result));
     return result + technicalDetail(mark.technicalInfo);
