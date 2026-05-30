@@ -41,6 +41,7 @@
       "Selecciona primero el atleta al que corresponden las marcas.": "Selecciona primer l’atleta al qual corresponen les marques.",
       "Caracteristica tecnica": "Característica tècnica",
       "Dato técnico": "Dada tècnica",
+      "Opcional": "Opcional",
       "Ambito": "Àmbit",
       "Ciudades": "Ciutats",
       "Traducciones": "Traduccions",
