@@ -46,7 +46,10 @@
     return current ? cityLabel(current) : (mark.city || "");
   }
   function cityCell(mark) {
-    if (isPublicAdmin() && isEditingMark(mark)) return '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">' + detailLine(mark.trackName);
+    if (isPublicAdmin() && isEditingMark(mark)) {
+      return '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">' +
+        '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" placeholder="' + escapeHtml(t("Nombre de la pista de atletismo (opcional)")) + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo (opcional)")) + '">';
+    }
     return escapeHtml(mark.city) + detailLine(mark.trackName);
   }
   function publicActionHeader() { return isPublicAdmin() ? "<th></th>" : ""; }
@@ -586,14 +589,14 @@
     if (!response.ok) throw new Error(data.error || "No se ha podido guardar el cambio.");
     return data;
   }
-  function publicMarkPayload(mark, result, date, cityId, technicalInfo) {
+  function publicMarkPayload(mark, result, date, cityId, technicalInfo, trackName) {
     return {
       athleteId: mark.athleteId,
       eventId: mark.eventId,
       cityId: cityId || mark.cityId,
       result: result,
       date: date,
-      trackName: mark.trackName || "",
+      trackName: trackName == null ? (mark.trackName || "") : trackName,
       technicalInfo: technicalInfo == null ? (mark.technicalInfo || "") : technicalInfo
     };
   }
@@ -617,10 +620,11 @@
     var technicalInput = row.querySelector("[data-public-edit-technical]");
     var dateInput = row.querySelector("[data-public-edit-date]");
     var cityInput = row.querySelector("[data-public-edit-city]");
+    var trackInput = row.querySelector("[data-public-edit-track]");
     var city = cityInput ? selectedPublicCity(cityInput.value) : null;
     if (cityInput && !city) { showError("Selecciona una ciudad existente."); return; }
     try {
-      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, city ? city.id : mark.cityId, technicalInput ? technicalInput.value : mark.technicalInfo)) });
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, city ? city.id : mark.cityId, technicalInput ? technicalInput.value : mark.technicalInfo, trackInput ? trackInput.value : mark.trackName)) });
       state.editingMarkId = null;
       await loadMarks();
     } catch (error) {
