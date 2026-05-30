@@ -313,6 +313,7 @@ td strong { color: var(--primary-dark); }
   font-size: 13px;
   margin-top: 4px;
 }
+.cell-detail-label { font-weight: 700; }
 
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }

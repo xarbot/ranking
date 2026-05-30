@@ -32,8 +32,8 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
     });
   }
-  function detailLine(value) { return value ? '<span class="cell-detail">' + escapeHtml(value) + '</span>' : ""; }
-  function technicalDetail(value) { return normalized(value) === "no" ? "" : detailLine(value); }
+  function detailLine(value, label) { return value ? '<span class="cell-detail">' + (label ? '<span class="cell-detail-label">' + escapeHtml(label) + ':</span> ' : "") + escapeHtml(value) + '</span>' : ""; }
+  function technicalDetail(value) { return detailLine(value, t("Marca técnica")); }
   function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
   function eventCell(mark) { return escapeHtml(eventLabel(mark)); }
   function cityLabel(city) { return city.name + (city.province ? " (" + city.province + ")" : ""); }
@@ -48,9 +48,9 @@
   function cityCell(mark) {
     if (isPublicAdmin() && isEditingMark(mark)) {
       return '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">' +
-        '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" placeholder="' + escapeHtml(t("Nombre de la pista de atletismo (opcional)")) + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo (opcional)")) + '">';
+        '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" placeholder="' + escapeHtml(t("Instalación")) + '" aria-label="' + escapeHtml(t("Instalación")) + '">';
     }
-    return escapeHtml(mark.city) + detailLine(mark.trackName);
+    return escapeHtml(mark.city) + detailLine(mark.trackName, t("Instalación"));
   }
   function publicActionHeader() { return isPublicAdmin() ? "<th></th>" : ""; }
   function isEditingMark(mark) { return state.editingMarkId && String(state.editingMarkId) === String(mark.id); }
@@ -79,7 +79,7 @@
   function resultCell(mark, strong) {
     if (isPublicAdmin() && isEditingMark(mark)) {
       return '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">' +
-        '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(mark.technicalInfo || "") + '" placeholder="' + escapeHtml(t("Característica técnica")) + '" aria-label="' + escapeHtml(t("Característica técnica")) + '">';
+        '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(mark.technicalInfo || "") + '" placeholder="' + escapeHtml(t("Marca técnica")) + '" aria-label="' + escapeHtml(t("Marca técnica")) + '">';
     }
     var result = strong ? '<strong>' + escapeHtml(displayResult(mark.result)) + '</strong>' : escapeHtml(displayResult(mark.result));
     return result + technicalDetail(mark.technicalInfo);
