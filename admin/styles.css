@@ -306,7 +306,20 @@ td strong { color: var(--primary-dark); }
   padding: 5px 8px;
 }
 .row-button.danger { color: var(--danger); }
+.athlete-list-button {
+  background: transparent;
+  border: 0;
+  color: var(--primary-dark);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+.athlete-list-button:hover { color: var(--primary); }
 .empty { color: var(--muted); margin: 20px 4px 4px; text-align: center; }
+.mark-result-main { color: var(--primary-dark); font-weight: 700; }
 .cell-detail {
   color: var(--muted);
   display: block;
