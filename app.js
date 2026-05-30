@@ -35,7 +35,7 @@
   function detailLine(value) { return value ? '<span class="cell-detail">' + escapeHtml(value) + '</span>' : ""; }
   function technicalDetail(value) { return normalized(value) === "no" ? "" : detailLine(value); }
   function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
-  function eventCell(mark) { return escapeHtml(eventLabel(mark)) + technicalDetail(mark.technicalInfo); }
+  function eventCell(mark) { return escapeHtml(eventLabel(mark)); }
   function cityLabel(city) { return city.name + (city.province ? " (" + city.province + ")" : ""); }
   function selectedPublicCity(value) {
     var query = normalized(value);
@@ -74,8 +74,12 @@
   }
   function displayResult(value) { return normalizeResultText(value); }
   function resultCell(mark, strong) {
-    if (isPublicAdmin() && isEditingMark(mark)) return '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">';
-    return strong ? '<strong>' + escapeHtml(displayResult(mark.result)) + '</strong>' : escapeHtml(displayResult(mark.result));
+    if (isPublicAdmin() && isEditingMark(mark)) {
+      return '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">' +
+        '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(mark.technicalInfo || "") + '" placeholder="' + escapeHtml(t("Característica técnica")) + '" aria-label="' + escapeHtml(t("Característica técnica")) + '">';
+    }
+    var result = strong ? '<strong>' + escapeHtml(displayResult(mark.result)) + '</strong>' : escapeHtml(displayResult(mark.result));
+    return result + technicalDetail(mark.technicalInfo);
   }
   function dateCell(mark) {
     if (isPublicAdmin() && isEditingMark(mark)) return '<input class="inline-mark-input" type="date" data-public-edit-date value="' + escapeHtml(mark.date || "") + '" aria-label="' + escapeHtml(t("Fecha")) + '">';
@@ -582,7 +586,7 @@
     if (!response.ok) throw new Error(data.error || "No se ha podido guardar el cambio.");
     return data;
   }
-  function publicMarkPayload(mark, result, date, cityId) {
+  function publicMarkPayload(mark, result, date, cityId, technicalInfo) {
     return {
       athleteId: mark.athleteId,
       eventId: mark.eventId,
@@ -590,7 +594,7 @@
       result: result,
       date: date,
       trackName: mark.trackName || "",
-      technicalInfo: mark.technicalInfo || ""
+      technicalInfo: technicalInfo == null ? (mark.technicalInfo || "") : technicalInfo
     };
   }
   function renderCurrentPublicViews() {
@@ -610,12 +614,13 @@
     var mark = findPublicMark(id);
     if (!mark || !row) return;
     var resultInput = row.querySelector("[data-public-edit-result]");
+    var technicalInput = row.querySelector("[data-public-edit-technical]");
     var dateInput = row.querySelector("[data-public-edit-date]");
     var cityInput = row.querySelector("[data-public-edit-city]");
     var city = cityInput ? selectedPublicCity(cityInput.value) : null;
     if (cityInput && !city) { showError("Selecciona una ciudad existente."); return; }
     try {
-      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, city ? city.id : mark.cityId)) });
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, city ? city.id : mark.cityId, technicalInput ? technicalInput.value : mark.technicalInfo)) });
       state.editingMarkId = null;
       await loadMarks();
     } catch (error) {

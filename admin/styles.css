@@ -307,6 +307,12 @@ td strong { color: var(--primary-dark); }
 }
 .row-button.danger { color: var(--danger); }
 .empty { color: var(--muted); margin: 20px 4px 4px; text-align: center; }
+.cell-detail {
+  color: var(--muted);
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
 
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }
