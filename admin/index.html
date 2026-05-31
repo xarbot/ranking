@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260530-7">
+    <link rel="stylesheet" href="styles.css?v=20260531-1">
     <script src="i18n.js?v=20260530-7" defer></script>
-    <script src="app.js?v=20260530-7" defer></script>
+    <script src="app.js?v=20260531-1" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -116,6 +116,7 @@
               <label id="technical-field" class="hidden">Característica técnica (alçada tanques, pes artefacte, ...)<input id="mark-technical-info"></label>
               <div class="fields two"><label>Fecha<input id="mark-date" type="date" required></label><label>Marca<input id="mark-result" required placeholder="Ej. 12.43 o 1:58.20"></label></div>
               <label>Ciudad<input id="mark-city" list="city-options" required placeholder="Buscar ciudad..."><datalist id="city-options"></datalist></label>
+              <label id="track-select-field" class="hidden">Nombre de la pista de atletismo<select id="mark-track-select"></select></label>
               <label id="track-name-field">Nombre de la pista de atletismo (opcional)<input id="mark-track-name"></label>
               <div class="category-box"><span>Categoría calculada</span><strong id="mark-category">Selecciona atleta y fecha</strong></div>
               <p id="mark-error" class="error" role="alert"></p>
@@ -206,9 +207,23 @@
             <label>Reemplazar por<input id="replace-value" list="city-options"></label>
             <label id="replace-area-field">Ámbito<select id="replace-area"><option value="">Todos los ámbitos</option><option value="pista_cubierta">Pista Cubierta</option><option value="aire_libre">Aire Libre</option><option value="ruta">Ruta</option></select></label>
             <label id="replace-city-field">Ciudad<input id="replace-city" list="city-options" placeholder="Opcional"></label>
+            <label>Año<input id="replace-year" type="number" min="1900" max="2100" placeholder="Opcional"></label>
             <button class="secondary" type="submit">Reemplazar</button>
           </form>
           <p id="replace-marks-status" class="status hidden" role="status"></p>
+          <details class="deleted-marks admin-only">
+            <summary>Marcas pendientes de borrar <span id="deleted-marks-count">0</span></summary>
+            <div class="deleted-actions">
+              <button class="secondary danger-action" id="purge-deleted-marks" type="button">Purgar marcas borradas</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Atleta</th><th>Prueba</th><th>Marca</th><th>Fecha</th><th>Borrada</th><th></th></tr></thead>
+                <tbody id="deleted-marks-body"></tbody>
+              </table>
+              <p id="deleted-marks-empty" class="empty">No hay marcas pendientes de borrar.</p>
+            </div>
+          </details>
           <div class="table-wrap">
             <table>
               <thead>
@@ -301,9 +316,26 @@
           <form id="merge-cities-form" class="inline-form merge-cities-form">
             <label>Fusionar ciudad origen<input id="merge-source-city" list="city-options" required placeholder="Buscar ciudad..."></label>
             <label>Con ciudad destino<input id="merge-target-city" list="city-options" required placeholder="Buscar ciudad..."></label>
+            <label>Ámbito<select id="merge-area"><option value="">Todos los ámbitos</option><option value="pista_cubierta">Pista Cubierta</option><option value="aire_libre">Aire Libre</option><option value="ruta">Ruta</option></select></label>
+            <label>Año<input id="merge-year" type="number" min="1900" max="2100" placeholder="Opcional"></label>
             <button class="secondary" type="submit">Fusionar</button>
           </form>
           <p id="merge-cities-status" class="status hidden" role="status"></p>
+          <hr class="section-divider">
+          <div class="card-title compact-title"><h2>Nombres de pista</h2></div>
+          <form id="track-form" class="inline-form">
+            <input type="hidden" id="track-id">
+            <label>Ámbito<select id="track-area" required><option value="pista_cubierta">Pista Cubierta</option><option value="aire_libre">Aire Libre</option><option value="ruta">Ruta</option></select></label>
+            <label>Ciudad<input id="track-city" list="city-options" required placeholder="Buscar ciudad..."></label>
+            <label>Nombre pista<input id="track-name" required></label>
+            <button class="primary" type="submit">Guardar</button>
+            <button class="secondary hidden" id="cancel-track" type="button">Cancelar</button>
+          </form>
+          <p id="track-error" class="error" role="alert"></p>
+          <div class="table-wrap">
+            <table><thead><tr><th>Ámbito</th><th>Ciudad</th><th>Pista</th><th></th></tr></thead><tbody id="tracks-body"></tbody></table>
+            <p id="tracks-empty" class="empty">No hay pistas registradas.</p>
+          </div>
         </article>
       </section>
 
@@ -353,6 +385,6 @@
         </article>
       </section>
     </main>
-    <footer id="app-footer" class="hidden">v. 3.3</footer>
+    <footer id="app-footer" class="hidden">v. 3.4</footer>
   </body>
 </html>

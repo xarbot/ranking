@@ -331,6 +331,31 @@ td strong { color: var(--primary-dark); }
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }
 .marks-search { margin-bottom: 20px; max-width: 420px; }
+.deleted-marks {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 14px 0 20px;
+  padding: 12px;
+}
+.deleted-marks summary {
+  color: var(--primary-dark);
+  cursor: pointer;
+  font-weight: 750;
+}
+.deleted-marks summary span {
+  background: var(--accent-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 12px;
+  margin-left: 8px;
+  min-width: 26px;
+  padding: 2px 8px;
+  text-align: center;
+}
+.deleted-actions { display: flex; justify-content: flex-end; margin: 12px 0 0; }
+.section-divider { border: 0; border-top: 1px solid var(--line); margin: 22px 0; }
+.compact-title { margin-bottom: 12px; }
 .inline-form {
   align-items: end;
   display: flex;
