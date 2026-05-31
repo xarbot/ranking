@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], cities: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editableAthleteIds: [], editingMarkId: null };
+  var state = { events: [], categories: [], athletes: [], cities: [], tracks: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editableAthleteIds: [], editingMarkId: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -54,10 +54,25 @@
     var current = state.cities.find(function (city) { return String(city.id) === String(mark.cityId); });
     return current ? cityLabel(current) : (mark.city || "");
   }
+  function tracksFor(area, cityId) { return (state.tracks || []).filter(function (track) { return track.area === area && String(track.cityId) === String(cityId); }).sort(function (a, b) { return a.name.localeCompare(b.name, "ca"); }); }
+  function publicTrackHtml(mark, cityId, current) {
+    var value = String(current || ""), tracks = cityId ? tracksFor(mark.area, cityId) : [], hasCurrent = tracks.some(function (track) { return track.name === value; });
+    if (!tracks.length) return '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(value) + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo")) + '">';
+    return '<select class="inline-mark-input inline-track-input" data-public-edit-track-select="' + escapeHtml(mark.id) + '">' + tracks.map(function (track) { return '<option value="' + escapeHtml(track.name) + '"' + (track.name === value ? " selected" : "") + '>' + escapeHtml(track.name) + '</option>'; }).join("") + (value && !hasCurrent ? '<option value="' + escapeHtml(value) + '" selected>' + escapeHtml(value) + '</option>' : "") + '<option value="__new__">Afegir una nova</option></select><input class="inline-mark-input inline-track-input ' + (hasCurrent || !value ? "hidden" : "") + '" data-public-edit-track value="' + escapeHtml(value && !hasCurrent ? value : "") + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo")) + '">';
+  }
+  function updatePublicTrackEditor(id, row) {
+    var mark = findPublicMark(id), cityInput = row.querySelector("[data-public-edit-city]"), wrap = row.querySelector("[data-public-track-wrap]");
+    if (!mark || !wrap) return;
+    wrap.innerHTML = publicTrackHtml(mark, publicCityId(mark, cityInput ? cityInput.value : cityInputValue(mark)), publicTrackValue(row));
+  }
+  function publicTrackValue(row) {
+    var select = row.querySelector("[data-public-edit-track-select]"), input = row.querySelector("[data-public-edit-track]");
+    return select && select.value !== "__new__" ? select.value : (input ? input.value : "");
+  }
   function cityCell(mark) {
     if (canEditPublicMark(mark) && isEditingMark(mark)) {
       return inlineField(t("Ciudad"), '<input class="inline-mark-input inline-city-input" data-public-edit-city list="public-cities" value="' + escapeHtml(cityInputValue(mark)) + '" aria-label="' + escapeHtml(t("Ciudad")) + '">') +
-        inlineField(t("Nombre de la pista de atletismo"), '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(mark.trackName || "") + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo")) + '">');
+        inlineField(t("Nombre de la pista de atletismo"), '<span data-public-track-wrap="' + escapeHtml(mark.id) + '">' + publicTrackHtml(mark, mark.cityId, mark.trackName || "") + '</span>');
     }
     return escapeHtml(mark.city) + detailLine(mark.trackName);
   }
@@ -460,6 +475,7 @@
         categories: data.categories || [],
         athletes: data.athletes || [],
         cities: adminData.cities || [],
+        tracks: adminData.tracks || [],
         marks: data.marks || [],
         counts: data.counts || {},
         ranking: null,
@@ -631,11 +647,11 @@
     var technicalInput = row.querySelector("[data-public-edit-technical]");
     var dateInput = row.querySelector("[data-public-edit-date]");
     var cityInput = row.querySelector("[data-public-edit-city]");
-    var trackInput = row.querySelector("[data-public-edit-track]");
+    var trackName = publicTrackValue(row);
     var cityId = cityInput ? publicCityId(mark, cityInput.value) : mark.cityId;
     if (cityInput && !cityId) { showError("Selecciona una ciudad existente."); return; }
     try {
-      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, cityId, technicalInput ? technicalInput.value : mark.technicalInfo, trackInput ? trackInput.value : mark.trackName)) });
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, cityId, technicalInput ? technicalInput.value : mark.technicalInfo, trackName)) });
       state.editingMarkId = null;
       await loadMarks();
     } catch (error) {
@@ -649,6 +665,22 @@
       await loadMarks();
     } catch (error) {
       showError(error.message);
+    }
+  }
+  function handlePublicInlineChange(event) {
+    var city = event.target.closest("[data-public-edit-city]");
+    if (city) {
+      var row = city.closest("tr"), save = row && row.querySelector("[data-public-save-mark]");
+      if (save) updatePublicTrackEditor(save.dataset.publicSaveMark, row);
+      return;
+    }
+    var select = event.target.closest("[data-public-edit-track-select]");
+    if (select) {
+      var input = select.parentElement.querySelector("[data-public-edit-track]");
+      if (input) {
+        input.classList.toggle("hidden", select.value !== "__new__");
+        if (select.value !== "__new__") input.value = select.value;
+      }
     }
   }
 
@@ -739,6 +771,7 @@
     var button = event.target.closest("[data-athlete-id]");
     if (button) loadHistory(button.dataset.athleteId);
   });
+  byId("marks-body").addEventListener("change", handlePublicInlineChange);
   byId("ranking-groups").addEventListener("click", function (event) {
     var save = event.target.closest("[data-public-save-mark]");
     if (save) { savePublicMark(save.dataset.publicSaveMark, save.closest("tr")); return; }
@@ -760,6 +793,7 @@
       renderRanking();
     }
   });
+  byId("ranking-groups").addEventListener("change", handlePublicInlineChange);
   byId("history-back").addEventListener("click", function () {
     state.history = null;
     state.historyVisible = {};
@@ -816,6 +850,7 @@
       renderHistory();
     }
   });
+  byId("history-categories").addEventListener("change", handlePublicInlineChange);
 
   loadMarks();
 }());
