@@ -136,7 +136,7 @@
                 <input id="mark-import-athlete" list="athlete-options" required placeholder="Buscar atleta...">
               </label>
               <button class="secondary add-athlete" id="add-import-athlete" type="button">Dar de alta este atleta</button>
-              <p class="helper bulk-helper">Las plantillas Excel incluyen listas y validaciones. Al terminar, guarda la hoja Resultados como CSV para importarla. Si una ciudad no coincide, la app permite corregirla antes de guardar.</p>
+              <p class="helper bulk-helper">Las plantillas Excel incluyen listas y validaciones. Al terminar, guarda la hoja Resultados como CSV para importarla. Antes de guardar, la app muestra una previsualización editable con avisos de duplicados, atletas no encontrados, ciudad y pista recomendada.</p>
               <div class="import-actions">
                 <div class="template-download">
                   <label>Plantilla
@@ -152,14 +152,14 @@
               </div>
               <p id="mark-import-status" class="status hidden" role="status"></p>
               <form id="mark-import-review-form" class="import-review hidden">
-                <h4>Revisar ciudades</h4>
+                <h4>Previsualización de marcas</h4>
                 <div id="mark-import-review-body"></div>
-                <button class="primary" type="submit">Importar marcas corregidas</button>
+                <button class="primary" type="submit">Subir marcas revisadas</button>
               </form>
             </section>
             <section class="bulk-import">
               <h3>Marcas de varios atletas</h3>
-              <p class="helper bulk-helper">El fichero incluye la columna Atleta con Nombre y Apellidos. Antes de cargar marcas se revisan las altas necesarias. Si una ciudad no coincide, la app permite corregirla antes de guardar.</p>
+              <p class="helper bulk-helper">El fichero incluye la columna Atleta con Nombre y Apellidos. Antes de cargar marcas se revisan las altas necesarias. Antes de guardar, la app muestra una previsualización editable con avisos de duplicados, atletas no encontrados, ciudad y pista recomendada.</p>
               <div class="import-actions">
                 <div class="template-download">
                   <label>Plantilla
@@ -175,9 +175,9 @@
               </div>
               <p id="multi-mark-import-status" class="status hidden" role="status"></p>
               <form id="multi-mark-import-review-form" class="import-review hidden">
-                <h4>Revisar ciudades</h4>
+                <h4>Previsualización de marcas</h4>
                 <div id="multi-mark-import-review-body"></div>
-                <button class="primary" type="submit">Continuar con ciudades corregidas</button>
+                <button class="primary" type="submit">Subir marcas revisadas</button>
               </form>
               <form id="missing-athletes-form" class="missing-athletes hidden">
                 <h4>Atletas no encontrados</h4>

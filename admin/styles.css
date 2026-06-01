@@ -278,6 +278,33 @@ button { font: inherit; }
 .missing-athlete-row, .import-review-row { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.35fr) minmax(170px, 1.25fr) minmax(120px, .95fr); margin-top: 10px; }
 .import-review-row { grid-template-columns: 70px minmax(190px, 1fr) minmax(160px, .9fr); }
 .missing-athlete-row label, .import-review-row label { min-width: 0; }
+.import-preview-list { display: grid; gap: 10px; }
+.import-preview-row {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(150px, 1.15fr) minmax(180px, 1.35fr) minmax(95px, .7fr) minmax(130px, .75fr) minmax(165px, 1.15fr) minmax(135px, .9fr) minmax(165px, 1fr);
+  padding: 10px;
+}
+.import-preview-line { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1 / -1; }
+.import-preview-line strong { color: var(--primary-dark); min-width: 54px; }
+.import-preview-row label { font-size: 12px; gap: 4px; min-width: 0; }
+.import-preview-row input, .import-preview-row select { min-width: 0; width: 100%; }
+.import-track-field span { display: grid; gap: 6px; }
+.import-preview-missing { border-top: 1px solid var(--line); display: grid; gap: 10px; margin-top: 4px; padding-top: 12px; }
+.warning-chip {
+  background: #fff7da;
+  border: 1px solid #ead58a;
+  border-radius: 999px;
+  color: #765d08;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 2px 4px 2px 0;
+  padding: 3px 8px;
+}
 .catalog-helper { margin-top: 0; }
 .bulk-helper { margin: 0; }
 .file-button { align-items: center; display: inline-flex; }
@@ -465,7 +492,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .tab { white-space: nowrap; }
   .card { padding: 17px; }
   .fields.two { grid-template-columns: 1fr; }
-  .missing-athlete-row, .import-review-row { grid-template-columns: 1fr; }
+  .missing-athlete-row, .import-review-row, .import-preview-row { grid-template-columns: 1fr; }
   .row-actions { width: auto; }
   .inline-form { display: grid; grid-template-columns: 1fr; }
   .inline-form label, .inline-form .checkbox-field, .inline-form button { min-width: 0; width: 100%; }
