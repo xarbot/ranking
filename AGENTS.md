@@ -1,63 +1,32 @@
 # Instrucciones para agentes IA
 
-Este repositorio contiene la aplicacion de ranking del Club Atletic Castellar. Estas reglas son el contexto comun para Codex, Cline y cualquier otro agente que trabaje sobre el proyecto.
+Este repositorio contiene la aplicacion de ranking del Club Atletic Castellar. `AGENTS.md` es el punto de entrada breve para cualquier agente local o remoto.
 
-## Idioma de trabajo
+Antes de trabajar, lee el contexto compartido neutral en `docs/agent-context/`.
 
-- Responde por defecto en castellano.
-- Si el usuario escribe en catalan, responde en catalan.
-- Planes, resumenes, explicaciones y avisos de riesgo deben estar en castellano salvo indicacion contraria.
-- Los nombres tecnicos de funciones, clases, variables, comandos, rutas y errores pueden mantenerse en ingles si forman parte del codigo o de herramientas externas.
+## Reglas criticas
 
-## Contexto del proyecto
-
-- Aplicacion web de ranking de atletismo del Club Atletic Castellar.
-- Consulta publica en `/` y panel de gestion autenticado en `/admin/`.
-- API PHP centralizada en `api/index.php`.
-- Persistencia en MySQL.
-- Frontend estatico con HTML, CSS y JavaScript.
-- Migraciones SQL en `database/migrations/`.
-- Scripts auxiliares PHP en `scripts/`.
-
-## Restricciones tecnicas
-
-- Produccion solo tiene PHP disponible.
+- Responder por defecto en castellano.
+- Si el usuario escribe en catalan, responder en catalan.
+- Produccion solo garantiza PHP; mantener compatibilidad con hosting PHP estandar.
 - La base de datos es MySQL.
-- Mantener compatibilidad con hosting PHP estandar.
 - No proponer Docker para produccion.
-- No introducir dependencias complejas sin una justificacion clara.
+- No modificar credenciales, `.env`, backups, dumps ni datos sensibles.
+- No cambiar configuracion de produccion salvo peticion explicita.
 - Preferir cambios pequenos, revisables y seguros.
 - No hacer refactors grandes si la tarea pedida es pequena.
-
-## Dominio funcional
-
-El proyecto gestiona atletas, pruebas, marcas, competiciones, ciudades, rankings e importacion de resultados.
-
-- Las marcas de carreras pueden tener formatos como `ss.cc`, `m:ss.cc` o `h:mm:ss`.
-- Los saltos y lanzamientos usan metros con punto decimal, por ejemplo `9.12`.
-- Las ciudades y pruebas deben coincidir con los catalogos internos.
-- Si una prueba, ciudad o atleta no esta claro, debe marcarse para revision y no inventarse.
-- No borrar registros dudosos sin confirmacion explicita.
-
-## Seguridad y datos
-
-- No modificar credenciales ni datos sensibles.
-- No exponer contenidos de `.env`, backups, dumps ni datos privados.
-- No ejecutar acciones destructivas sobre datos reales sin confirmacion.
-- Antes de cambios de base de datos en produccion debe existir backup.
-
-## Flujo de trabajo
-
-- Trabajar siempre en ramas, nunca directamente sobre produccion.
 - Antes de modificar archivos, explicar brevemente que se quiere tocar y por que.
 - Despues de modificar archivos, resumir cambios, indicar pruebas realizadas y avisar de riesgos.
-- Mantener el diff pequeno y facil de revisar.
-- Consultar `docs/ai/PROJECT_CONTEXT.md`, `docs/ai/DECISIONS.md`, `docs/ai/TASKS.md` y `docs/ai/CHANGELOG_AI.md` antes de cambios relevantes.
 
-## Documentacion compartida
+## Contexto compartido
 
-- `.clinerules/`: reglas de workspace para Cline, separadas por tema.
-- `docs/ai/PROJECT_CONTEXT.md`: contexto del proyecto y arquitectura.
-- `docs/ai/DECISIONS.md`: decisiones tecnicas aceptadas.
-- `docs/ai/TASKS.md`: lista viva de tareas pendientes.
-- `docs/ai/CHANGELOG_AI.md`: registro de cambios hechos con ayuda de IA.
+- `docs/agent-context/README.md`: indice del contexto comun.
+- `docs/agent-context/PROJECT_CONTEXT.md`: objetivo funcional y modulos.
+- `docs/agent-context/ARCHITECTURE.md`: arquitectura tecnica y produccion.
+- `docs/agent-context/DOMAIN_RULES.md`: reglas deportivas y catalogos.
+- `docs/agent-context/CODING_STANDARDS.md`: estandares de codigo.
+- `docs/agent-context/WORKFLOW.md`: flujo obligatorio de trabajo.
+- `docs/agent-context/DATA_IMPORTS.md`: importaciones y validaciones.
+- `docs/agent-context/DECISIONS.md`: decisiones tecnicas.
+- `docs/agent-context/TASKS.md`: lista viva de tareas.
+- `docs/agent-context/CHANGELOG_AI.md`: cambios realizados con ayuda de IA.
