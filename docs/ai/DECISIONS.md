@@ -1,6 +1,8 @@
 # Decisiones tecnicas
 
-Este archivo registra decisiones importantes para que Codex, Cline y futuros agentes mantengan coherencia entre sesiones.
+Nota de compatibilidad: `docs/ai/` es historico. La fuente actual esta en `docs/agent-context/`; empezar por `docs/agent-context/PROJECT_INDEX.md`.
+
+Este archivo conserva decisiones anteriores para no romper referencias antiguas.
 
 ## Decisiones vigentes
 

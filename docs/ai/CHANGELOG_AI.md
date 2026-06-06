@@ -1,5 +1,7 @@
 # Changelog de cambios con IA
 
+Nota de compatibilidad: `docs/ai/` es historico. La fuente actual para nuevas entradas es `docs/agent-context/CHANGELOG_AGENT.md`.
+
 Registro de cambios realizados con ayuda de agentes IA. No sustituye al historial de Git; sirve como memoria legible para futuras sesiones.
 
 ## 2026-06-03

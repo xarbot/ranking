@@ -1,6 +1,8 @@
 # Tareas pendientes para IA
 
-Lista viva de tareas y mejoras detectadas. Mantener entradas pequenas, revisables y accionables.
+Nota de compatibilidad: `docs/ai/` es historico. La fuente actual esta en `docs/agent-context/`; empezar por `docs/agent-context/PROJECT_INDEX.md`.
+
+Lista historica de tareas y mejoras detectadas.
 
 ## Pendientes
 

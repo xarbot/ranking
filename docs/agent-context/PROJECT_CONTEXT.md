@@ -2,30 +2,37 @@
 
 ## Resumen
 
-Este repositorio contiene la aplicacion de ranking del Club Atletic Castellar. Su objetivo es publicar rankings deportivos y facilitar la gestion interna de atletas, pruebas, ciudades, competiciones, marcas, usuarios, permisos, traducciones e importaciones de resultados.
+Aplicacion de rankings de atletismo del Club Atletic Castellar. Publica mejores marcas y rankings por prueba, categoria y sexo, y ofrece un panel autenticado para mantener datos deportivos.
 
-La aplicacion debe seguir siendo sencilla, mantenible y compatible con un hosting PHP estandar con MySQL.
+El objetivo tecnico es conservar una aplicacion sencilla, revisable y desplegable en hosting PHP estandar con MySQL.
 
-## Funcionamiento global
+## Que problema resuelve
 
-- La parte publica permite consultar rankings y marcas.
-- El panel de gestion autenticado permite mantener catalogos y resultados.
-- La API centraliza validaciones, sesiones, consultas y operaciones de gestion.
-- La persistencia se realiza en MySQL.
-- El frontend es estatico y usa HTML, CSS y JavaScript sin framework pesado.
+- Centraliza atletas, pruebas, ciudades/pistas, marcas, usuarios, permisos y traducciones.
+- Permite importar resultados desde plantillas/CSV con validaciones antes de grabar.
+- Calcula categorias deportivas a partir de fecha de nacimiento, fecha de marca y sexo.
+- Muestra rankings publicos separando pruebas, categorias y criterios de ordenacion.
 
-## Modulos principales
+## Tecnologias
 
-- Consulta publica de rankings.
-- Gestion de atletas.
-- Gestion de pruebas.
-- Gestion de ciudades.
-- Gestion de competiciones.
-- Gestion de marcas.
-- Importacion de resultados.
-- Gestion de usuarios y permisos.
-- Traducciones en castellano y catalan.
+- PHP 8.3 compatible con hosting estandar.
+- MySQL 8.0 o compatible.
+- PDO con consultas preparadas.
+- HTML, CSS y JavaScript sin framework pesado.
+- Scripts PHP para migraciones y generacion de plantillas.
 
-## Idioma de trabajo
+## Produccion
 
-El usuario trabaja habitualmente en castellano y catalan. Por defecto, los agentes deben responder en castellano. Si el usuario escribe en catalan, deben responder en catalan.
+- Produccion solo garantiza PHP y MySQL.
+- No asumir Docker, Node, builders, workers, colas ni servicios externos.
+- `.env` vive fuera del webroot en despliegue y contiene credenciales.
+- nginx sirve `/`, `/admin/` y enruta `/api/` al controlador PHP.
+
+## Restricciones criticas
+
+- No modificar credenciales, `.env`, backups, dumps ni datos sensibles.
+- No cambiar configuracion de produccion sin peticion explicita.
+- No tocar codigo funcional cuando la tarea sea documental.
+- Evitar refactors grandes; priorizar cambios pequenos y reversibles.
+- Mantener interfaz y literales en castellano/catalan cuando afecte a textos visibles.
+- Responder por defecto en castellano; si el usuario escribe en catalan, responder en catalan.

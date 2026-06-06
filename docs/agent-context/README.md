@@ -1,21 +1,26 @@
 # Contexto compartido para agentes
 
-Este directorio es la fuente comun y neutral de conocimiento para Codex, Zoo Code, Cline, Roo, Aider u otros agentes locales conectados a modelos externos o a Ollama.
+Fuente neutral para Codex, Zoo Code, Cline, Roo, Aider u otros agentes. No depende de una herramienta concreta.
 
-No depende de una herramienta concreta. `AGENTS.md` funciona como entrada breve en la raiz y este directorio contiene el contexto estable que los agentes deben consultar antes de cambios relevantes.
+## Entrada obligatoria
 
-## Indice
+- `PROJECT_INDEX.md`: indice compacto. Leer primero y despues abrir solo lo necesario.
 
-- `PROJECT_CONTEXT.md`: descripcion del proyecto, objetivo general y modulos.
-- `ARCHITECTURE.md`: arquitectura tecnica conocida, produccion y restricciones.
-- `DOMAIN_RULES.md`: reglas del dominio deportivo y catalogos internos.
-- `CODING_STANDARDS.md`: reglas de codigo y compatibilidad tecnica.
-- `WORKFLOW.md`: flujo obligatorio para agentes antes, durante y despues de editar.
-- `DATA_IMPORTS.md`: importacion de resultados, CSV/PDF y validaciones.
-- `DECISIONS.md`: decisiones tecnicas aceptadas.
-- `TASKS.md`: lista viva de tareas pendientes, en curso y hechas.
-- `CHANGELOG_AI.md`: registro de cambios realizados con ayuda de IA.
+## Documentos actuales
+
+- `PROJECT_CONTEXT.md`: resumen, problema, tecnologias, produccion y restricciones.
+- `ARCHITECTURE.md`: mapa de carpetas, modulos y archivos principales.
+- `DATA_MODEL.md`: tablas, campos, relaciones y convenciones deportivas.
+- `WORKFLOWS.md`: importaciones, duplicados, rankings, admin, version y validacion.
+- `CODING_RULES.md`: reglas para tocar codigo y validar cambios.
+- `KNOWN_ISSUES.md`: riesgos, contradicciones y zonas delicadas.
+- `CHANGELOG_AGENT.md`: memoria breve de cambios para agentes.
+
+## Referencias historicas o auxiliares
+
+- `DOMAIN_RULES.md`, `DATA_IMPORTS.md`, `DECISIONS.md`, `TASKS.md`: contexto adicional historico si una tarea lo requiere.
+- `WORKFLOW.md`, `CODING_STANDARDS.md`, `CHANGELOG_AI.md`: compatibilidad con nombres antiguos; la fuente actual son los documentos nuevos.
 
 ## Principio de mantenimiento
 
-Si una regla es general para cualquier agente, debe vivir aqui. Los archivos especificos de herramientas solo deben crearse cuando el usuario lo pida expresamente y deben derivar de este contexto, no sustituirlo.
+No duplicar contexto. Si una regla es general para cualquier agente, debe vivir aqui. Los archivos especificos de herramientas solo deben apuntar a este directorio.

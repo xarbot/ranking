@@ -6,6 +6,11 @@ autenticado en `/admin/`, persistencia MySQL y clasificacion calculada por edad 
 El idioma inicial es catalan. Tanto la consulta publica como la gestion permiten alternar
 castellano y catalan; los literales se pueden anadir, editar o retirar desde **Traducciones**.
 
+## Agentes IA
+
+Los agentes deben empezar por `AGENTS.md` y leer despues `docs/agent-context/PROJECT_INDEX.md`.
+Ese indice indica que documentos abrir segun la tarea para evitar cargar contexto innecesario.
+
 ## Version
 
 - Version en produccion: `1.0`

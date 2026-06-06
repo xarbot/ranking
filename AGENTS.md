@@ -1,8 +1,14 @@
 # Instrucciones para agentes IA
 
-Este repositorio contiene la aplicacion de ranking del Club Atletic Castellar. `AGENTS.md` es el punto de entrada breve para cualquier agente local o remoto.
+Este repositorio contiene la aplicacion de ranking del Club Atletic Castellar. `AGENTS.md` es solo el punto de entrada breve para agentes locales o remotos.
 
-Antes de trabajar, lee el contexto compartido neutral en `docs/agent-context/`.
+## Lectura obligatoria
+
+1. Lee primero `docs/agent-context/PROJECT_INDEX.md`.
+2. Despues lee solo los documentos que el indice recomiende para la tarea.
+3. Usa busqueda/indexacion del editor, `rg` o el indice del proyecto antes de abrir muchos archivos.
+4. No cargues archivos grandes completos si basta con buscar simbolos, rutas o fragmentos concretos.
+5. No repitas contexto largo en el chat: cita rutas y resume solo lo necesario.
 
 ## Reglas criticas
 
@@ -18,15 +24,6 @@ Antes de trabajar, lee el contexto compartido neutral en `docs/agent-context/`.
 - Antes de modificar archivos, explicar brevemente que se quiere tocar y por que.
 - Despues de modificar archivos, resumir cambios, indicar pruebas realizadas y avisar de riesgos.
 
-## Contexto compartido
+## Fuente compartida
 
-- `docs/agent-context/README.md`: indice del contexto comun.
-- `docs/agent-context/PROJECT_CONTEXT.md`: objetivo funcional y modulos.
-- `docs/agent-context/ARCHITECTURE.md`: arquitectura tecnica y produccion.
-- `docs/agent-context/DOMAIN_RULES.md`: reglas deportivas y catalogos.
-- `docs/agent-context/CODING_STANDARDS.md`: estandares de codigo.
-- `docs/agent-context/WORKFLOW.md`: flujo obligatorio de trabajo.
-- `docs/agent-context/DATA_IMPORTS.md`: importaciones y validaciones.
-- `docs/agent-context/DECISIONS.md`: decisiones tecnicas.
-- `docs/agent-context/TASKS.md`: lista viva de tareas.
-- `docs/agent-context/CHANGELOG_AI.md`: cambios realizados con ayuda de IA.
+La documentacion neutral para cualquier herramienta vive en `docs/agent-context/`. Los archivos especificos de una herramienta, si existen, deben apuntar a esa fuente y no duplicar reglas.
