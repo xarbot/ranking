@@ -20,7 +20,8 @@ try {
     }
     
     // Incluir dbname en el DSN para seleccionar la base de datos explícitamente y evitar "No database selected"
-    $dsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, (int)$port);
+    // Incluir dbname en el DSN para seleccionar la base de datos explícitamente y evitar "No database selected"
+    $dsn = sprintf('mysql:host=%s;dbname=%s;port=%d;charset=utf8mb4', $host, $dbname, (int)$port);
     $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
