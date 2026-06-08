@@ -31,7 +31,7 @@ try {
 }
 
 // Consulta para obtener duplicados con los detalles solicitados
-$sql = 'SELECT atleta.nombre AS nombre_atleta, prueba.descripcion AS prueba, valor_tecnico, marca_registro, fecha, ciudad.nombre AS ciudad, pista.nombre AS pista FROM resultados INNER JOIN atletas atleta ON resultados.atleta_id = atleta.id INNER JOIN pruebas prueba ON resultados.prueba_id = prueba.id INNER JOIN ciudades ciudad ON resultados.ciudad_id = ciudad.id INNER JOIN pistas pista ON resultados.pista_id = pista.id WHERE duplicados > 1';
+$sql = 'SELECT atleta.nombre AS nombre_atleta, prueba.descripcion AS prueba, valor_tecnico, marca_registro, fecha, ciudad.nombre AS ciudad, pista.nombre AS pista FROM marcas INNER JOIN atletas atleta ON marcas.atleta_id = atleta.id INNER JOIN pruebas prueba ON marcas.prueba_id = prueba.id INNER JOIN ciudades ciudad ON marcas.ciudad_id = ciudad.id INNER JOIN pistas pista ON marcas.pista_id = pista.id WHERE duplicados > 1';
 
 $duplicates = [];
 
