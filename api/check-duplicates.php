@@ -19,7 +19,7 @@ try {
         throw new Exception("La variable de entorno DB_NAME no está configurada.");
     }
     
-    // Incluir dbname en el DSN para seleccionar la base de datos explícitamente
+    // Incluir dbname en el DSN para seleccionar la base de datos explícitamente y evitar "No database selected"
     $dsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, (int)$port);
     $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
