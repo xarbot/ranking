@@ -5,7 +5,8 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-require_once '../lib/env.php'; // Incluir archivo de configuración de la base de datos
+require_once __DIR__ . '/../lib/env.php';
+loadEnvironment(__DIR__ . '/../.env'); // Cargar variables del archivo .env
 
 try {
     $host = getenv('DB_HOST') ?: 'localhost';
