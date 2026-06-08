@@ -8,8 +8,22 @@ header('Access-Control-Allow-Origin: *');
 require_once '../lib/env.php'; // Incluir archivo de configuración de la base de datos
 
 try {
-    $pdo = new PDO(DB_DSN, DB_USER, DB_PASSWORD);
-} catch (PDOException $e) {
+    $host = getenv('DB_HOST') ?: 'localhost';
+    $port = getenv('DB_PORT') ?: 3306;
+    $dbname = getenv('DB_NAME');
+    $user = getenv('DB_USER');
+    $pass = getenv('DB_PASS');
+    
+    if (empty($dbname)) {
+        throw new Exception("La variable de entorno DB_NAME no está configurada.");
+    }
+    
+    $dsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, (int)$port);
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+} catch (PDOException|Exception $e) {
     die("Error en la conexión a la base de datos: " . $e->getMessage());
 }
 
