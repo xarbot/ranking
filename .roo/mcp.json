@@ -8,10 +8,10 @@
         "/data/repos/ranking"
       ]
     },
-    "ranking-rag": {
+    "ranking-tools": {
       "command": "python3",
       "args": [
-        "/data/mcp/ranking-rag/server.py"
+        "/data/mcp/ranking-tools/server.py"
       ]
     }
   }
