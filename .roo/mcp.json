@@ -1,0 +1,20 @@
+{
+  "servers": {
+    "ranking-filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/data/repos/ranking"
+      ]
+    },
+    "ranking-rag": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "/data/mcp/ranking-rag/server.py"
+      ]
+    }
+  }
+}
