@@ -1,7 +1,6 @@
 {
-  "servers": {
+  "mcpServers": {
     "ranking-filesystem": {
-      "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
@@ -10,7 +9,6 @@
       ]
     },
     "ranking-rag": {
-      "type": "stdio",
       "command": "python3",
       "args": [
         "/data/mcp/ranking-rag/server.py"
