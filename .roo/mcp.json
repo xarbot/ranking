@@ -1,18 +1,48 @@
 {
-  "mcpServers": {
-    "ranking-filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/data/repos/ranking"
-      ]
-    },
-    "ranking-tools": {
-      "command": "python3",
-      "args": [
-        "/data/mcp/ranking-tools/server.py"
-      ]
-    }
-  }
+	"mcpServers": {
+		"ranking-filesystem": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@modelcontextprotocol/server-filesystem",
+				"/data/repos/ranking"
+			],
+			"alwaysAllow": [
+				"read_file",
+				"read_text_file",
+				"read_media_file",
+				"read_multiple_files",
+				"write_file",
+				"edit_file",
+				"create_directory",
+				"list_directory",
+				"list_directory_with_sizes",
+				"directory_tree",
+				"move_file",
+				"search_files",
+				"get_file_info",
+				"list_allowed_directories"
+			]
+		},
+		"ranking-tools": {
+			"command": "python3",
+			"args": [
+				"/data/mcp/ranking-tools/server.py"
+			],
+			"alwaysAllow": [
+				"list_project_hotspots",
+				"find_table_usage",
+				"search_code",
+				"find_php_function",
+				"find_version",
+				"git_status",
+				"git_diff_file",
+				"php_syntax_check",
+				"search_ranking",
+				"run_project_checks",
+				"bump_version",
+				"find_api_endpoint"
+			]
+		}
+	}
 }
