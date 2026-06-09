@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "ranking-filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/data/repos/ranking"
+      ]
+    }
+  }
+}
