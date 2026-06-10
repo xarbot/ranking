@@ -20,7 +20,6 @@ try {
     }
     
     // Incluir dbname en el DSN para seleccionar la base de datos explícitamente y evitar "No database selected"
-    // Incluir dbname en el DSN para seleccionar la base de datos explícitamente y evitar "No database selected"
     $dsn = sprintf('mysql:host=%s;dbname=%s;port=%d;charset=utf8mb4', $host, $dbname, (int)$port);
     $pdo = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -31,7 +30,38 @@ try {
 }
 
 // Consulta para obtener duplicados con los detalles solicitados
-$sql = 'SELECT atleta.nombre AS nombre_atleta, prueba.descripcion AS prueba, valor_tecnico, marca_registro, fecha, ciudad.nombre AS ciudad, pista.nombre AS pista FROM marcas INNER JOIN atletas atleta ON marcas.atleta_id = atleta.id INNER JOIN pruebas prueba ON marcas.prueba_id = prueba.id INNER JOIN ciudades ciudad ON marcas.ciudad_id = ciudad.id INNER JOIN pistas pista ON marcas.pista_id = pista.id WHERE duplicados > 1';
+// Un duplicado se considera cuando hay dos filas iguales dentro de la tabla marcas
+// Es decir dos resultados iguales del mismo atleta, la misma prueba, ciudad y fecha,
+// con la misma categoria y caracteristica tecnica
+$sql = 'SELECT
+    m.atleta_id,
+    m.prueba_id,
+    m.ciudad_id,
+    m.fecha,
+    m.caracteristica_tecnica,
+    m.categoria,
+    atleta.nombre AS nombre_atleta,
+    prueba.nombre AS prueba,
+    ciudad.nombre AS ciudad,
+    m.resultado,
+    m.nombre_pista,
+    m.pista_id
+FROM marcas m
+INNER JOIN atletas atleta ON m.atleta_id = atleta.id
+INNER JOIN pruebas prueba ON m.prueba_id = prueba.id
+INNER JOIN ciudades ciudad ON m.ciudad_id = ciudad.id
+WHERE m.id IN (
+    SELECT m2.id
+    FROM marcas m2
+    WHERE m2.atleta_id = m.atleta_id
+    AND m2.prueba_id = m.prueba_id
+    AND m2.ciudad_id = m.ciudad_id
+    AND m2.fecha = m.fecha
+    AND m2.caracteristica_tecnica = m.caracteristica_tecnica
+    AND m2.categoria = m.categoria
+    GROUP BY m2.atleta_id, m2.prueba_id, m2.ciudad_id, m2.fecha, m2.caracteristica_tecnica, m2.categoria
+    HAVING COUNT(*) > 1
+)';
 
 $duplicates = [];
 
@@ -39,13 +69,18 @@ try {
     $stmt = $pdo->query($sql);
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $duplicates[] = [
+            'atleta_id' => $row['atleta_id'],
+            'prueba_id' => $row['prueba_id'],
+            'ciudad_id' => $row['ciudad_id'],
+            'fecha' => $row['fecha'],
+            'caracteristica_tecnica' => $row['caracteristica_tecnica'],
+            'categoria' => $row['categoria'],
             'nombre_atleta' => $row['nombre_atleta'],
             'prueba' => $row['prueba'],
-            'valor_tecnico' => $row['valor_tecnico'],
-            'marca_registro' => $row['marca_registro'],
-            'fecha' => $row['fecha'],
             'ciudad' => $row['ciudad'],
-            'pista' => $row['pista']
+            'resultado' => $row['resultado'],
+            'nombre_pista' => $row['nombre_pista'],
+            'pista_id' => $row['pista_id']
         ];
     }
 } catch (PDOException $e) {
@@ -53,6 +88,7 @@ try {
 }
 
 // Devolver resultados en formato JSON
+
 echo json_encode([
     'status' => 'success',
     'data' => $duplicates
