@@ -1,20 +1,22 @@
 {
   "servers": {
-    "ranking-filesystem": {
+    "rankingFilesystem": {
       "type": "stdio",
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-filesystem",
+        "@modelcontextprotocol/server-filesystem@latest",
         "/data/repos/ranking"
-      ]
+      ],
+      "cwd": "/data/repos/ranking"
     },
-    "ranking-rag": {
+    "rankingTools": {
       "type": "stdio",
       "command": "python3",
       "args": [
-        "/data/mcp/ranking-rag/server.py"
-      ]
+        "/data/mcp/ranking-tools/server.py"
+      ],
+      "cwd": "/data/repos/ranking"
     }
   }
 }
