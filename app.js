@@ -119,13 +119,16 @@
     return resultMain(mark, strong) + technicalDetail(mark.technicalInfo);
   }
   function ordinal(value) { return String(value) + (window.RankingI18n.language() === "ca" ? "è" : "º"); }
-  function rankingBadge(mark, key, label, tone) {
-    return mark[key] ? '<span class="personal-best-badge personal-best-badge--' + tone + '">' + escapeHtml(ordinal(mark[key]) + " " + t(label)) + '</span>' : "";
+  function rankingBadge(mark, key, label, mode) {
+    return mark[key] ? '<button class="personal-best-badge" type="button" data-history-ranking="' + mode + '" data-history-event="' + escapeHtml(mark.eventId) + '" data-history-area-target="' + escapeHtml(mark.area) + '" data-history-group-target="' + escapeHtml(mark.eventGroup) + '" data-history-category-target="' + escapeHtml(mark.category) + '">' + escapeHtml(ordinal(mark[key]) + " " + t(label)) + '</button>' : "";
   }
   function personalBestBadges(mark) {
     return '<span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' +
       rankingBadge(mark, "absoluteRank", "Ranking absoluto", "absolute") +
       rankingBadge(mark, "categoryRank", "Ranking categoría", "category");
+  }
+  function historyBadgesCell(mark, isPersonalBest) {
+    return isPersonalBest ? '<span class="history-badge-list">' + personalBestBadges(mark) + '</span>' : "";
   }
   function dateCell(mark) {
     if (canEditPublicMark(mark) && isEditingMark(mark)) return '<input class="inline-mark-input" type="date" data-public-edit-date value="' + escapeHtml(mark.date || "") + '" aria-label="' + escapeHtml(t("Fecha")) + '">';
@@ -447,10 +450,7 @@
           var sortedMarks = eventGroup.marks.slice().sort(compareHistory);
           var visible = state.historyVisible[key] || 1;
           var rows = sortedMarks.slice(0, visible).map(function (mark, index) {
-            var markCell = index === 0
-              ? '<span class="history-mark-line">' + resultMain(mark, true) + personalBestBadges(mark) + '</span>' + technicalDetail(mark.technicalInfo)
-              : resultCell(mark, true);
-            return "<tr><td>" + markCell + "</td><td>" + dateCell(mark) +
+            return "<tr><td>" + resultCell(mark, true) + "</td><td>" + historyBadgesCell(mark, index === 0) + "</td><td>" + dateCell(mark) +
               "</td><td>" + cityCell(mark) + "</td>" + publicActions(mark) + "</tr>";
           }).join("");
           var less = visible > 1
@@ -461,7 +461,7 @@
             : "";
           var controls = more || less ? '<div class="history-controls">' + less + more + '</div>' : "";
           return "<section class=\"event-history\"><h4>" + escapeHtml(eventShortLabel(eventGroup.event)) + "</h4><div class=\"table-wrap\"><table><thead><tr><th>" +
-            t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th>" + publicActionHeader() + "</tr></thead><tbody>" + rows + "</tbody></table></div>" + controls + "</section>";
+            t("Marca") + "</th><th>" + t("Ranking") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th>" + publicActionHeader() + "</tr></thead><tbody>" + rows + "</tbody></table></div>" + controls + "</section>";
         }).join("") + "</article></section>";
     }).join("");
     byId("history-empty").classList.toggle("hidden", history.marks.length > 0);
@@ -604,6 +604,18 @@
     renderFilters();
     byId("event-filter").value = events.length ? String(events[0].id) : "";
     renderFilters();
+  }
+
+  function openHistoryRanking(button) {
+    byId("sex-filter").value = categorySex(button.dataset.historyCategoryTarget || "");
+    byId("category-filter").value = button.dataset.historyRanking === "category" ? (button.dataset.historyCategoryTarget || "") : "";
+    byId("area-filter").value = button.dataset.historyAreaTarget || "";
+    renderFilters();
+    byId("group-filter").value = button.dataset.historyGroupTarget || "";
+    renderFilters();
+    byId("event-filter").value = button.dataset.historyEvent || "";
+    renderFilters();
+    loadRanking();
   }
 
   function selectSearchedAthlete() {
@@ -846,6 +858,8 @@
     renderHistory();
   });
   byId("history-categories").addEventListener("click", function (event) {
+    var ranking = event.target.closest("[data-history-ranking]");
+    if (ranking) { openHistoryRanking(ranking); return; }
     var save = event.target.closest("[data-public-save-mark]");
     if (save) { savePublicMark(save.dataset.publicSaveMark, save.closest("tr")); return; }
     var cancel = event.target.closest("[data-public-cancel-edit]");
