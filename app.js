@@ -311,13 +311,14 @@
   }
   function renderMarks() {
     var marks = state.marks;
+    var showDebugTech = new URLSearchParams(window.location.search).get('debugTech') === '1';
     var latestHead = document.querySelector("#latest-section thead tr");
     if (latestHead) latestHead.innerHTML = "<th>" + t("Atleta") + "</th><th>" + t("Prueba") + "</th><th>" + t("Categoria") + "</th><th>" + t("Marca") + "</th><th>" + t("Fecha") + "</th><th>" + t("Ciudad") + "</th>" + publicActionHeader();
     byId("results-title").textContent = t("Ultimas marcas registradas");
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return '<tr><td><button class="athlete-button" type="button" data-athlete-id="' + mark.athleteId + '">' +
         escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
-        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + resultCell(mark, false) + '</td><td>' +
+        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + resultCell(mark, false) + (showDebugTech ? '<div class="debug-technical">' + escapeHtml(String(mark.technicalInfo || '')) + '</div>' : '') + '</td><td>' +
         dateCell(mark) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
