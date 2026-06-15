@@ -22,7 +22,11 @@
   function athleteLabel(item) { return item.name + " " + item.surname; }
   function cityLabel(item) { return item.name + (item.province ? " (" + item.province + ")" : ""); }
   function detailLine(value, label) { return value ? "<span class=\"cell-detail\">" + (label ? "<span class=\"cell-detail-label\">" + escapeHtml(label) + ":</span> " : "") + escapeHtml(value) + "</span>" : ""; }
-  function technicalValue(value) { return normalized(value) === "no" ? "" : String(value || ""); }
+  function technicalValue(value) {
+    var norm = normalized(value);
+    if (norm === "no" || norm === "si" || norm === "true" || norm === "yes") return "";
+    return String(value || "");
+  }
   function technicalDetail(value) { return detailLine(technicalValue(value), t("Marca técnica")); }
   function markResultCell(mark) { return "<span class=\"mark-result-main\">" + escapeHtml(normalizeResultText(mark.result)) + "</span>" + technicalDetail(mark.technicalInfo); }
   function formatDate(date) { return date ? new Date(date + "T00:00:00").toLocaleDateString(window.RankingI18n.language() === "ca" ? "ca-ES" : "es-ES") : ""; }

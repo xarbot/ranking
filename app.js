@@ -33,7 +33,11 @@
     });
   }
   function detailLine(value, label) { return value ? '<span class="cell-detail">' + (label ? '<span class="cell-detail-label">' + escapeHtml(label) + ':</span> ' : "") + escapeHtml(value) + '</span>' : ""; }
-  function technicalValue(value) { return normalized(value) === "no" ? "" : String(value || ""); }
+  function technicalValue(value) {
+    var norm = normalized(value);
+    if (norm === "no" || norm === "si" || norm === "true" || norm === "yes") return "";
+    return String(value || "");
+  }
   function technicalDetail(value) { return detailLine(technicalValue(value), t("Marca técnica")); }
   function inlineField(label, input) { return '<label class="inline-edit-field"><span>' + escapeHtml(label) + '</span>' + input + '</label>'; }
   function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
