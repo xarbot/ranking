@@ -122,13 +122,15 @@
   function rankingBadge(mark, key, label, mode) {
     return mark[key] ? '<button class="personal-best-badge" type="button" data-history-ranking="' + mode + '" data-history-event="' + escapeHtml(mark.eventId) + '" data-history-area-target="' + escapeHtml(mark.area) + '" data-history-group-target="' + escapeHtml(mark.eventGroup) + '" data-history-category-target="' + escapeHtml(mark.category) + '">' + escapeHtml(ordinal(mark[key]) + " " + t(label)) + '</button>' : "";
   }
-  function personalBestBadges(mark) {
-    return '<span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' +
-      rankingBadge(mark, "absoluteRank", "Ranking absoluto", "absolute") +
-      rankingBadge(mark, "categoryRank", "Ranking categoría", "category");
+  function personalBestBadge() {
+    return '<span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>';
+  }
+  function historyMarkCell(mark, isPersonalBest) {
+    var main = isPersonalBest ? '<span class="history-mark-line">' + resultMain(mark, true) + personalBestBadge() + '</span>' + technicalDetail(mark.technicalInfo) : resultCell(mark, true);
+    return main;
   }
   function historyBadgesCell(mark, isPersonalBest) {
-    return isPersonalBest ? '<span class="history-badge-list">' + personalBestBadges(mark) + '</span>' : "";
+    return isPersonalBest ? '<span class="history-badge-list">' + rankingBadge(mark, "absoluteRank", "Ranking absoluto", "absolute") + rankingBadge(mark, "categoryRank", "Ranking categoría", "category") + '</span>' : "";
   }
   function dateCell(mark) {
     if (canEditPublicMark(mark) && isEditingMark(mark)) return '<input class="inline-mark-input" type="date" data-public-edit-date value="' + escapeHtml(mark.date || "") + '" aria-label="' + escapeHtml(t("Fecha")) + '">';
@@ -450,7 +452,7 @@
           var sortedMarks = eventGroup.marks.slice().sort(compareHistory);
           var visible = state.historyVisible[key] || 1;
           var rows = sortedMarks.slice(0, visible).map(function (mark, index) {
-            return "<tr><td>" + resultCell(mark, true) + "</td><td>" + historyBadgesCell(mark, index === 0) + "</td><td>" + dateCell(mark) +
+            return "<tr><td>" + historyMarkCell(mark, index === 0) + "</td><td>" + historyBadgesCell(mark, index === 0) + "</td><td>" + dateCell(mark) +
               "</td><td>" + cityCell(mark) + "</td>" + publicActions(mark) + "</tr>";
           }).join("");
           var less = visible > 1

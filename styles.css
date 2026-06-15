@@ -546,6 +546,7 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   font-size: 18px;
   margin: 0 0 10px;
 }
+.history-mark-line,
 .history-badge-list {
   align-items: center;
   display: flex;
@@ -623,7 +624,7 @@ button.personal-best-badge:hover {
   .ranking-result td:first-child,
   .ranking-result th:nth-child(2),
   .ranking-result td:nth-child(2) { min-width: 0; white-space: normal; width: 100%; }
-  .history-badge-list { gap: 5px; }
+  .history-mark-line, .history-badge-list { gap: 5px; }
   .personal-best-badge { max-width: 100%; }
   .history-controls { margin-top: 8px; }
   .history-toggle { height: 34px; width: 38px; }
