@@ -546,6 +546,12 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   font-size: 18px;
   margin: 0 0 10px;
 }
+.history-mark-line {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .personal-best-badge {
   background: #edf6ef;
   border: 1px solid #c7dfcc;
@@ -554,10 +560,19 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
-  margin-left: 8px;
   padding: 3px 7px;
   vertical-align: middle;
   white-space: nowrap;
+}
+.personal-best-badge--absolute {
+  background: #e5f2e6;
+  border-color: #adcfb3;
+  color: #2f6735;
+}
+.personal-best-badge--category {
+  background: #dff0e9;
+  border-color: #a4cab9;
+  color: #28624f;
 }
 .history-controls {
   display: flex;
@@ -609,11 +624,8 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   .ranking-result td:first-child,
   .ranking-result th:nth-child(2),
   .ranking-result td:nth-child(2) { min-width: 0; white-space: normal; width: 100%; }
-  .personal-best-badge {
-    display: block;
-    margin: 6px 0 0;
-    width: max-content;
-  }
+  .history-mark-line { gap: 5px; }
+  .personal-best-badge { max-width: 100%; }
   .history-controls { margin-top: 8px; }
   .history-toggle { height: 34px; width: 38px; }
 }

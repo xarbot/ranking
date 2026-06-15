@@ -107,13 +107,25 @@
     return result;
   }
   function displayResult(value) { return normalizeResultText(value); }
+  function resultMain(mark, strong) {
+    var result = escapeHtml(displayResult(mark.result));
+    return strong ? '<strong>' + result + '</strong>' : result;
+  }
   function resultCell(mark, strong) {
     if (canEditPublicMark(mark) && isEditingMark(mark)) {
       return inlineField(t("Marca"), '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">') +
         inlineField(t("Marca técnica"), '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(technicalValue(mark.technicalInfo)) + '" aria-label="' + escapeHtml(t("Marca técnica")) + '">');
     }
-    var result = strong ? '<strong>' + escapeHtml(displayResult(mark.result)) + '</strong>' : escapeHtml(displayResult(mark.result));
-    return result + technicalDetail(mark.technicalInfo);
+    return resultMain(mark, strong) + technicalDetail(mark.technicalInfo);
+  }
+  function ordinal(value) { return String(value) + (window.RankingI18n.language() === "ca" ? "è" : "º"); }
+  function rankingBadge(mark, key, label, tone) {
+    return mark[key] ? '<span class="personal-best-badge personal-best-badge--' + tone + '">' + escapeHtml(ordinal(mark[key]) + " " + t(label)) + '</span>' : "";
+  }
+  function personalBestBadges(mark) {
+    return '<span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' +
+      rankingBadge(mark, "absoluteRank", "Ranking absoluto", "absolute") +
+      rankingBadge(mark, "categoryRank", "Ranking categoría", "category");
   }
   function dateCell(mark) {
     if (canEditPublicMark(mark) && isEditingMark(mark)) return '<input class="inline-mark-input" type="date" data-public-edit-date value="' + escapeHtml(mark.date || "") + '" aria-label="' + escapeHtml(t("Fecha")) + '">';
@@ -435,8 +447,10 @@
           var sortedMarks = eventGroup.marks.slice().sort(compareHistory);
           var visible = state.historyVisible[key] || 1;
           var rows = sortedMarks.slice(0, visible).map(function (mark, index) {
-            var personalBest = index === 0 ? ' <span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>' : "";
-            return "<tr><td>" + resultCell(mark, true) + personalBest + "</td><td>" + dateCell(mark) +
+            var markCell = index === 0
+              ? '<span class="history-mark-line">' + resultMain(mark, true) + personalBestBadges(mark) + '</span>' + technicalDetail(mark.technicalInfo)
+              : resultCell(mark, true);
+            return "<tr><td>" + markCell + "</td><td>" + dateCell(mark) +
               "</td><td>" + cityCell(mark) + "</td>" + publicActions(mark) + "</tr>";
           }).join("");
           var less = visible > 1

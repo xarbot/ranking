@@ -166,7 +166,53 @@ function publicRanking(PDO $db, ?string $area, ?string $eventGroup, ?int $eventI
     }
     return compact('area', 'eventGroup', 'eventId', 'category', 'sex', 'available', 'groups');
 }
-function publicHistory(PDO $db, int $id): array { refreshCategories($db); $athlete=execute($db,"SELECT id, CONCAT(nombre,' ',apellidos) AS name FROM atletas WHERE id = ?",[$id])->fetch(); if(!$athlete)throw new ApiException('El atleta indicado no existe.',404);$location=locationSql();$marks=execute($db,"SELECT m.id,m.atleta_id AS athleteId,m.prueba_id AS eventId,m.ciudad_id AS cityId,p.nombre AS event,p.ambito AS area,p.grupo AS eventGroup,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,DATE_FORMAT(m.fecha,'%Y-%m-%d') AS date,{$location} FROM marcas m JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id WHERE m.atleta_id=? ORDER BY m.fecha DESC",[$id])->fetchAll();return compact('athlete','marks'); }
+function bestRankingPosition(array $rows, int $athleteId): ?int {
+    $best = [];
+    foreach ($rows as $row) {
+        $row['_value'] = comparableResult($row['result']);
+        $key = (string) $row['athleteId'];
+        $old = $best[$key] ?? null;
+        if (!$old || ($row['resultDirection'] === 'higher' ? $row['_value'] > $old['_value'] : $row['_value'] < $old['_value'])) $best[$key] = $row;
+    }
+    $ranking = array_values($best);
+    usort($ranking, static fn($a, $b) => $a['resultDirection'] === 'higher' ? ($b['_value'] <=> $a['_value']) : ($a['_value'] <=> $b['_value']));
+    foreach ($ranking as $index => $row) {
+        if ((int) $row['athleteId'] === $athleteId) return $index + 1;
+    }
+    return null;
+}
+function addHistoryRankings(PDO $db, array &$marks, int $athleteId, string $sex): void {
+    $eventIds = array_values(array_unique(array_map(static fn($mark) => (int) $mark['eventId'], $marks)));
+    if (!$eventIds) return;
+    $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+    $rows = execute($db, "SELECT m.atleta_id AS athleteId,m.prueba_id AS eventId,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,a.sexo AS sex FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id WHERE m.prueba_id IN ({$placeholders})", $eventIds)->fetchAll();
+    $absolute = [];
+    $category = [];
+    foreach ($rows as $row) {
+        if ($row['sex'] === $sex) $absolute[(string) $row['eventId']][] = $row;
+        $category[$row['eventId'] . '|' . $row['category']][] = $row;
+    }
+    $positionCache = [];
+    foreach ($marks as &$mark) {
+        $absoluteKey = 'absolute|' . $mark['eventId'];
+        $categoryKey = 'category|' . $mark['eventId'] . '|' . $mark['category'];
+        if (!array_key_exists($absoluteKey, $positionCache)) $positionCache[$absoluteKey] = bestRankingPosition($absolute[(string) $mark['eventId']] ?? [], $athleteId);
+        if (!array_key_exists($categoryKey, $positionCache)) $positionCache[$categoryKey] = bestRankingPosition($category[$mark['eventId'] . '|' . $mark['category']] ?? [], $athleteId);
+        $mark['absoluteRank'] = $positionCache[$absoluteKey];
+        $mark['categoryRank'] = $positionCache[$categoryKey];
+    }
+    unset($mark);
+}
+function publicHistory(PDO $db, int $id): array {
+    refreshCategories($db);
+    $athlete = execute($db, "SELECT id, CONCAT(nombre,' ',apellidos) AS name, sexo AS sex FROM atletas WHERE id = ?", [$id])->fetch();
+    if (!$athlete) throw new ApiException('El atleta indicado no existe.', 404);
+    $location = locationSql();
+    $marks = execute($db, "SELECT m.id,m.atleta_id AS athleteId,m.prueba_id AS eventId,m.ciudad_id AS cityId,p.nombre AS event,p.ambito AS area,p.grupo AS eventGroup,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,DATE_FORMAT(m.fecha,'%Y-%m-%d') AS date,{$location} FROM marcas m JOIN pruebas p ON p.id=m.prueba_id LEFT JOIN ciudades c ON c.id=m.ciudad_id LEFT JOIN pistas t ON t.id=m.pista_id WHERE m.atleta_id=? ORDER BY m.fecha DESC", [$id])->fetchAll();
+    addHistoryRankings($db, $marks, $id, (string) $athlete['sex']);
+    unset($athlete['sex']);
+    return compact('athlete', 'marks');
+}
 
 function writeAthlete(PDO $db, array $payload, ?int $id = null): void { $birthdate=requiredDate($payload,'birthdate','fecha de nacimiento');$sex=requiredSex($payload);$values=[titleCaseName(requiredText($payload,'name','nombre')),titleCaseName(requiredText($payload,'surname','apellidos')),$birthdate,$sex]; if($id===null){execute($db,'INSERT INTO atletas (nombre, apellidos, fecha_nacimiento, sexo) VALUES (?, ?, ?, ?)', $values);return;} ensureExists($db,'atletas',$id);$values[]=$id;execute($db,'UPDATE atletas SET nombre=?, apellidos=?, fecha_nacimiento=?, sexo=? WHERE id=?',$values); foreach(execute($db,'SELECT id, fecha FROM marcas WHERE atleta_id=?',[$id])->fetchAll() as $mark) execute($db,'UPDATE marcas SET categoria=? WHERE id=?',[categoryForDates($birthdate,$mark['fecha'],$sex),$mark['id']]); }
 function moveAthleteMarks(PDO $db,array $payload): array{$sourceId=requiredId($payload,'sourceAthleteId','atleta origen');$targetId=requiredId($payload,'targetAthleteId','atleta destino');if($sourceId===$targetId)throw new ApiException('El atleta origen y destino deben ser diferentes.');ensureExists($db,'atletas',$sourceId);$target=execute($db,'SELECT fecha_nacimiento, sexo FROM atletas WHERE id=?',[$targetId])->fetch();if(!$target)throw new ApiException('El atleta destino no existe.',404);$marks=execute($db,'SELECT id, fecha FROM marcas WHERE atleta_id=?',[$sourceId])->fetchAll();foreach($marks as $mark){$category=categoryForDates($target['fecha_nacimiento'],$mark['fecha'],$target['sexo']);execute($db,'UPDATE marcas SET atleta_id=?, categoria=? WHERE id=?',[$targetId,$category,$mark['id']]);}return ['moved'=>count($marks)];}

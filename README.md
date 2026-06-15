@@ -13,8 +13,8 @@ Ese indice indica que documentos abrir segun la tarea para evitar cargar context
 
 ## Version
 
-- Version en produccion: `1.0`
-- Version del repositorio: `1.0`
+- Version en produccion: `3.8`
+- Version del repositorio: `3.8`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
