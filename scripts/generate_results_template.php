@@ -191,8 +191,7 @@ function buildEventSearchSheet(array $catalogue): string
     foreach ($catalogue as $area => $groups) {
         foreach ($groups as $group => $events) {
             foreach ($events as $event) {
-                $technical = in_array($group, ['Tanques', 'Llançaments'], true) ? 'Sí' : 'No';
-                $rows .= sheetRow($row, [$area . ' / ' . $group, $event, $technical, $row === 2 ? $help : '']);
+                $rows .= sheetRow($row, [$area . ' / ' . $group, $event, '', $row === 2 ? $help : '']);
                 $row++;
             }
         }

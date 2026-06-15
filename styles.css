@@ -419,11 +419,6 @@ footer { color: var(--muted); font-size: 13px; padding: 0 26px 28px; text-align:
   font-size: 13px;
   margin-top: 4px;
 }
-.debug-technical {
-  color: #7a7a7a;
-  font-size: 12px;
-  margin-top: 4px;
-}
 .cell-detail-label { font-weight: 700; }
 .history { display: grid; gap: 20px; }
 .history.hidden { display: none; }
