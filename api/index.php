@@ -181,11 +181,20 @@ function bestRankingPosition(array $rows, int $athleteId): ?int {
     }
     return null;
 }
+function bestAthleteMarkId(array $rows, int $athleteId): ?int {
+    $best = null;
+    foreach ($rows as $row) {
+        if ((int) $row['athleteId'] !== $athleteId) continue;
+        $row['_value'] = comparableResult($row['result']);
+        if (!$best || ($row['resultDirection'] === 'higher' ? $row['_value'] > $best['_value'] : $row['_value'] < $best['_value'])) $best = $row;
+    }
+    return $best ? (int) $best['id'] : null;
+}
 function addHistoryRankings(PDO $db, array &$marks, int $athleteId, string $sex): void {
     $eventIds = array_values(array_unique(array_map(static fn($mark) => (int) $mark['eventId'], $marks)));
     if (!$eventIds) return;
     $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
-    $rows = execute($db, "SELECT m.atleta_id AS athleteId,m.prueba_id AS eventId,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,a.sexo AS sex FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id WHERE m.prueba_id IN ({$placeholders})", $eventIds)->fetchAll();
+    $rows = execute($db, "SELECT m.id,m.atleta_id AS athleteId,m.prueba_id AS eventId,CASE p.sentido_resultado WHEN 'mayor' THEN 'higher' ELSE 'lower' END AS resultDirection,m.resultado AS result,m.categoria AS category,a.sexo AS sex FROM marcas m JOIN atletas a ON a.id=m.atleta_id JOIN pruebas p ON p.id=m.prueba_id WHERE m.prueba_id IN ({$placeholders})", $eventIds)->fetchAll();
     $absolute = [];
     $category = [];
     foreach ($rows as $row) {
@@ -196,9 +205,15 @@ function addHistoryRankings(PDO $db, array &$marks, int $athleteId, string $sex)
     foreach ($marks as &$mark) {
         $absoluteKey = 'absolute|' . $mark['eventId'];
         $categoryKey = 'category|' . $mark['eventId'] . '|' . $mark['category'];
-        if (!array_key_exists($absoluteKey, $positionCache)) $positionCache[$absoluteKey] = bestRankingPosition($absolute[(string) $mark['eventId']] ?? [], $athleteId);
+        if (!array_key_exists($absoluteKey, $positionCache)) {
+            $absoluteRows = $absolute[(string) $mark['eventId']] ?? [];
+            $positionCache[$absoluteKey] = [
+                'rank' => bestRankingPosition($absoluteRows, $athleteId),
+                'markId' => bestAthleteMarkId($absoluteRows, $athleteId),
+            ];
+        }
         if (!array_key_exists($categoryKey, $positionCache)) $positionCache[$categoryKey] = bestRankingPosition($category[$mark['eventId'] . '|' . $mark['category']] ?? [], $athleteId);
-        $mark['absoluteRank'] = $positionCache[$absoluteKey];
+        $mark['absoluteRank'] = (int) $mark['id'] === $positionCache[$absoluteKey]['markId'] ? $positionCache[$absoluteKey]['rank'] : null;
         $mark['categoryRank'] = $positionCache[$categoryKey];
     }
     unset($mark);
