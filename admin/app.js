@@ -23,9 +23,12 @@
   function cityLabel(item) { return item.name + (item.province ? " (" + item.province + ")" : ""); }
   function detailLine(value, label) { return value ? "<span class=\"cell-detail\">" + (label ? "<span class=\"cell-detail-label\">" + escapeHtml(label) + ":</span> " : "") + escapeHtml(value) + "</span>" : ""; }
   function technicalValue(value) {
-    var norm = normalized(value);
-    if (norm === "no" || norm === "si" || norm === "true" || norm === "yes") return "";
-    return String(value || "");
+    var val = String(value == null ? "" : value).trim();
+    if (!val) return "";
+    var norm = normalized(val);
+    var indicators = { no: true, si: true, true: true, false: true, yes: true, y: true, n: true };
+    if (indicators[norm]) return "";
+    return val;
   }
   function technicalDetail(value) { return detailLine(technicalValue(value), t("Marca técnica")); }
   function markResultCell(mark) { return "<span class=\"mark-result-main\">" + escapeHtml(normalizeResultText(mark.result)) + "</span>" + technicalDetail(mark.technicalInfo); }
