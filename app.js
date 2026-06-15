@@ -737,12 +737,7 @@
     }
     if (tab.dataset.filterLevel === "category") {
       byId("category-filter").value = tab.dataset.filterValue;
-      byId("area-filter").value = "";
-      byId("group-filter").value = "";
-      byId("event-filter").value = "";
       renderFilters();
-      await loadRanking(false);
-      selectFirstAvailablePath();
       loadRanking();
       return;
     }
