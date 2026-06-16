@@ -1,5 +1,5 @@
 # Arquitectura
-
+ 
 ## Mapa de carpetas
 
 - `/index.html`, `/app.js`, `/styles.css`, `/i18n.js`: consulta publica de rankings y marcas.
