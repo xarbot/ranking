@@ -1,5 +1,5 @@
 # Changelog para agentes
-
+ 
 Registro breve de cambios pensados para futuras sesiones de IA. No sustituye al historial de Git.
 
 ## 2026-06-06
