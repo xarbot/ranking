@@ -52,3 +52,12 @@ Entrada obligatoria para ahorrar contexto. Lee este archivo primero y abre solo 
 ## Documentos antiguos
 
 Algunos nombres historicos pueden seguir existiendo por compatibilidad (`WORKFLOW.md`, `CODING_STANDARDS.md`, `CHANGELOG_AI.md`, `docs/ai/`). La fuente actual es este directorio y, para reglas nuevas, los documentos listados arriba.
+
+## Herramientas MCP
+
+Ver:
+
+- `docs/agent-context/MCP_SERVERS.md`
+
+Este archivo documenta los servidores MCP disponibles para agentes locales/remotos, su ambito y el uso recomendado de:
+`ranking-filesystem`, `ranking-tools`, `ranking-git` y `ranking-qdrant`.

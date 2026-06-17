@@ -27,3 +27,7 @@ Este repositorio contiene la aplicacion de ranking del Club Atletic Castellar. `
 ## Fuente compartida
 
 La documentacion neutral para cualquier herramienta vive en `docs/agent-context/`. Los archivos especificos de una herramienta, si existen, deben apuntar a esa fuente y no duplicar reglas.
+
+## MCP servers
+
+Para conocer los servidores MCP disponibles y cuando usar cada uno, consulta `docs/agent-context/MCP_SERVERS.md`.
