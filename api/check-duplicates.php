@@ -33,6 +33,7 @@ try {
 // Un duplicado se considera cuando hay dos filas iguales dentro de la tabla marcas
 // Es decir dos resultados iguales del mismo atleta, la misma prueba, ciudad y fecha,
 // con la misma categoria y caracteristica tecnica
+// NOTA: El campo `resultado` NO se incluye en el criterio de duplicado.
 $sql = 'SELECT
     m.atleta_id,
     m.prueba_id,
