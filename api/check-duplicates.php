@@ -14,11 +14,10 @@ try {
     $dbname = getenv('DB_NAME');
     $user = getenv('DB_USER');
     $pass = getenv('DB_PASS');
-    
     if (empty($dbname)) {
         throw new Exception("La variable de entorno DB_NAME no está configurada.");
     }
-    
+
     // Incluir dbname en el DSN para seleccionar la base de datos explícitamente y evitar "No database selected"
     $dsn = sprintf('mysql:host=%s;dbname=%s;port=%d;charset=utf8mb4', $host, $dbname, (int)$port);
     $pdo = new PDO($dsn, $user, $pass, [
@@ -31,9 +30,9 @@ try {
 
 // Consulta para obtener duplicados con los detalles solicitados
 // Un duplicado se considera cuando hay dos filas iguales dentro de la tabla marcas
-// Es decir dos resultados iguales del mismo atleta, la misma prueba, ciudad y fecha,
-// con la misma categoría y característica técnica.
-// NOTA: El campo `resultado` NO se incluye en el criterio de duplicado.
+// Es decir, dos registros del mismo atleta, misma prueba, ciudad, fecha,
+// con la misma categoría, característica técnica Y el mismo resultado.
+// Dos marcas son duplicadas solo si coinciden en TODOS estos campos incluido resultado.
 $sql = 'SELECT
     m.atleta_id,
     m.prueba_id,
@@ -58,9 +57,10 @@ WHERE m.id IN (
     AND m2.prueba_id = m.prueba_id
     AND m2.ciudad_id = m.ciudad_id
     AND m2.fecha = m.fecha
+    AND (m2.resultado <=> m.resultado)
     AND m2.caracteristica_tecnica = m.caracteristica_tecnica
     AND m2.categoria = m.categoria
-    GROUP BY m2.atleta_id, m2.prueba_id, m2.ciudad_id, m2.fecha, m2.caracteristica_tecnica, m2.categoria
+    GROUP BY m2.atleta_id, m2.prueba_id, m2.ciudad_id, m2.fecha, m2.caracteristica_tecnica, m2.categoria, m2.resultado
     HAVING COUNT(*) > 1
 )';
 
