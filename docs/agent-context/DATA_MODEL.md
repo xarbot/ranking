@@ -32,7 +32,7 @@ Fuente principal: `database/init.sql`. Para cambios estructurales, revisar tambi
 - Atletas: nombre y apellidos se normalizan capitalizados; `sexo` es `masculino` o `femenino` cuando el atleta esta completo. No usar valores ficticios para pendientes.
 - Pruebas: `ambito` puede ser `pista_cubierta`, `aire_libre` o `ruta`.
 - Pruebas: `grupo` organiza catalogo; `sentido_resultado` es `menor` para tiempos y `mayor` para saltos/lanzamientos.
-- Pruebas: `informacion_adicional` obliga a registrar caracteristica tecnica.
+- Pruebas: `informacion_adicional` obliga a registrar caracteristica tecnica en alta/edicion manual. En importaciones de marcas, la caracteristica tecnica es opcional y puede guardarse `NULL`.
 - Marcas: `resultado` se guarda como texto validado; se convierte a valor comparable al calcular rankings.
 - Atletas pendientes: existen en administracion, permisos, busquedas, fusion y exportaciones admin; no aparecen en endpoints publicos hasta completarse.
 - Marcas: `categoria` se calcula desde fecha de nacimiento, fecha de marca y sexo. En marcas de atletas pendientes puede ser `NULL`.

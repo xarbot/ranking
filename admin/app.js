@@ -301,7 +301,7 @@
     var extension = format === "microsoft2021" ? ".xlsm" : ".xlsx";
     var variant = format === "microsoft2021" ? "-microsoft-2021" : format === "microsoft" ? "-microsoft" : "";
     var version = format === "microsoft2021" ? "xlsm1" : format === "microsoft" ? "ms7" : "lo";
-    byId(linkId).href = "../assets/" + prefix + variant + extension + "?v=20260528-" + version;
+    byId(linkId).href = "../assets/" + prefix + variant + extension + "?v=20260802-5-" + version;
     byId(linkId).download = prefix + "-" + suffix + ".xlsx";
     if (format === "microsoft2021") byId(linkId).download = prefix + "-" + suffix + ".xlsm";
   }

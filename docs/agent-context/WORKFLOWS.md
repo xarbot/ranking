@@ -6,7 +6,7 @@
 - En admin hay flujo individual por atleta y flujo multiatleta con columna `Atleta`.
 - Validar todas las filas antes de grabar; si hay errores, no importar parcialmente.
 - La importacion masiva usa jobs temporales en `storage/import-jobs/` para progreso y un lock en `storage/locks/`.
-- Comprobar atleta, prueba, ciudad, fecha, marca y caracteristica tecnica obligatoria.
+- Comprobar atleta, prueba, ciudad, fecha y marca. En importacion, la caracteristica tecnica es opcional aunque la prueba tenga `informacion_adicional`.
 - Si un atleta nuevo tiene nombre/apellidos validos pero falta fecha de nacimiento o sexo, se crea como `estado='pendiente'` y sus marcas entran con `categoria=NULL`; esto no cuenta como error masivo.
 - La creacion de atletas nuevos y la insercion de marcas deben permanecer en la misma transaccion de importacion.
 - Para cambios de logica, buscar `importMarks`, `importMultipleMarks`, `markPayload`, `requiredResult`.

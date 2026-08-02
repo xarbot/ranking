@@ -14,6 +14,7 @@ Registro breve de cambios pensados para futuras sesiones de IA. No sustituye al 
 - Aniadida migracion `009_atletas_pendientes.sql`: atletas nuevos sin fecha/sexo se crean como pendientes, sus marcas usan `categoria=NULL`, y los endpoints publicos filtran `estado='completo'`.
 - El listado admin de atletas distingue y filtra pendientes; al completar fecha y sexo se recalculan categorias de sus marcas de forma transaccional.
 - `api/check-duplicates.php` queda protegido por sesion admin y sigue comparando `categoria` con operador null-safe para pendientes.
+- En importaciones de marcas, `Caracteristica tecnica` pasa a ser opcional incluso si la prueba tiene `informacion_adicional`; el alta manual conserva la obligatoriedad.
 
 ### Notas
 

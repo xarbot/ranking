@@ -177,7 +177,7 @@ function rankingBuildCitySearchSheet(array $cities, bool $excelStrict = false): 
 
 function rankingBuildEventSearchSheet(array $catalogue, bool $excelStrict = false): string
 {
-    $help = 'Filtra esta tabla y copia Ámbito / Grupo y Prueba en Resultados. Fecha admitida: AAAA-MM-DD, DD/MM/AAAA o D/M/AA.';
+    $help = 'Filtra esta tabla y copia Ámbito / Grupo y Prueba en Resultados. Característica técnica es opcional. Fecha admitida: AAAA-MM-DD, DD/MM/AAAA o D/M/AA.';
     $rows = rankingSheetRow(1, ['Ámbito / Grupo', 'Prueba', 'Característica técnica', 'Ayuda'], 1);
     $row = 2;
     foreach ($catalogue as $area => $groups) {

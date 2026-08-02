@@ -56,8 +56,9 @@ El esquema contiene:
 
 La instalacion incluye un catalogo inicial de `Pista Cubierta`, `Aire Libre` y `Ruta`, con
 sus grupos y pruebas. Desde el apartado de pruebas se pueden anadir, editar y eliminar
-pruebas. Tanques y lanzamientos requieren el texto libre de caracteristica tecnica. En pista
-cubierta y aire libre se puede indicar ademas el nombre de la pista.
+pruebas. En alta manual, tanques y lanzamientos requieren el texto libre de caracteristica
+tecnica; en importaciones de resultados esa columna es opcional y se conserva solo si viene
+informada. En pista cubierta y aire libre se puede indicar ademas el nombre de la pista.
 
 Las clasificaciones separan sexo: `Sub8 - Masculino`, `Sub8 - Femenino`, etc. Desde los
 grupos Sub hasta Senior se asignan por el ano en que el atleta cumple la edad de cambio.
@@ -100,7 +101,9 @@ LibreOffice/OpenOffice. Ofrece `Ambito / Grupo` en una unica columna y un desple
 `Ciudades`. La persona que la rellena la devuelve en formato Excel; antes de importarla se
 guarda la hoja `Resultados` como CSV. El CSV individual contiene `Ambito / Grupo`, `Prueba`,
 `Caracteristica tecnica`, `Marca`, `Fecha`, `Ciudad` y `Pista`; el CSV multiatleta antepone
-`Atleta`. Se siguen admitiendo CSV anteriores con `Ambito` y `Grupo` separados. La fecha de
+`Atleta`. En importaciones, `Caracteristica tecnica` es opcional aunque la prueba tenga dato
+tecnico en el catalogo; si esta vacia se guarda sin rellenar valores ficticios.
+Se siguen admitiendo CSV anteriores con `Ambito` y `Grupo` separados. La fecha de
 las marcas puede escribirse como `AAAA-MM-DD`, `AAAA/MM/DD`, `DD-MM-AAAA`, `DD/MM/AAAA`
 o con dia, mes y ano abreviados, como `1/7/94` (`1994-07-01`).
 La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
