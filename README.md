@@ -13,8 +13,8 @@ Ese indice indica que documentos abrir segun la tarea para evitar cargar context
 
 ## Version
 
-- Version en produccion: `3.8`
-- Version del repositorio: `3.8`
+- Version en produccion: `3.9`
+- Version del repositorio: `3.9`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -50,6 +50,7 @@ El esquema contiene:
 - `marcas`: atleta, prueba, ciudad, nombre opcional de pista, marca, dato tecnico y categoria.
 - `traducciones`: traduccion editable de los literales de la aplicacion.
 - `pistas`: tabla conservada unicamente para migrar marcas historicas.
+- `app_settings`: preferencias persistentes de la aplicacion, incluida la activacion de la carga automatica inicial de ciudades.
 
 ## Catalogo y clasificaciones
 
@@ -99,9 +100,30 @@ guarda la hoja `Resultados` como CSV. El CSV individual contiene `Ambito / Grupo
 las marcas puede escribirse como `AAAA-MM-DD`, `AAAA/MM/DD`, `DD-MM-AAAA`, `DD/MM/AAAA`
 o con dia, mes y ano abreviados, como `1/7/94` (`1994-07-01`).
 La importacion comprueba prueba, ciudad y campos obligatorios antes de grabar ninguna marca.
+El panel de importacion muestra progreso por job temporal mientras valida e inserta marcas;
+las marcas se validan por completo antes de grabarse y la insercion se mantiene atomica.
+Desde el mismo apartado se puede descargar un XLSX multiatleta con todas las marcas activas,
+compatible con la plantilla de importacion. Ese Excel no incluye papelera, IDs internos,
+auditoria ni timestamps.
 
 Las plantillas se regeneran tras modificar el catalogo o las ciudades mediante
 `php scripts/generate_results_template.php`.
+
+## Utilidades administrativas
+
+El apartado **Utilidades** esta disponible solo para administradores. Permite crear, listar,
+descargar, subir, restaurar y eliminar backups logicos completos en
+`storage/backups/`. El formato es JSONL secuencial propio
+(`*.ranking-backup.jsonl`) y no depende de `mysqldump`, `exec` ni `ZipArchive`.
+Los backups incluyen todas las tablas funcionales, preservando IDs, relaciones, usuarios,
+hashes de contrasena, auditoria y timestamps; `schema_migrations` se registra en metadata
+pero no se restaura como dato.
+
+Las restauraciones validan formato, checksum, columnas, migraciones exactas y existencia de
+un admin activo antes de tocar la base de datos. Antes de restaurar, borrar todas las marcas
+o hacer un vaciado general se genera un backup automatico. Las operaciones destructivas usan
+confirmacion fuerte y, para restore, borrar todas las marcas y vaciado general, la contrasena
+actual del administrador.
 
 ## Despliegue nginx
 

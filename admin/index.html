@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260531-1">
-    <script src="i18n.js?v=20260530-7" defer></script>
-    <script src="app.js?v=20260531-2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260802-1">
+    <script src="i18n.js?v=20260802-1" defer></script>
+    <script src="app.js?v=20260802-1" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -80,6 +80,7 @@
         <button class="tab" data-panel="ciudades">Ciudades</button>
         <button class="tab" data-panel="traducciones">Traducciones</button>
         <button class="tab" data-panel="usuarios">Usuarios</button>
+        <button class="tab admin-only" data-panel="utilidades">Utilidades</button>
         <button class="tab" data-panel="control">Panel de Control</button>
       </nav>
       <p id="app-error" class="status failure hidden" role="alert"></p>
@@ -128,7 +129,7 @@
 
       <section id="panel-carga-resultados" class="panel">
         <article class="card management imports-management">
-          <div class="card-title"><h2>Carga masiva de resultados</h2></div>
+          <div class="card-title"><h2>Carga masiva de resultados</h2><div class="import-actions admin-only"><button class="secondary" id="download-all-marks" type="button">Descargar todas las marcas</button></div></div>
           <div class="import-modes">
             <section class="bulk-import">
               <h3>Marcas de un atleta</h3>
@@ -151,6 +152,11 @@
                 <label class="file-button secondary" for="import-marks-file">Importar resultados CSV</label><input class="hidden" id="import-marks-file" type="file" accept=".csv,text/csv">
               </div>
               <p id="mark-import-status" class="status hidden" role="status"></p>
+              <div id="mark-import-progress" class="import-progress hidden" role="status" aria-live="polite">
+                <div class="progress-meta"><strong data-progress-phase>Preparando</strong><span data-progress-count></span></div>
+                <div class="progress-track"><span data-progress-bar></span></div>
+                <p data-progress-message></p>
+              </div>
               <form id="mark-import-review-form" class="import-review hidden">
                 <h4>Previsualización de marcas</h4>
                 <div id="mark-import-review-body"></div>
@@ -174,6 +180,11 @@
                 <label class="file-button secondary" for="import-multi-marks-file">Importar resultados CSV</label><input class="hidden" id="import-multi-marks-file" type="file" accept=".csv,text/csv">
               </div>
               <p id="multi-mark-import-status" class="status hidden" role="status"></p>
+              <div id="multi-mark-import-progress" class="import-progress hidden" role="status" aria-live="polite">
+                <div class="progress-meta"><strong data-progress-phase>Preparando</strong><span data-progress-count></span></div>
+                <div class="progress-track"><span data-progress-bar></span></div>
+                <p data-progress-message></p>
+              </div>
               <form id="multi-mark-import-review-form" class="import-review hidden">
                 <h4>Previsualización de marcas</h4>
                 <div id="multi-mark-import-review-body"></div>
@@ -384,7 +395,65 @@
           </div>
         </article>
       </section>
+
+      <section id="panel-utilidades" class="panel">
+        <article class="card management utilities-management">
+          <div class="card-title"><h2>Utilidades</h2><button class="secondary" id="refresh-utilities" type="button">Actualizar</button></div>
+          <div class="utilities-grid">
+            <section class="utility-block">
+              <h3>Copias de seguridad</h3>
+              <div class="utility-actions">
+                <button class="primary" id="create-backup" type="button">Crear copia</button>
+                <label class="file-button secondary" for="upload-backup-file">Subir backup</label>
+                <input class="hidden" id="upload-backup-file" type="file" accept=".jsonl,.ranking-backup.jsonl,application/x-ndjson">
+              </div>
+              <p id="backup-status" class="status hidden" role="status"></p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Archivo</th><th>Fecha</th><th>Tamaño</th><th>Recuentos</th><th></th></tr></thead>
+                  <tbody id="backups-body"></tbody>
+                </table>
+                <p id="backups-empty" class="empty">No hay copias de seguridad.</p>
+              </div>
+            </section>
+            <section class="utility-block">
+              <h3>Gestión de datos</h3>
+              <p class="helper">Los vaciados selectivos bloquean dependencias para evitar datos huérfanos.</p>
+              <p id="data-clear-status" class="status hidden" role="status"></p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Datos</th><th>Cantidad</th><th>Estado</th><th></th></tr></thead>
+                  <tbody id="data-clear-body"></tbody>
+                </table>
+              </div>
+            </section>
+            <section class="utility-block">
+              <h3>Operaciones globales</h3>
+              <p class="helper">Estas operaciones crean una copia completa antes de modificar datos.</p>
+              <div class="global-operations">
+                <button class="secondary danger-action" id="clear-all-marks" type="button">Borrar todas las marcas</button>
+                <button class="secondary danger-action" id="full-reset" type="button">Vaciar todo</button>
+              </div>
+              <p id="global-operations-status" class="status hidden" role="status"></p>
+            </section>
+          </div>
+        </article>
+      </section>
     </main>
-    <footer id="app-footer" class="hidden">v. 3.4</footer>
+    <div class="modal-backdrop hidden" id="danger-modal" role="dialog" aria-modal="true" aria-labelledby="danger-modal-title">
+      <div class="modal-card">
+        <h2 id="danger-modal-title">Confirmar operación</h2>
+        <p id="danger-modal-message"></p>
+        <label>Frase de confirmación<input id="danger-modal-confirmation" autocomplete="off"></label>
+        <label id="danger-modal-password-field">Contraseña actual<input id="danger-modal-password" type="password" autocomplete="current-password"></label>
+        <p class="helper">Esta comprobación también se valida en el servidor.</p>
+        <p id="danger-modal-error" class="error" role="alert"></p>
+        <div class="actions">
+          <button class="secondary" id="danger-modal-cancel" type="button">Cancelar</button>
+          <button class="primary danger-action" id="danger-modal-confirm" type="button">Confirmar</button>
+        </div>
+      </div>
+    </div>
+    <footer id="app-footer" class="hidden">v. 3.9</footer>
   </body>
 </html>

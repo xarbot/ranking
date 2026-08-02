@@ -6,13 +6,15 @@
 - `/admin/index.html`, `/admin/app.js`, `/admin/styles.css`, `/admin/i18n.js`: panel autenticado de gestion.
 - `/api/index.php`: controlador unico de API, sesiones, validaciones, rankings, importaciones y CRUD.
 - `/lib/env.php`: lectura de variables de entorno desde `.env`.
+- `/lib/admin_utilities.php`: backups JSONL, locks, auditoria, settings y operaciones admin destructivas.
+- `/lib/results_workbook.php`: generacion compartida de plantillas/export XLSX de resultados.
 - `/database/init.sql`: esquema completo para instalaciones nuevas.
 - `/database/migrations/`: migraciones incrementales aplicadas por `scripts/migrate.php`.
 - `/database/ciudades_es.csv`: catalogo inicial de municipios; archivo grande.
 - `/scripts/`: migraciones y generacion/empaquetado de plantillas.
 - `/assets/`: logo y plantillas Excel/LibreOffice para importaciones.
 - `/deploy/nginx/`: ejemplo de rutas nginx.
-- `/storage/`: ruta reservada con `.gitignore`.
+- `/storage/`: ruta reservada con `.gitignore`; contiene backups, auditoria, locks, exports temporales y jobs de importacion.
 - `/docs/agent-context/`: contexto neutral para agentes.
 - `/docs/ai/`: documentacion historica; usar solo como compatibilidad.
 

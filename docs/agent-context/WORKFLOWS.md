@@ -5,8 +5,16 @@
 - Revisar formato esperado en `README.md` solo si la tarea trata plantillas o CSV.
 - En admin hay flujo individual por atleta y flujo multiatleta con columna `Atleta`.
 - Validar todas las filas antes de grabar; si hay errores, no importar parcialmente.
+- La importacion masiva usa jobs temporales en `storage/import-jobs/` para progreso y un lock en `storage/locks/`.
 - Comprobar atleta, prueba, ciudad, fecha, marca y caracteristica tecnica obligatoria.
 - Para cambios de logica, buscar `importMarks`, `importMultipleMarks`, `markPayload`, `requiredResult`.
+
+## Utilidades admin
+
+- Backups logicos en `storage/backups/` con formato JSONL propio; no dependen de `mysqldump` ni `ZipArchive`.
+- `schema_migrations` se valida como metadata estricta, pero no se restaura como tabla de datos.
+- Restaurar, borrar todas las marcas y full reset crean backup previo y usan lock de mantenimiento.
+- No ejecutar restore, vaciados ni borrados sobre una DB real salvo peticion explicita.
 
 ## Revisar duplicados
 

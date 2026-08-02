@@ -138,11 +138,23 @@ CREATE TABLE IF NOT EXISTS traducciones (
   UNIQUE KEY uq_traducciones_literal (literal)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS app_settings (
+  name VARCHAR(100) NOT NULL,
+  value VARCHAR(255) NOT NULL,
+  creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (name)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS schema_migrations (
   version VARCHAR(255) NOT NULL,
   executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (version)
 ) ENGINE=InnoDB;
+
+INSERT INTO app_settings (name, value)
+VALUES ('seed_cities_enabled', '1')
+ON DUPLICATE KEY UPDATE value = value;
 
 INSERT IGNORE INTO schema_migrations (version)
 VALUES ('001_create_migration_tracking.sql'),
@@ -151,4 +163,5 @@ VALUES ('001_create_migration_tracking.sql'),
        ('004_catalogo_pruebas_cerrado.sql'),
        ('005_usuarios_roles_permisos_marcas.sql'),
        ('006_rol_gestor_marcas.sql'),
-       ('007_pistas_catalogo_marcas_borradas.sql');
+       ('007_pistas_catalogo_marcas_borradas.sql'),
+       ('008_app_settings_seed_control.sql');

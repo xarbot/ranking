@@ -13,6 +13,7 @@
 - Importaciones deben validar todo antes de escribir; evitar grabaciones parciales.
 - Permisos combinan roles globales y permisos por atleta; revisar antes de tocar marcas o atletas.
 - `marcas_borradas` conserva marcas eliminadas; no purgar sin confirmacion clara.
+- Utilidades admin incluye restore, vaciados y full reset; no ejecutar endpoints destructivos contra DB real para pruebas.
 - `database/ciudades_es.csv` es grande y se carga como catalogo inicial; no editarlo salvo tarea especifica.
 - Plantillas Excel de `assets/` incluyen binarios; no abrir ni regenerar sin necesidad.
 

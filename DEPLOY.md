@@ -96,6 +96,17 @@ chmod 600 /var/www/ranking.clubatleticcastellar.cat/.env
 ```
 
 El fichero `conf/nginx/ranking.conf` impide publicar o ejecutar `database/`, `lib/`, `scripts/`, `storage/`, `vendor/` y otros directorios privados incluidos en `htdocs`.
+El apartado admin **Utilidades** escribe backups, locks, auditoria y jobs temporales bajo
+`storage/`. El proceso PHP debe poder crear y escribir:
+
+```sh
+mkdir -p storage/backups storage/locks storage/audit storage/import-jobs storage/exports
+chown -R deploy:www-data storage
+chmod -R 750 storage
+```
+
+`storage/` no se versiona y nginx lo bloquea; las descargas de backup se realizan siempre
+mediante endpoint autenticado.
 
 ## Actualizacion segura
 
@@ -116,6 +127,8 @@ para que el navegador revalide el HTML y recoja los nuevos `?v=` de `app.js` y `
 tras cada despliegue.
 
 Las migraciones de `database/migrations/` se aplican por orden de nombre y solo una vez. Si una migracion falla, conserva el backup y resuelve el error antes de publicar la nueva version.
+La version `3.9` incorpora `008_app_settings_seed_control.sql`, que crea `app_settings`
+para guardar preferencias persistentes como `seed_cities_enabled`.
 
 ## Copia de seguridad
 

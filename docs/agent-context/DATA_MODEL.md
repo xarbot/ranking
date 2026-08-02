@@ -13,6 +13,7 @@ Fuente principal: `database/init.sql`. Para cambios estructurales, revisar tambi
 - `marcas_borradas`: papelera/auditoria para marcas eliminadas.
 - `usuario_atleta_permisos`: permisos de usuarios normales sobre atletas concretos.
 - `traducciones`: literales editables en castellano y catalan.
+- `app_settings`: preferencias persistentes de aplicacion; actualmente controla si `seedCities` puede repoblar ciudades automaticamente.
 - `schema_migrations`: migraciones SQL ya aplicadas.
 
 ## Relaciones
@@ -24,6 +25,7 @@ Fuente principal: `database/init.sql`. Para cambios estructurales, revisar tambi
 - `marcas.creado_por` y `actualizado_por` -> `usuarios.id` con borrado a `NULL`.
 - `usuario_atleta_permisos` une `usuarios` y `atletas`.
 - `pistas.ciudad_id` -> `ciudades.id`.
+- `app_settings` no tiene claves foraneas y se incluye en backups logicos de datos.
 
 ## Convenciones deportivas
 
