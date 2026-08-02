@@ -138,6 +138,7 @@
       "Escoge un atleta existente en cada fila o completa aqui las altas nuevas antes de subir.": "Escull un atleta existent a cada fila o completa aquí les altes noves abans de pujar.",
       "Atleta no encontrado": "Atleta no trobat",
       "Prueba no encontrada": "Prova no trobada",
+      "Fecha no válida": "Data no vàlida",
       "Ciudad no encontrada": "Ciutat no trobada",
       "Posible duplicado": "Possible duplicat",
       "Pista recomendada": "Pista recomanada",

@@ -96,55 +96,31 @@ function rankingSheetRow(int $number, array $values, int $style = 0): string
     return '<row r="' . $number . '">' . $cells . '</row>';
 }
 
-function rankingWorksheet(string $rows, string $columns, string $validations = '', string $lastColumn = 'H', int $lastRow = RANKING_RESULTS_ENTRY_ROWS + 1, bool $excelStrict = false): string
+function rankingWorksheet(
+    string $rows,
+    string $columns,
+    string $validations = '',
+    string $lastColumn = 'H',
+    int $lastRow = RANKING_RESULTS_ENTRY_ROWS + 1,
+    bool $excelStrict = false,
+    bool $includeAutoFilter = true,
+    ?string $autoFilterRef = null,
+    bool $includeSheetProtection = true
+): string
 {
-    $protection = $excelStrict ? '' : '<sheetProtection sheet="0"/>';
+    $dimension = $excelStrict ? '<dimension ref="A1:' . $lastColumn . $lastRow . '"/>' : '';
+    $sheetFormat = $excelStrict ? '<sheetFormatPr defaultRowHeight="15"/>' : '';
+    $protection = (!$excelStrict && $includeSheetProtection) ? '<sheetProtection sheet="0"/>' : '';
+    $autoFilter = $includeAutoFilter ? '<autoFilter ref="' . ($autoFilterRef ?? 'A1:' . $lastColumn . $lastRow) . '"/>' : '';
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
+        . $dimension . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>' . $sheetFormat
         . '<cols>' . $columns . '</cols><sheetData>' . $rows . '</sheetData>'
-        . $protection . '<autoFilter ref="A1:' . $lastColumn . $lastRow . '"/>'
+        . $protection . $autoFilter
         . $validations . '</worksheet>';
 }
 
-function rankingColumnIndex(string $letters): int
-{
-    $index = 0;
-    foreach (str_split($letters) as $letter) {
-        $index = ($index * 26) + (ord($letter) - 64);
-    }
-    return $index;
-}
-
-function rankingSheetDimension(string $sheet): string
-{
-    preg_match_all('/<c r="([A-Z]+)(\d+)"/', $sheet, $matches, PREG_SET_ORDER);
-    $maxColumn = 1;
-    $maxRow = 1;
-    foreach ($matches as $match) {
-        $maxColumn = max($maxColumn, rankingColumnIndex($match[1]));
-        $maxRow = max($maxRow, (int) $match[2]);
-    }
-    return 'A1:' . rankingColumn($maxColumn) . $maxRow;
-}
-
-function rankingExcelStrictSheet(string $sheet, bool $removeAutoFilter = false): string
-{
-    $sheet = preg_replace('/<sheetProtection[^>]*\/>/', '', $sheet) ?? $sheet;
-    if ($removeAutoFilter) {
-        $sheet = preg_replace('/<autoFilter[^>]*\/>/', '', $sheet) ?? $sheet;
-    }
-    if (!str_contains($sheet, '<dimension ')) {
-        $dimension = '<dimension ref="' . rankingSheetDimension($sheet) . '"/>';
-        $sheet = preg_replace('/(<worksheet\b[^>]*>)/', '$1' . $dimension, $sheet, 1) ?? $sheet;
-    }
-    if (!str_contains($sheet, '<sheetFormatPr ')) {
-        $sheet = str_replace('</sheetViews>', '</sheetViews><sheetFormatPr defaultRowHeight="15"/>', $sheet);
-    }
-    return $sheet;
-}
-
-function rankingBuildListSheet(array $cities, array $catalogue): array
+function rankingBuildListSheet(array $cities, array $catalogue, bool $excelStrict = false): array
 {
     $scopes = [];
     foreach ($catalogue as $area => $groups) {
@@ -176,25 +152,30 @@ function rankingBuildListSheet(array $cities, array $catalogue): array
         $number = $position + 1;
         $widths .= '<col min="' . $number . '" max="' . $number . '" width="32" customWidth="1"/>';
     }
-    return [rankingWorksheet($rows, $widths), $ranges];
+    return [rankingWorksheet($rows, $widths, '', rankingColumn(count($columns)), $rowCount, $excelStrict, !$excelStrict), $ranges];
 }
 
-function rankingBuildCitySearchSheet(array $cities): string
+function rankingBuildCitySearchSheet(array $cities, bool $excelStrict = false): string
 {
     $help = 'En Resultados puedes escribir una ciudad valida. Si tu Excel no autocompleta la lista, busca aqui con el filtro y copia el valor.';
     $rows = rankingSheetRow(1, ['Ciudad', 'Ayuda'], 1);
     foreach ($cities as $position => $city) {
         $rows .= rankingSheetRow($position + 2, [$city, $position === 0 ? $help : '']);
     }
-    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
-        . '<cols><col min="1" max="1" width="46" customWidth="1"/><col min="2" max="2" width="112" customWidth="1"/></cols>'
-        . '<sheetData>' . $rows . '</sheetData>'
-        . '<autoFilter ref="A1:A' . (count($cities) + 1) . '"/></worksheet>';
+    return rankingWorksheet(
+        $rows,
+        '<col min="1" max="1" width="46" customWidth="1"/><col min="2" max="2" width="112" customWidth="1"/>',
+        '',
+        'B',
+        count($cities) + 1,
+        $excelStrict,
+        true,
+        'A1:A' . (count($cities) + 1),
+        false
+    );
 }
 
-function rankingBuildEventSearchSheet(array $catalogue): string
+function rankingBuildEventSearchSheet(array $catalogue, bool $excelStrict = false): string
 {
     $help = 'Filtra esta tabla y copia Ámbito / Grupo y Prueba en Resultados. Fecha admitida: AAAA-MM-DD, DD/MM/AAAA o D/M/AA.';
     $rows = rankingSheetRow(1, ['Ámbito / Grupo', 'Prueba', 'Característica técnica', 'Ayuda'], 1);
@@ -207,12 +188,17 @@ function rankingBuildEventSearchSheet(array $catalogue): string
             }
         }
     }
-    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
-        . '<cols><col min="1" max="1" width="36" customWidth="1"/><col min="2" max="2" width="26" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/><col min="4" max="4" width="90" customWidth="1"/></cols>'
-        . '<sheetData>' . $rows . '</sheetData>'
-        . '<autoFilter ref="A1:D' . ($row - 1) . '"/></worksheet>';
+    return rankingWorksheet(
+        $rows,
+        '<col min="1" max="1" width="36" customWidth="1"/><col min="2" max="2" width="26" customWidth="1"/><col min="3" max="3" width="26" customWidth="1"/><col min="4" max="4" width="90" customWidth="1"/>',
+        '',
+        'D',
+        $row - 1,
+        $excelStrict,
+        !$excelStrict,
+        null,
+        false
+    );
 }
 
 function rankingValidation(string $kind, string $reference, string $formula, string $prompt, string $error): string
@@ -222,28 +208,30 @@ function rankingValidation(string $kind, string $reference, string $formula, str
         . rankingXml($formula) . '</formula1></dataValidation>';
 }
 
-function rankingBuildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false, string $cityFormula = 'Ciudades', array $dataRows = []): string
+function rankingBuildResultsSheet(bool $includeAthlete = false, bool $excelStrict = false, string $cityFormula = 'Ciudades', iterable $dataRows = []): string
 {
     $offset = $includeAthlete ? 1 : 0;
     $scope = rankingColumn(1 + $offset);
     $event = rankingColumn(2 + $offset);
     $city = rankingColumn(6 + $offset);
-    $lastRow = max(RANKING_RESULTS_ENTRY_ROWS + 1, count($dataRows) + 1);
+    $headers = $includeAthlete ? RANKING_RESULTS_MULTI_HEADERS : RANKING_RESULTS_HEADERS;
+    $rows = rankingSheetRow(1, $headers, 1);
+    $lastDataRow = 1;
+    foreach ($dataRows as $dataRow) {
+        $lastDataRow++;
+        $rows .= rankingSheetRow($lastDataRow, $dataRow);
+    }
+    $lastRow = max(RANKING_RESULTS_ENTRY_ROWS + 1, $lastDataRow);
     $items = [
         rankingValidation('Ámbito / Grupo', $scope . '2:' . $scope . $lastRow, 'Ambitos_Grupos', 'Escribe o escoge el ámbito y grupo.', 'Escoge un ámbito y grupo de la lista.'),
         rankingValidation('Prueba', $event . '2:' . $event . $lastRow, 'INDIRECT("Proves_"&SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(' . $scope . '2," ","_"),"/","_"),"ç","c"))', 'Tras indicar ámbito y grupo, escribe o escoge la prueba.', 'Escoge una prueba válida para el grupo.'),
         rankingValidation('Ciudad', $city . '2:' . $city . $lastRow, $cityFormula, 'Escribe la ciudad o búscala en la pestaña Ciudades.', 'Escoge una ciudad de la lista.'),
     ];
-    $headers = $includeAthlete ? RANKING_RESULTS_MULTI_HEADERS : RANKING_RESULTS_HEADERS;
     $widths = $includeAthlete ? [34, 34, 24, 35, 14, 16, 38, 34] : [34, 24, 35, 14, 16, 38, 34];
     $columns = '';
     foreach ($widths as $position => $width) {
         $number = $position + 1;
         $columns .= '<col min="' . $number . '" max="' . $number . '" width="' . $width . '" customWidth="1"/>';
-    }
-    $rows = rankingSheetRow(1, $headers, 1);
-    foreach ($dataRows as $index => $dataRow) {
-        $rows .= rankingSheetRow($index + 2, $dataRow);
     }
     return rankingWorksheet($rows, $columns, '<dataValidations count="3">' . implode('', $items) . '</dataValidations>', $includeAthlete ? 'H' : 'G', $lastRow, $excelStrict);
 }
@@ -260,11 +248,17 @@ function rankingStyles(): string
         . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 }
 
-function rankingWorkbookFiles(array $cities, array $catalogue, bool $includeAthlete = false, bool $microsoft = false, array $dataRows = []): array
+function rankingWorkbookFiles(array $cities, array $catalogue, bool $includeAthlete = false, bool $microsoft = false, iterable $dataRows = []): iterable
 {
-    [$listSheet, $ranges] = rankingBuildListSheet($cities, $catalogue);
-    $citySearchSheet = rankingBuildCitySearchSheet($cities);
-    $eventSearchSheet = rankingBuildEventSearchSheet($catalogue);
+    [$listSheet, $ranges] = rankingBuildListSheet($cities, $catalogue, $microsoft);
+    if ($microsoft) {
+        foreach ($ranges as &$range) {
+            if ($range[0] === 'Ciudades') {
+                $range[1] = "'Ciudades'!\$A\$2:\$A\$" . (count($cities) + 1);
+            }
+        }
+        unset($range);
+    }
     $defined = '';
     foreach ($ranges as [$name, $reference]) {
         $defined .= '<definedName name="' . rankingXml($name) . '">' . rankingXml($reference) . '</definedName>';
@@ -273,61 +267,88 @@ function rankingWorkbookFiles(array $cities, array $catalogue, bool $includeAthl
         . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
         . '<sheets><sheet name="Resultados" sheetId="1" r:id="rId1"/><sheet name="Listas" sheetId="2" state="hidden" r:id="rId2"/><sheet name="Ciudades" sheetId="3" r:id="rId3"/><sheet name="Pruebas" sheetId="4" r:id="rId4"/></sheets>'
         . '<definedNames>' . $defined . '</definedNames><calcPr calcId="191029" calcMode="auto"/></workbook>';
-    $files = [
-        '[Content_Types].xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>',
-        '_rels/.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>',
-        'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>Club Atlètic Castellar</dc:creator><dc:title>Plantilla de resultats</dc:title></cp:coreProperties>',
-        'docProps/app.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Club Atlètic Castellar</Application></Properties>',
-        'xl/workbook.xml' => $workbook,
-        'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
-        'xl/worksheets/sheet1.xml' => rankingBuildResultsSheet($includeAthlete, false, 'Ciudades', $dataRows),
-        'xl/worksheets/sheet2.xml' => $listSheet,
-        'xl/worksheets/sheet3.xml' => $citySearchSheet,
-        'xl/worksheets/sheet4.xml' => $eventSearchSheet,
-        'xl/styles.xml' => rankingStyles(),
-    ];
-    if (!$microsoft) {
-        return $files;
-    }
-
-    $files['xl/workbook.xml'] = str_replace(
-        "'Listas'!\$A\$2:\$A\$" . (count($cities) + 1),
-        "'Ciudades'!\$A\$2:\$A\$" . (count($cities) + 1),
-        $workbook
-    );
+    yield '[Content_Types].xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
+    yield '_rels/.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>';
+    yield 'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>Club Atlètic Castellar</dc:creator><dc:title>Plantilla de resultats</dc:title></cp:coreProperties>';
+    yield 'docProps/app.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Club Atlètic Castellar</Application></Properties>';
+    yield 'xl/workbook.xml' => $workbook;
+    yield 'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+    yield 'xl/worksheets/sheet2.xml' => $listSheet;
+    unset($listSheet);
+    yield 'xl/worksheets/sheet3.xml' => rankingBuildCitySearchSheet($cities, $microsoft);
+    yield 'xl/worksheets/sheet4.xml' => rankingBuildEventSearchSheet($catalogue, $microsoft);
     $cityFormula = 'Ciudades!$A$2:$A$' . (count($cities) + 1);
-    $files['xl/worksheets/sheet1.xml'] = rankingExcelStrictSheet(rankingBuildResultsSheet($includeAthlete, true, $cityFormula, $dataRows));
-    $files['xl/worksheets/sheet2.xml'] = rankingExcelStrictSheet($listSheet, true);
-    $files['xl/worksheets/sheet3.xml'] = rankingExcelStrictSheet($citySearchSheet);
-    $files['xl/worksheets/sheet4.xml'] = rankingExcelStrictSheet($eventSearchSheet, true);
-    return $files;
+    yield 'xl/worksheets/sheet1.xml' => rankingBuildResultsSheet($includeAthlete, $microsoft, $microsoft ? $cityFormula : 'Ciudades', $dataRows);
+    yield 'xl/styles.xml' => rankingStyles();
 }
 
-function rankingWriteZip(string $target, array $files): void
+function rankingWriteZipPart($handle, string $content): void
 {
-    $body = '';
-    $directory = '';
+    $length = strlen($content);
     $offset = 0;
-    foreach ($files as $name => $content) {
-        $compressed = function_exists('gzdeflate') ? gzdeflate($content) : $content;
-        if ($compressed === false) {
-            $compressed = $content;
+    while ($offset < $length) {
+        $chunk = substr($content, $offset, min(1048576, $length - $offset));
+        $written = fwrite($handle, $chunk);
+        if ($written === false || $written === 0) {
+            throw new RuntimeException('No se ha podido escribir el archivo ZIP.');
         }
-        $method = $compressed === $content ? 0 : 8;
-        $crc = crc32($content);
-        $size = strlen($content);
-        $compressedSize = strlen($compressed);
-        $length = strlen($name);
-        $local = pack('VvvvvvVVVvv', 0x04034b50, 20, 0, $method, 0, 0, $crc, $compressedSize, $size, $length, 0) . $name . $compressed;
-        $directory .= pack('VvvvvvvVVVvvvvvVV', 0x02014b50, 20, 20, 0, $method, 0, 0, $crc, $compressedSize, $size, $length, 0, 0, 0, 0, 0, $offset) . $name;
-        $body .= $local;
-        $offset += strlen($local);
+        $offset += $written;
     }
-    $count = count($files);
-    $contents = $body . $directory . pack('VvvvvVVv', 0x06054b50, 0, 0, $count, $count, strlen($directory), strlen($body), 0);
-    if (file_put_contents($target, $contents) === false) {
+}
+
+function rankingWriteZip(string $target, iterable $files): void
+{
+    $handle = fopen($target, 'wb');
+    if ($handle === false) {
         throw new RuntimeException('No se ha podido guardar ' . $target . '.');
     }
+    $central = [];
+    try {
+        foreach ($files as $name => $content) {
+            $name = (string) $name;
+            $content = (string) $content;
+            $compressed = function_exists('gzdeflate') ? gzdeflate($content) : false;
+            $method = $compressed === false ? 0 : 8;
+            if ($compressed === false) {
+                $compressed = $content;
+            }
+            $crc = crc32($content);
+            $size = strlen($content);
+            $compressedSize = strlen($compressed);
+            $length = strlen($name);
+            $offset = ftell($handle);
+            if ($offset === false) {
+                throw new RuntimeException('No se ha podido escribir el archivo ZIP.');
+            }
+            rankingWriteZipPart($handle, pack('VvvvvvVVVvv', 0x04034b50, 20, 0, $method, 0, 0, $crc, $compressedSize, $size, $length, 0));
+            rankingWriteZipPart($handle, $name);
+            rankingWriteZipPart($handle, $compressed);
+            $central[] = [$name, $method, $crc, $compressedSize, $size, $offset];
+            unset($content, $compressed);
+        }
+        $centralStart = ftell($handle);
+        if ($centralStart === false) {
+            throw new RuntimeException('No se ha podido escribir el archivo ZIP.');
+        }
+        foreach ($central as [$name, $method, $crc, $compressedSize, $size, $offset]) {
+            $length = strlen($name);
+            rankingWriteZipPart($handle, pack('VvvvvvvVVVvvvvvVV', 0x02014b50, 20, 20, 0, $method, 0, 0, $crc, $compressedSize, $size, $length, 0, 0, 0, 0, 0, $offset));
+            rankingWriteZipPart($handle, $name);
+        }
+        $centralEnd = ftell($handle);
+        if ($centralEnd === false) {
+            throw new RuntimeException('No se ha podido escribir el archivo ZIP.');
+        }
+        $count = count($central);
+        rankingWriteZipPart($handle, pack('VvvvvVVv', 0x06054b50, 0, 0, $count, $count, $centralEnd - $centralStart, $centralStart, 0));
+    } catch (Throwable $exception) {
+        fclose($handle);
+        if (is_file($target)) {
+            unlink($target);
+        }
+        throw $exception;
+    }
+    fclose($handle);
 }
 
 function rankingReadCitiesCsv(string $cityFile): array
