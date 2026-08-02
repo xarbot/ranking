@@ -129,6 +129,9 @@ tras cada despliegue.
 Las migraciones de `database/migrations/` se aplican por orden de nombre y solo una vez. Si una migracion falla, conserva el backup y resuelve el error antes de publicar la nueva version.
 La version `3.9` incorpora `008_app_settings_seed_control.sql`, que crea `app_settings`
 para guardar preferencias persistentes como `seed_cities_enabled`.
+La misma version incorpora `009_atletas_pendientes.sql`, que permite atletas pendientes
+con fecha/sexo nulos y marcas con `categoria=NULL`; aplicala antes de abrir el panel con
+codigo actualizado.
 
 ## Copia de seguridad
 

@@ -44,10 +44,10 @@ reasignan a `Aire Libre / Curses / 100` para revisarlas posteriormente.
 El esquema contiene:
 
 - `usuarios`: cuentas de gestion.
-- `atletas`: nombre, fecha de nacimiento y sexo (`masculino` o `femenino`).
+- `atletas`: nombre, fecha de nacimiento, sexo (`masculino` o `femenino`) y estado (`completo` o `pendiente`).
 - `pruebas`: ambito, grupo, prueba, criterio de ranking y si exige caracteristica tecnica.
 - `ciudades`: catalogo para el autocompletado de localizacion.
-- `marcas`: atleta, prueba, ciudad, nombre opcional de pista, marca, dato tecnico y categoria.
+- `marcas`: atleta, prueba, ciudad, nombre opcional de pista, marca, dato tecnico y categoria. La categoria puede ser `NULL` para atletas pendientes.
 - `traducciones`: traduccion editable de los literales de la aplicacion.
 - `pistas`: tabla conservada unicamente para migrar marcas historicas.
 - `app_settings`: preferencias persistentes de la aplicacion, incluida la activacion de la carga automatica inicial de ciudades.
@@ -67,6 +67,10 @@ categorias que tienen marcas registradas; las pruebas se filtran de forma jerarq
 ambito y grupo. Las ultimas marcas muestran, cuando procede, caracteristica tecnica y nombre
 de pista bajo la prueba y la ciudad.
 
+Los atletas pendientes son visibles y editables en administracion, pueden fusionarse y se
+incluyen en exportaciones administrativas. Mientras tengan `estado='pendiente'`, no aparecen
+en consulta publica; al completar fecha de nacimiento y sexo se recalculan sus categorias.
+
 ## Ciudades
 
 El apartado **Pistas** se sustituye por **Ciudades**. `database/ciudades_es.csv` incluye los
@@ -79,16 +83,16 @@ historicas se trasladan automaticamente durante la migracion.
 ## Cargas CSV
 
 La plantilla de atletas descargable incluye `Nombre`, `Apellidos`, `Fecha de nacimiento` y
-`Sexo`. Las fechas usan `AAAA-MM-DD` y el sexo es `masculino` o `femenino`. Nombres y
-apellidos se almacenan capitalizados; al cargar la aplicacion se normalizan igualmente los
-atletas que ya existian.
+`Sexo`. Las fechas usan `AAAA-MM-DD` y el sexo es `masculino` o `femenino`; si falta alguno
+de esos dos datos el atleta queda pendiente. Nombres y apellidos se almacenan capitalizados;
+al cargar la aplicacion se normalizan igualmente los atletas que ya existian.
 
 La carga masiva de resultados dispone de un flujo para un unico atleta seleccionado en la web,
 con acceso directo a su alta si aun no existe, y de otro flujo multiatleta cuyo fichero
 incorpora `Atleta` como primera columna, con el valor
-`Nombre Apellidos`. Este segundo flujo revisa primero los atletas existentes y permite dar de
-alta los que faltan indicando nombre, apellidos, fecha de nacimiento y sexo; si no se completa
-un alta, se omiten sus marcas.
+`Nombre Apellidos`. Si el atleta no existe y el nombre puede separarse en nombre y apellidos,
+se crea automaticamente dentro de la misma transaccion de importacion. Si faltan fecha de
+nacimiento o sexo, se crea como pendiente y sus marcas se guardan con `categoria=NULL`.
 
 Cada flujo permite descargar una plantilla Excel (`.xlsx`), compatible tambien con
 LibreOffice/OpenOffice. Ofrece `Ambito / Grupo` en una unica columna y un desplegable

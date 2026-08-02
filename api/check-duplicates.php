@@ -2,6 +2,10 @@
 
 require_once dirname(__DIR__) . '/lib/env.php';
 
+session_name('ranking_session');
+session_set_cookie_params(['httponly' => true, 'samesite' => 'Strict', 'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', 'path' => '/']);
+session_start();
+
 // Validar filtros GET opcionales
 $athleteIdFilter = isset($_GET['athlete_id']) ? filter_var($_GET['athlete_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : null;
 if (isset($_GET['athlete_id']) && $athleteIdFilter === false) {
@@ -29,6 +33,19 @@ function failJson(string $message, int $status = 500): never
     respondJson(['success' => false, 'error' => $message], $status);
 }
 
+function requireAdminSession(PDO $db): void
+{
+    $userId = filter_var($_SESSION['user_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    if (!$userId) {
+        failJson('Debes iniciar sesion para continuar.', 401);
+    }
+    $statement = $db->prepare("SELECT 1 FROM usuarios WHERE id = ? AND activo = 1 AND rol = 'admin'");
+    $statement->execute([(int) $userId]);
+    if (!$statement->fetchColumn()) {
+        failJson('No tienes permisos para acceder a este apartado.', 403);
+    }
+}
+
 /**
  * Detecta grupos de marcas duplicadas en la tabla marcas.
  *
@@ -46,6 +63,32 @@ function failJson(string $message, int $status = 500): never
  */
 function detectDuplicateGroups(PDO $db, ?int $athleteIdFilter = null, ?int $pruebaIdFilter = null): array
 {
+    $conditions = [];
+    $params = [];
+    if ($athleteIdFilter !== null) {
+        $conditions[] = 'm.atleta_id = ?';
+        $params[] = $athleteIdFilter;
+    }
+    if ($pruebaIdFilter !== null) {
+        $conditions[] = 'm.prueba_id = ?';
+        $params[] = $pruebaIdFilter;
+    }
+    $conditions[] = 'EXISTS (
+    SELECT 1
+    FROM marcas m2
+    WHERE m2.id <> m.id'
+        . ($athleteIdFilter !== null ? ' AND m2.atleta_id = m.atleta_id' : '')
+        . ($pruebaIdFilter !== null ? ' AND m2.prueba_id = m.prueba_id' : '')
+        . ' AND (m2.atleta_id            <=> m.atleta_id)
+      AND (m2.prueba_id             <=> m.prueba_id)
+      AND (m2.fecha                 <=> m.fecha)
+      AND (m2.resultado             <=> m.resultado)
+      AND (m2.ciudad_id             <=> m.ciudad_id)
+      AND (m2.nombre_pista          <=> m.nombre_pista)
+      AND (m2.caracteristica_tecnica <=> m.caracteristica_tecnica)
+      AND (m2.categoria             <=> m.categoria)
+      AND (m2.pista_id              <=> m.pista_id)
+)';
     $sql = 'SELECT
     m.id,
     m.atleta_id,
@@ -67,33 +110,8 @@ function detectDuplicateGroups(PDO $db, ?int $athleteIdFilter = null, ?int $prue
 FROM marcas m
 LEFT JOIN atletas a ON a.id = m.atleta_id
 LEFT JOIN pruebas p ON p.id = m.prueba_id
-LEFT JOIN ciudades c ON c.id = m.ciudad_id'
-        . ($athleteIdFilter !== null ? ' WHERE m.atleta_id = ?' : '')
-        . ($pruebaIdFilter !== null ? ($athleteIdFilter !== null ? ' AND m.prueba_id = ?' : ' WHERE m.prueba_id = ?') : '')
-        . ' AND EXISTS (
-    SELECT 1
-    FROM marcas m2
-    WHERE m2.id <> m.id'
-        . ($athleteIdFilter !== null ? ' AND m2.atleta_id = m.atleta_id' : '')
-        . ($pruebaIdFilter !== null ? ' AND m2.prueba_id = m.prueba_id' : '')
-        . ' AND (m2.atleta_id            <=> m.atleta_id)
-      AND (m2.prueba_id             <=> m.prueba_id)
-      AND (m2.fecha                 <=> m.fecha)
-      AND (m2.resultado             <=> m.resultado)
-      AND (m2.ciudad_id             <=> m.ciudad_id)
-      AND (m2.nombre_pista          <=> m.nombre_pista)
-      AND (m2.caracteristica_tecnica <=> m.caracteristica_tecnica)
-      AND (m2.categoria             <=> m.categoria)
-      AND (m2.pista_id              <=> m.pista_id)
-)';
-
-    $params = [];
-    if ($athleteIdFilter !== null) {
-        $params[] = $athleteIdFilter;
-    }
-    if ($pruebaIdFilter !== null) {
-        $params[] = $pruebaIdFilter;
-    }
+LEFT JOIN ciudades c ON c.id = m.ciudad_id
+WHERE ' . implode(' AND ', $conditions);
 
     $statement = $db->prepare($sql);
     $statement->execute($params);
@@ -162,6 +180,7 @@ LEFT JOIN ciudades c ON c.id = m.ciudad_id'
 
 try {
     $db = databaseConnection(dirname(__DIR__, 2) . '/.env');
+    requireAdminSession($db);
     $payload = detectDuplicateGroups($db, $athleteIdFilter, $pruebaIdFilter);
     respondJson($payload, 200);
 } catch (Throwable $e) {

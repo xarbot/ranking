@@ -5,7 +5,7 @@ Fuente principal: `database/init.sql`. Para cambios estructurales, revisar tambi
 ## Tablas principales
 
 - `usuarios`: cuentas del panel. Campos clave: `nombre`, `usuario`, `password_hash`, `activo`, `rol`.
-- `atletas`: deportistas. Campos: `nombre`, `apellidos`, `fecha_nacimiento`, `sexo`.
+- `atletas`: deportistas. Campos: `nombre`, `apellidos`, `fecha_nacimiento`, `sexo`, `estado`. `fecha_nacimiento` y `sexo` pueden ser `NULL` si `estado='pendiente'`.
 - `pruebas`: catalogo deportivo. Campos: `nombre`, `ambito`, `grupo`, `sentido_resultado`, `informacion_adicional`.
 - `ciudades`: catalogo de localidades. Campos: `nombre`, `provincia`.
 - `pistas`: catalogo auxiliar de pistas por ciudad y ambito. Conserva compatibilidad con marcas historicas.
@@ -29,12 +29,13 @@ Fuente principal: `database/init.sql`. Para cambios estructurales, revisar tambi
 
 ## Convenciones deportivas
 
-- Atletas: nombre y apellidos se normalizan capitalizados; `sexo` es `masculino` o `femenino`.
+- Atletas: nombre y apellidos se normalizan capitalizados; `sexo` es `masculino` o `femenino` cuando el atleta esta completo. No usar valores ficticios para pendientes.
 - Pruebas: `ambito` puede ser `pista_cubierta`, `aire_libre` o `ruta`.
 - Pruebas: `grupo` organiza catalogo; `sentido_resultado` es `menor` para tiempos y `mayor` para saltos/lanzamientos.
 - Pruebas: `informacion_adicional` obliga a registrar caracteristica tecnica.
 - Marcas: `resultado` se guarda como texto validado; se convierte a valor comparable al calcular rankings.
-- Marcas: `categoria` se calcula desde fecha de nacimiento, fecha de marca y sexo.
+- Atletas pendientes: existen en administracion, permisos, busquedas, fusion y exportaciones admin; no aparecen en endpoints publicos hasta completarse.
+- Marcas: `categoria` se calcula desde fecha de nacimiento, fecha de marca y sexo. En marcas de atletas pendientes puede ser `NULL`.
 - Pistas: para pista cubierta/aire libre puede usarse `nombre_pista`; en ruta normalmente no aplica.
 - Ciudades: deben existir en catalogo antes de grabar marcas.
 
@@ -43,6 +44,7 @@ Fuente principal: `database/init.sql`. Para cambios estructurales, revisar tambi
 - Las categorias Sub y Senior se calculan por el ano en que el atleta cumple la edad de cambio.
 - Master empieza desde la fecha exacta de 35 anos y avanza en tramos de cinco anos.
 - Las categorias se separan por sexo en la consulta publica.
+- La consulta publica debe filtrar siempre `atletas.estado = 'completo'` en servidor; no basta con ocultar filas en UI ni con `categoria IS NOT NULL`.
 - Ranking: cada atleta aparece con su mejor marca por prueba/categoria segun `sentido_resultado`.
 
 ## Notas

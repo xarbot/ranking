@@ -10,6 +10,8 @@
 
 - `api/index.php` concentra muchas responsabilidades; buscar funcion/ruta concreta antes de editar.
 - Categorias y rankings dependen de `categoryForDates`, `refreshCategories`, `publicRanking` y `sentido_resultado`.
+- Desde `009_atletas_pendientes.sql`, `atletas.fecha_nacimiento`, `atletas.sexo` y `marcas.categoria` pueden ser `NULL`; revisar codigo que asumiera strings obligatorios.
+- Los atletas `estado='pendiente'` son datos admin validos y deben excluirse solo de la parte publica con filtro server-side.
 - Importaciones deben validar todo antes de escribir; evitar grabaciones parciales.
 - Permisos combinan roles globales y permisos por atleta; revisar antes de tocar marcas o atletas.
 - `marcas_borradas` conserva marcas eliminadas; no purgar sin confirmacion clara.

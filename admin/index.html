@@ -7,9 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Ranking de Atletismo | Club Atlètic Castellar</title>
-    <link rel="stylesheet" href="styles.css?v=20260802-1">
-    <script src="i18n.js?v=20260802-2" defer></script>
-    <script src="app.js?v=20260802-2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=20260802-4">
+    <script src="i18n.js?v=20260802-4" defer></script>
+    <script src="app.js?v=20260802-4" defer></script>
   </head>
   <body>
     <main id="auth-shell" class="auth-shell">
@@ -137,7 +137,8 @@
                 <input id="mark-import-athlete" list="athlete-options" required placeholder="Buscar atleta...">
               </label>
               <button class="secondary add-athlete" id="add-import-athlete" type="button">Dar de alta este atleta</button>
-              <p class="helper bulk-helper">Las plantillas Excel incluyen listas y validaciones. Al terminar, guarda la hoja Resultados como CSV para importarla. Antes de guardar, la app muestra una previsualización editable con avisos de duplicados, atletas no encontrados, ciudad y pista recomendada.</p>
+              <p class="helper bulk-helper">Las plantillas Excel incluyen listas y validaciones. Al terminar, guarda la hoja Resultados como CSV para importarla. La validación siempre se ejecuta; la previsualización editable puede omitirse para ficheros grandes. Los atletas nuevos sin fecha o sexo se crearán como pendientes.</p>
+              <label class="toggle-line"><input id="mark-import-preview" type="checkbox" checked> Mostrar previsualización antes de importar</label>
               <div class="import-actions">
                 <div class="template-download">
                   <label>Plantilla
@@ -165,7 +166,8 @@
             </section>
             <section class="bulk-import">
               <h3>Marcas de varios atletas</h3>
-              <p class="helper bulk-helper">El fichero incluye la columna Atleta con Nombre y Apellidos. Antes de cargar marcas se revisan las altas necesarias. Antes de guardar, la app muestra una previsualización editable con avisos de duplicados, atletas no encontrados, ciudad y pista recomendada.</p>
+              <p class="helper bulk-helper">El fichero incluye la columna Atleta con Nombre y Apellidos. Los atletas nuevos sin fecha de nacimiento o sexo se crean como pendientes; la previsualización editable puede omitirse para ficheros grandes.</p>
+              <label class="toggle-line"><input id="multi-mark-import-preview" type="checkbox" checked> Mostrar previsualización antes de importar</label>
               <div class="import-actions">
                 <div class="template-download">
                   <label>Plantilla
@@ -192,7 +194,7 @@
               </form>
               <form id="missing-athletes-form" class="missing-athletes hidden">
                 <h4>Atletas no encontrados</h4>
-                <p class="helper bulk-helper">Corrige nombre y apellidos para vincular un atleta existente, o completa fecha y sexo para darlo de alta. Las filas no completadas y sus marcas se omitirán.</p>
+                <p class="helper bulk-helper">Corrige nombre y apellidos para vincular un atleta existente. Los nuevos sin fecha o sexo se crearán como pendientes.</p>
                 <div id="missing-athletes-body"></div>
                 <button class="primary" type="submit">Continuar con la carga</button>
               </form>
@@ -258,7 +260,7 @@
               <input class="hidden" id="import-athletes-file" type="file" accept=".csv,text/csv">
             </div>
           </div>
-          <p class="helper admin-only">Columnas de importación: Nombre, Apellidos, Fecha de nacimiento (AAAA-MM-DD) y Sexo (masculino/femenino).</p>
+          <p class="helper admin-only">Columnas de importación: Nombre, Apellidos, Fecha de nacimiento (AAAA-MM-DD) y Sexo (masculino/femenino). Si falta fecha o sexo, el atleta queda pendiente y no será visible públicamente hasta completar sus datos.</p>
           <p id="athlete-import-status" class="status hidden" role="status"></p>
           <form id="move-marks-form" class="inline-form move-marks-form admin-only">
             <label>Atleta origen<input id="move-source-athlete" list="athlete-options" required placeholder="Buscar atleta..."></label>
@@ -270,12 +272,22 @@
             <input type="hidden" id="athlete-id">
             <label>Nombre<input id="athlete-name" required></label>
             <label>Apellidos<input id="athlete-surname" required></label>
-            <label>Fecha de nacimiento<input id="athlete-birthdate" type="date" required></label>
-            <label>Sexo<select id="athlete-sex" required><option value="femenino">Femenino</option><option value="masculino">Masculino</option></select></label>
+            <label>Fecha de nacimiento<input id="athlete-birthdate" type="date"></label>
+            <label>Sexo<select id="athlete-sex"><option value="">Seleccionar</option><option value="femenino">Femenino</option><option value="masculino">Masculino</option></select></label>
             <button class="primary" type="submit">Guardar</button>
             <button class="secondary hidden" id="cancel-athlete" type="button">Cancelar</button>
           </form>
           <p id="athlete-error" class="error" role="alert"></p>
+          <div class="athlete-filter-row">
+            <label>Estado
+              <select id="athlete-state-filter">
+                <option value="all">Todos</option>
+                <option value="completo">Completos</option>
+                <option value="pendiente">Pendientes</option>
+              </select>
+            </label>
+            <p>Atletas pendientes: <strong id="athletes-pending-count">0</strong></p>
+          </div>
           <div class="table-wrap">
             <table><thead><tr><th>Atleta</th><th>Fecha de nacimiento</th><th>Sexo</th><th></th></tr></thead>
               <tbody id="athletes-body"></tbody></table>

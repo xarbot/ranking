@@ -7,6 +7,8 @@
 - Validar todas las filas antes de grabar; si hay errores, no importar parcialmente.
 - La importacion masiva usa jobs temporales en `storage/import-jobs/` para progreso y un lock en `storage/locks/`.
 - Comprobar atleta, prueba, ciudad, fecha, marca y caracteristica tecnica obligatoria.
+- Si un atleta nuevo tiene nombre/apellidos validos pero falta fecha de nacimiento o sexo, se crea como `estado='pendiente'` y sus marcas entran con `categoria=NULL`; esto no cuenta como error masivo.
+- La creacion de atletas nuevos y la insercion de marcas deben permanecer en la misma transaccion de importacion.
 - Para cambios de logica, buscar `importMarks`, `importMultipleMarks`, `markPayload`, `requiredResult`.
 
 ## Utilidades admin
@@ -28,7 +30,7 @@
 - Revisar `publicRanking`, `comparableResult`, `categoryForDates` y `refreshCategories`.
 - Mantener separacion por sexo y categoria.
 - Respetar `sentido_resultado`: menor gana en carreras, mayor gana en saltos/lanzamientos.
-- La parte publica solo debe mostrar ambitos, grupos, pruebas y categorias con marcas.
+- La parte publica solo debe mostrar ambitos, grupos, pruebas, categorias y atletas completos con marcas. Aplicar siempre filtro servidor `atletas.estado = 'completo'`.
 
 ## Modificar utilidades admin
 

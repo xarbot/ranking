@@ -140,6 +140,35 @@ function rankingPrimaryColumns(PDO $db, string $table): array
     return array_map(static fn(array $row): string => (string) $row['Column_name'], $rows);
 }
 
+function rankingValidDateString(mixed $value): bool
+{
+    if (!is_string($value) || !preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $match)) {
+        return false;
+    }
+    return checkdate((int) $match[2], (int) $match[3], (int) $match[1]);
+}
+
+function rankingValidateAthleteBackupRow(array $row): void
+{
+    $state = (string) ($row['estado'] ?? '');
+    if (!in_array($state, ['completo', 'pendiente'], true)) {
+        throw new RankingAdminException('El backup contiene un estado de atleta no válido.', 400);
+    }
+    $birthdate = $row['fecha_nacimiento'] ?? null;
+    $sex = $row['sexo'] ?? null;
+    if ($state === 'completo' && (!rankingValidDateString($birthdate) || !in_array($sex, ['masculino', 'femenino'], true))) {
+        throw new RankingAdminException('El backup contiene un atleta completo sin datos obligatorios.', 400);
+    }
+    if ($state === 'pendiente') {
+        if ($birthdate !== null && !rankingValidDateString($birthdate)) {
+            throw new RankingAdminException('El backup contiene un atleta pendiente con fecha no válida.', 400);
+        }
+        if ($sex !== null && !in_array($sex, ['masculino', 'femenino'], true)) {
+            throw new RankingAdminException('El backup contiene un atleta pendiente con sexo no válido.', 400);
+        }
+    }
+}
+
 function rankingSchemaMigrations(PDO $db): array
 {
     $rows = $db->query('SELECT version FROM schema_migrations ORDER BY version')->fetchAll(PDO::FETCH_COLUMN);
@@ -473,6 +502,9 @@ function rankingValidateBackup(PDO $db, string $path): array
         if ($table === 'usuarios' && (string) ($row['rol'] ?? '') === 'admin' && (int) ($row['activo'] ?? 0) === 1) {
             $activeAdmins++;
         }
+        if ($table === 'atletas') {
+            rankingValidateAthleteBackupRow($row);
+        }
         $canonical = rankingJsonEncode($row);
         hash_update($contexts[$table], $canonical . "\n");
         $counts[$table]++;
@@ -753,6 +785,10 @@ function rankingCleanupJobs(): void
         }
         $updated = strtotime((string) ($data['updated_at'] ?? '')) ?: filemtime($path);
         if ($updated !== false && $updated < time() - RANKING_IMPORT_JOB_TTL_SECONDS) {
+            $jobId = basename($path, '.json');
+            foreach (glob(rankingJobDirectory() . '/' . $jobId . '_*.csv') ?: [] as $reportPath) {
+                unlink($reportPath);
+            }
             unlink($path);
         }
     }

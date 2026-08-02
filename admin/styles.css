@@ -273,6 +273,8 @@ button { font: inherit; }
 .bulk-import h3 { color: var(--primary-dark); font-size: 17px; margin: 0; }
 .bulk-import .add-athlete { justify-self: start; }
 .bulk-import .status { margin: 0; }
+.toggle-line { align-items: center; color: var(--ink); display: flex; flex-direction: row; font-size: 13px; gap: 8px; }
+.toggle-line input { width: auto; }
 .missing-athletes, .import-review { border-top: 1px solid var(--line); display: grid; gap: 12px; padding-top: 14px; }
 .missing-athletes h4, .import-review h4 { color: var(--primary-dark); font-size: 16px; margin: 0; }
 .import-progress { background: #f7faf7; border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 8px; margin-top: 12px; padding: 12px; }
@@ -281,6 +283,7 @@ button { font: inherit; }
 .progress-track { background: #dfe9df; border-radius: 999px; height: 10px; overflow: hidden; }
 .progress-track span { background: var(--primary); display: block; height: 100%; transition: width .2s ease; width: 0; }
 .import-progress p { margin: 0; }
+.import-summary { border-top: 1px solid var(--line); display: grid; gap: 8px; padding-top: 8px; }
 .missing-athlete-row, .import-review-row { align-items: end; display: grid; gap: 8px; grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.35fr) minmax(170px, 1.25fr) minmax(120px, .95fr); margin-top: 10px; }
 .import-review-row { grid-template-columns: 70px minmax(190px, 1fr) minmax(160px, .9fr); }
 .missing-athlete-row label, .import-review-row label { min-width: 0; }
@@ -311,6 +314,19 @@ button { font: inherit; }
   margin: 2px 4px 2px 0;
   padding: 3px 8px;
 }
+.status-chip {
+  background: #e9f6ed;
+  border: 1px solid #b8d9c1;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  margin: 2px 4px 2px 0;
+  padding: 3px 8px;
+}
+.status-chip.new { background: #eaf2fb; border-color: #b8cce4; color: #1d4f7a; }
+.status-chip.pending { background: #fff2df; border-color: #e5c28c; color: #7b4d12; }
 .catalog-helper { margin-top: 0; }
 .bulk-helper { margin: 0; }
 .file-button { align-items: center; display: inline-flex; }
@@ -351,6 +367,18 @@ td strong { color: var(--primary-dark); }
   text-decoration: underline;
 }
 .athlete-list-button:hover { color: var(--primary); }
+.pending-athlete-row { background: #fffaf1; }
+.athlete-filter-row {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  margin: 6px 0 14px;
+}
+.athlete-filter-row label { max-width: 220px; }
+.athlete-filter-row p { color: var(--muted); font-size: 13px; font-weight: 700; margin: 0 0 9px; }
+.incomplete-text { color: #7b4d12; font-weight: 600; }
 .empty { color: var(--muted); margin: 20px 4px 4px; text-align: center; }
 .mark-result-main { color: var(--primary-dark); font-weight: 700; }
 .cell-detail {
