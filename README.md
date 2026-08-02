@@ -13,8 +13,8 @@ Ese indice indica que documentos abrir segun la tarea para evitar cargar context
 
 ## Version
 
-- Version en produccion: `4.0`
-- Version del repositorio: `4.0`
+- Version en produccion: `4.1`
+- Version del repositorio: `4.1`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -73,6 +73,8 @@ la vista publica usando el catalogo completo de pruebas disponible en gestion.
 Los atletas pendientes son visibles y editables en administracion, pueden fusionarse y se
 incluyen en exportaciones administrativas. Mientras tengan `estado='pendiente'`, no aparecen
 en consulta publica; al completar fecha de nacimiento y sexo se recalculan sus categorias.
+Al fusionar atletas desde administracion, las marcas activas y la papelera del atleta origen
+se reasignan al destino y despues se elimina el atleta origen.
 
 ## Ciudades
 

@@ -20,7 +20,7 @@
 
 ## Revisar duplicados
 
-- Atletas: no fusionar ni mover marcas sin confirmacion; buscar `moveAthleteMarks`.
+- Atletas: no fusionar sin confirmacion; `moveAthleteMarks` reasigna marcas activas y papelera al destino y elimina el atleta origen.
 - Ciudades: preferir fusion segura si hay marcas asociadas; buscar `mergeCities` y `writeCity`.
 - Pistas: revisar `tracks`, `writeTrack`, `upsertTrack` antes de tocar.
 - Marcas: los borrados son suaves hacia `marcas_borradas`; buscar `softDeleteMark`.

@@ -16,6 +16,7 @@ Registro breve de cambios pensados para futuras sesiones de IA. No sustituye al 
 - `api/check-duplicates.php` queda protegido por sesion admin y sigue comparando `categoria` con operador null-safe para pendientes.
 - En importaciones de marcas, `Caracteristica tecnica` pasa a ser opcional incluso si la prueba tiene `informacion_adicional`; el alta manual conserva la obligatoriedad.
 - La edicion publica de marcas permite cambiar la prueba con el catalogo completo cargado desde `/api/bootstrap`; si la nueva prueba no usa caracteristica tecnica, se limpia en frontend y en altas/ediciones manuales del backend.
+- La fusion admin de atletas reasigna marcas activas y `marcas_borradas` al destino, elimina permisos del origen y borra el atleta origen dentro de la transaccion.
 
 ### Notas
 
