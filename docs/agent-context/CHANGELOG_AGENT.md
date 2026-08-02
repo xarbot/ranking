@@ -15,6 +15,7 @@ Registro breve de cambios pensados para futuras sesiones de IA. No sustituye al 
 - El listado admin de atletas distingue y filtra pendientes; al completar fecha y sexo se recalculan categorias de sus marcas de forma transaccional.
 - `api/check-duplicates.php` queda protegido por sesion admin y sigue comparando `categoria` con operador null-safe para pendientes.
 - En importaciones de marcas, `Caracteristica tecnica` pasa a ser opcional incluso si la prueba tiene `informacion_adicional`; el alta manual conserva la obligatoriedad.
+- La edicion publica de marcas permite cambiar la prueba con el catalogo completo cargado desde `/api/bootstrap`; si la nueva prueba no usa caracteristica tecnica, se limpia en frontend y en altas/ediciones manuales del backend.
 
 ### Notas
 

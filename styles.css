@@ -323,6 +323,8 @@ td strong { color: var(--primary-dark); }
 .inline-city-input { max-width: 210px; }
 .inline-track-input,
 .inline-technical-input { max-width: 210px; }
+.inline-event-field,
+.inline-event-input { max-width: 280px; }
 
 .management { max-width: 1050px; }
 .marks-management { max-width: 1120px; }

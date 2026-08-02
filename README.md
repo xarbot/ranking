@@ -13,8 +13,8 @@ Ese indice indica que documentos abrir segun la tarea para evitar cargar context
 
 ## Version
 
-- Version en produccion: `3.9`
-- Version del repositorio: `3.9`
+- Version en produccion: `4.0`
+- Version del repositorio: `4.0`
 
 El pie de las paginas muestra la version desplegada. A partir de `0.1`, cada peticion
 que genere cambios publicables debe incrementar la version en `0.1` y actualizar este
@@ -67,6 +67,8 @@ tambien separados por sexo. En la consulta publica solo aparecen ambitos, grupos
 categorias que tienen marcas registradas; las pruebas se filtran de forma jerarquica por
 ambito y grupo. Las ultimas marcas muestran, cuando procede, caracteristica tecnica y nombre
 de pista bajo la prueba y la ciudad.
+Los usuarios con permiso de edicion sobre una marca pueden corregir tambien la prueba desde
+la vista publica usando el catalogo completo de pruebas disponible en gestion.
 
 Los atletas pendientes son visibles y editables en administracion, pueden fusionarse y se
 incluyen en exportaciones administrativas. Mientras tengan `estado='pendiente'`, no aparecen

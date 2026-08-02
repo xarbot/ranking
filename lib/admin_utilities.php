@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const RANKING_APP_VERSION = '3.9';
+const RANKING_APP_VERSION = '4.0';
 const RANKING_BACKUP_FORMAT = 'ranking-backup-jsonl';
 const RANKING_BACKUP_FORMAT_VERSION = 1;
 const RANKING_BACKUP_EXTENSION = '.ranking-backup.jsonl';

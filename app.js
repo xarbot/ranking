@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { events: [], categories: [], athletes: [], cities: [], tracks: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editableAthleteIds: [], editingMarkId: null };
+  var state = { events: [], eventCatalogue: [], categories: [], athletes: [], cities: [], tracks: [], marks: [], counts: {}, ranking: null, rankingVisible: {}, history: null, historyVisible: {}, historyArea: "", currentUser: null, editableAthleteIds: [], editingMarkId: null };
 
   function byId(id) { return document.getElementById(id); }
   function t(value) { return window.RankingI18n.t(value); }
@@ -46,7 +46,42 @@
   function isPublicAdmin() { return state.currentUser && state.currentUser.role === "admin"; }
   function hasPublicEditAccess() { return isPublicAdmin() || state.editableAthleteIds.length > 0; }
   function canEditPublicMark(mark) { return isPublicAdmin() || state.editableAthleteIds.indexOf(String(mark.athleteId)) !== -1; }
-  function eventCell(mark) { return escapeHtml(eventLabel(mark)); }
+  function eventCatalogue() {
+    var items = (state.eventCatalogue && state.eventCatalogue.length ? state.eventCatalogue : state.events).slice();
+    return items.sort(function (first, second) {
+      var area = areaRank(first.area) - areaRank(second.area);
+      var group = groupLabel(first.eventGroup).localeCompare(groupLabel(second.eventGroup));
+      return area || group || compareEvents(first, second) || String(first.id).localeCompare(String(second.id));
+    });
+  }
+  function publicEventById(id) {
+    var target = String(id);
+    return eventCatalogue().find(function (event) { return String(event.id) === target; }) ||
+      state.events.find(function (event) { return String(event.id) === target; }) ||
+      null;
+  }
+  function publicMarkEvent(mark) {
+    return publicEventById(mark.eventId) || { id: mark.eventId, name: mark.event, event: mark.event, area: mark.area, eventGroup: mark.eventGroup, requiresTechnicalInfo: technicalValue(mark.technicalInfo) ? 1 : 0 };
+  }
+  function selectedPublicEvent(row, mark) {
+    var select = row ? row.querySelector("[data-public-edit-event]") : null;
+    return publicEventById(select && select.value ? select.value : mark.eventId) || publicMarkEvent(mark);
+  }
+  function publicEventRequiresTechnicalInfo(event) { return Boolean(event && Number(event.requiresTechnicalInfo)); }
+  function publicEventChoiceLabel(event) { return t(areaLabel(event.area)) + " / " + groupLabel(event.eventGroup) + " - " + t(event.name || event.event || ""); }
+  function publicEventSelectHtml(mark) {
+    var selected = String(mark.eventId || ""), items = eventCatalogue(), current = publicMarkEvent(mark);
+    if (current && !items.some(function (event) { return String(event.id) === String(current.id); })) items.push(current);
+    if (!items.length) return '<select class="inline-mark-input inline-event-input" data-public-edit-event required aria-label="' + escapeHtml(t("Prueba")) + '"><option value="">' + escapeHtml(t("Selecciona una prueba")) + '</option></select>';
+    return '<select class="inline-mark-input inline-event-input" data-public-edit-event required aria-label="' + escapeHtml(t("Prueba")) + '">' + items.map(function (event) {
+      return '<option value="' + escapeHtml(event.id) + '"' + (String(event.id) === selected ? " selected" : "") + '>' + escapeHtml(publicEventChoiceLabel(event)) + '</option>';
+    }).join("") + '</select>';
+  }
+  function publicEventEditor(mark) { return '<label class="inline-edit-field inline-event-field"><span>' + escapeHtml(t("Prueba")) + '</span>' + publicEventSelectHtml(mark) + '</label>'; }
+  function eventCell(mark) {
+    if (canEditPublicMark(mark) && isEditingMark(mark)) return publicEventEditor(mark);
+    return escapeHtml(eventLabel(mark));
+  }
   function cityLabel(city) { return city.name + (city.province ? " (" + city.province + ")" : ""); }
   function selectedPublicCity(value) {
     var query = normalized(value);
@@ -62,15 +97,16 @@
     return current ? cityLabel(current) : (mark.city || "");
   }
   function tracksFor(area, cityId) { return (state.tracks || []).filter(function (track) { return track.area === area && String(track.cityId) === String(cityId); }).sort(function (a, b) { return a.name.localeCompare(b.name, "ca"); }); }
-  function publicTrackHtml(mark, cityId, current) {
-    var value = String(current || ""), tracks = cityId ? tracksFor(mark.area, cityId) : [], hasCurrent = tracks.some(function (track) { return track.name === value; });
+  function publicTrackHtml(mark, cityId, current, area) {
+    var value = String(current || ""), tracks = cityId ? tracksFor(area || mark.area, cityId) : [], hasCurrent = tracks.some(function (track) { return track.name === value; });
     if (!tracks.length) return '<input class="inline-mark-input inline-track-input" data-public-edit-track value="' + escapeHtml(value) + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo")) + '">';
     return '<select class="inline-mark-input inline-track-input" data-public-edit-track-select="' + escapeHtml(mark.id) + '">' + tracks.map(function (track) { return '<option value="' + escapeHtml(track.name) + '"' + (track.name === value ? " selected" : "") + '>' + escapeHtml(track.name) + '</option>'; }).join("") + (value && !hasCurrent ? '<option value="' + escapeHtml(value) + '" selected>' + escapeHtml(value) + '</option>' : "") + '<option value="__new__">Afegir una nova</option></select><input class="inline-mark-input inline-track-input ' + (hasCurrent || !value ? "hidden" : "") + '" data-public-edit-track value="' + escapeHtml(value && !hasCurrent ? value : "") + '" aria-label="' + escapeHtml(t("Nombre de la pista de atletismo")) + '">';
   }
   function updatePublicTrackEditor(id, row) {
-    var mark = findPublicMark(id), cityInput = row.querySelector("[data-public-edit-city]"), wrap = row.querySelector("[data-public-track-wrap]");
+    var mark = findPublicMark(id), cityInput = row.querySelector("[data-public-edit-city]"), wrap = row.querySelector("[data-public-track-wrap]"), item;
     if (!mark || !wrap) return;
-    wrap.innerHTML = publicTrackHtml(mark, publicCityId(mark, cityInput ? cityInput.value : cityInputValue(mark)), publicTrackValue(row));
+    item = selectedPublicEvent(row, mark);
+    wrap.innerHTML = publicTrackHtml(mark, publicCityId(mark, cityInput ? cityInput.value : cityInputValue(mark)), publicTrackValue(row), item ? item.area : mark.area);
   }
   function publicTrackValue(row) {
     var select = row.querySelector("[data-public-edit-track-select]"), input = row.querySelector("[data-public-edit-track]");
@@ -111,10 +147,24 @@
     var result = escapeHtml(displayResult(mark.result));
     return strong ? '<strong>' + result + '</strong>' : result;
   }
-  function resultCell(mark, strong) {
+  function publicTechnicalInputHtml(mark) {
+    var item = publicMarkEvent(mark), requires = publicEventRequiresTechnicalInfo(item);
+    return '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(requires ? technicalValue(mark.technicalInfo) : "") + '" aria-label="' + escapeHtml(t("Marca técnica")) + '"' + (requires ? " required" : " disabled") + '>';
+  }
+  function updatePublicTechnicalEditor(id, row) {
+    var mark = findPublicMark(id), input = row ? row.querySelector("[data-public-edit-technical]") : null, item, requires;
+    if (!mark || !input) return;
+    item = selectedPublicEvent(row, mark);
+    requires = publicEventRequiresTechnicalInfo(item);
+    input.disabled = !requires;
+    input.required = requires;
+    if (!requires) input.value = "";
+  }
+  function resultCell(mark, strong, includeEventEditor) {
     if (canEditPublicMark(mark) && isEditingMark(mark)) {
-      return inlineField(t("Marca"), '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">') +
-        inlineField(t("Marca técnica"), '<input class="inline-mark-input inline-technical-input" data-public-edit-technical value="' + escapeHtml(technicalValue(mark.technicalInfo)) + '" aria-label="' + escapeHtml(t("Marca técnica")) + '">');
+      return (includeEventEditor ? publicEventEditor(mark) : "") +
+        inlineField(t("Marca"), '<input class="inline-mark-input" data-public-edit-result value="' + escapeHtml(displayResult(mark.result)) + '" aria-label="' + escapeHtml(t("Marca")) + '">') +
+        inlineField(t("Marca técnica"), publicTechnicalInputHtml(mark));
     }
     return resultMain(mark, strong) + technicalDetail(mark.technicalInfo);
   }
@@ -126,6 +176,7 @@
     return '<span class="personal-best-badge">' + escapeHtml(t("Mejor marca personal")) + '</span>';
   }
   function historyMarkCell(mark, isPersonalBest) {
+    if (canEditPublicMark(mark) && isEditingMark(mark)) return resultCell(mark, true, true) + (isPersonalBest ? personalBestBadge() : "");
     var main = isPersonalBest ? '<span class="history-mark-line">' + resultMain(mark, true) + personalBestBadge() + '</span>' + technicalDetail(mark.technicalInfo) : resultCell(mark, true);
     return main;
   }
@@ -334,7 +385,7 @@
     byId("marks-body").innerHTML = marks.map(function (mark) {
       return '<tr><td><button class="athlete-button" type="button" data-athlete-id="' + mark.athleteId + '">' +
         escapeHtml(mark.athlete) + '</button></td><td>' + eventCell(mark) +
-        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + resultCell(mark, false) + '</td><td>' +
+        '</td><td>' + escapeHtml(categoryLabel(mark.category)) + '</td><td>' + resultCell(mark, false, false) + '</td><td>' +
         dateCell(mark) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     byId("marks-empty").classList.toggle("hidden", marks.length > 0);
@@ -359,7 +410,7 @@
     var rows = grouped.marks.slice(0, visible).map(function (mark, index) {
       return '<tr><td>' + (index + 1) + '</td><td><button class="athlete-button" type="button" data-athlete-id="' +
         mark.athleteId + '">' + escapeHtml(mark.athlete) + '</button></td>' + (opts.showEvent === false ? "" : "<td>" + eventCell(mark) + "</td>") +
-        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryTabLabel(mark.category)) + "</td>") + '<td>' + resultCell(mark, true) +
+        (opts.showCategory === false ? "" : "<td>" + escapeHtml(categoryTabLabel(mark.category)) + "</td>") + '<td>' + resultCell(mark, true, opts.showEvent === false) +
         '</td><td>' + dateCell(mark) + '</td><td>' + cityCell(mark) + '</td>' + publicActions(mark) + '</tr>';
     }).join("");
     var heading = includeHeading && grouped.category ? '<p class="ranking-category">' + escapeHtml(categoryLabel(grouped.category)) + '</p>' : "";
@@ -486,15 +537,16 @@
       if (!response.ok) throw new Error(data.error || "No se puede conectar con el servidor de datos.");
       var authResponse = await fetch("/api/auth/status");
       var auth = await authResponse.json().catch(function () { return {}; });
-      var adminData = { athletes: [], cities: [] };
+      var adminData = { athletes: [], cities: [], tracks: [], events: [] };
       if (auth.user) {
         var adminResponse = await fetch("/api/bootstrap");
-        adminData = await adminResponse.json().catch(function () { return { athletes: [], cities: [] }; });
-        if (!adminResponse.ok) adminData = { athletes: [], cities: [] };
+        adminData = await adminResponse.json().catch(function () { return { athletes: [], cities: [], tracks: [], events: [] }; });
+        if (!adminResponse.ok) adminData = { athletes: [], cities: [], tracks: [], events: [] };
       }
       if (window.RankingI18n.setManagedTranslations) window.RankingI18n.setManagedTranslations(data.translations || []);
       state = {
         events: data.events || [],
+        eventCatalogue: adminData.events && adminData.events.length ? adminData.events : (data.events || []),
         categories: data.categories || [],
         athletes: data.athletes || [],
         cities: adminData.cities || [],
@@ -651,10 +703,10 @@
     if (!response.ok) throw new Error(data.error || "No se ha podido guardar el cambio.");
     return data;
   }
-  function publicMarkPayload(mark, result, date, cityId, technicalInfo, trackName) {
+  function publicMarkPayload(mark, eventId, result, date, cityId, technicalInfo, trackName) {
     return {
       athleteId: mark.athleteId,
-      eventId: mark.eventId,
+      eventId: eventId || mark.eventId,
       cityId: cityId || mark.cityId,
       result: result,
       date: date,
@@ -682,11 +734,15 @@
     var technicalInput = row.querySelector("[data-public-edit-technical]");
     var dateInput = row.querySelector("[data-public-edit-date]");
     var cityInput = row.querySelector("[data-public-edit-city]");
+    var selectedEvent = selectedPublicEvent(row, mark);
     var trackName = publicTrackValue(row);
     var cityId = cityInput ? publicCityId(mark, cityInput.value) : mark.cityId;
+    var technicalInfo = technicalInput ? (technicalInput.disabled ? "" : technicalInput.value) : mark.technicalInfo;
+    if (!selectedEvent) { showError("Selecciona una prueba."); return; }
     if (cityInput && !cityId) { showError("Selecciona una ciudad existente."); return; }
+    if (publicEventRequiresTechnicalInfo(selectedEvent) && !String(technicalInfo || "").trim()) { showError("La caracteristica tecnica es obligatoria para esta prueba."); return; }
     try {
-      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, cityId, technicalInput ? technicalInput.value : mark.technicalInfo, trackName)) });
+      await requestPublicAdmin("/marks/" + encodeURIComponent(id), { method: "PUT", body: JSON.stringify(publicMarkPayload(mark, selectedEvent.id, normalizeResultText(resultInput ? resultInput.value : mark.result), dateInput ? dateInput.value : mark.date, cityId, technicalInfo, trackName)) });
       state.editingMarkId = null;
       await loadMarks();
     } catch (error) {
@@ -703,6 +759,15 @@
     }
   }
   function handlePublicInlineChange(event) {
+    var eventSelect = event.target.closest("[data-public-edit-event]");
+    if (eventSelect) {
+      var eventRow = eventSelect.closest("tr"), eventSave = eventRow && eventRow.querySelector("[data-public-save-mark]");
+      if (eventSave) {
+        updatePublicTechnicalEditor(eventSave.dataset.publicSaveMark, eventRow);
+        updatePublicTrackEditor(eventSave.dataset.publicSaveMark, eventRow);
+      }
+      return;
+    }
     var city = event.target.closest("[data-public-edit-city]");
     if (city) {
       var row = city.closest("tr"), save = row && row.querySelector("[data-public-save-mark]");
